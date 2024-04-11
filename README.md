@@ -52,16 +52,16 @@ const { payload } = useAction(PAGE_INIT, [pipe.every, pipe.destruct]);
 ```
 
 
-### Handle a `Promise` with returning data or throwing an error with stopping the previous thread
+### Handle a `Promise` that returns a data or throws an error with stopping the previous thread
 
 Let's assume that variable named `params` stores a query parameters.
 
 ```typescript
-const response = useTask((params) => getUser(params), [params]);
+const response = usePipe((params) => getUser(params), [params]);
 ```
 
 ```typescript
-const response = useTask((params) => getUser(params), [pipe.latest, params]);
+const response = usePipe((params) => getUser(params), [pipe.latest, params]);
 ```
 
 In this case, access to the data and to the error can be obtained through the variables `response` and `response.error`. Eg:
@@ -69,42 +69,42 @@ In this case, access to the data and to the error can be obtained through the va
 ```typescript
 const dispatch = useDispatch();
 
-const response = useTask((params) => getUser(params), [params]);
+const response = usePipe((params) => getUser(params), [params]);
 
-useTask((data) => dispatch({ type: 'RESOLVED_REQUEST', payload: data }), [response]);
+usePipe((data) => dispatch({ type: 'RESOLVED_REQUEST', payload: data }), [response]);
 
-useTask((error) => dispatch({ type: 'REJECTED_REQUEST', payload: error }), [response.error]);
+usePipe((error) => dispatch({ type: 'REJECTED_REQUEST', payload: error }), [response.error]);
 ```
 
 
 ### Handle a `Promise` that returns `{ data, error }` with stopping the previous thread
 
 ```typescript
-const { data, error } = useTask((params) => getUser(params), [pipe.destruct, params]);
+const { data, error } = usePipe((params) => getUser(params), [pipe.destruct, params]);
 ```
 
 ```typescript
-const { data, error } = useTask((params) => getUser(params), [pipe.latest, pipe.destruct, params]);
+const { data, error } = usePipe((params) => getUser(params), [pipe.latest, pipe.destruct, params]);
 ```
 
 
-### Handle a `Promise` that returns `[ data, error ]` with stopping the previous thread
+### Handle a `Promise` that returns `[data, error]` with stopping the previous thread
 
 ```typescript
-const [ data, error ] = useTask((params) => getUser(params), [pipe.destruct, params]);
+const [data, error] = usePipe((params) => getUser(params), [pipe.destruct, params]);
 ```
 
 ```typescript
-const [ data, error ] = useTask((params) => getUser(params), [pipe.latest, pipe.destruct, params]);
+const [data, error] = usePipe((params) => getUser(params), [pipe.latest, pipe.destruct, params]);
 ```
 
 
-### Handle a `Promise` with returning data or throwing an error without stopping the previous thread
+### Handle a `Promise` that returns a data or throws an error without stopping the previous thread
 
 Let's assume that variable named `params` stores a query parameters.
 
 ```typescript
-const response = useTask((params) => getUser(params), [pipe.every, params]);
+const response = usePipe((params) => getUser(params), [pipe.every, params]);
 ```
 
 In this case, access to the data and to the error can be obtained through the variables `response` and `response.error`. Eg:
@@ -112,21 +112,21 @@ In this case, access to the data and to the error can be obtained through the va
 ```typescript
 const dispatch = useDispatch();
 
-const response = useTask((params) => getUser(params)), [pipe.every, params]);
+const response = usePipe((params) => getUser(params)), [pipe.every, params]);
 
-useTask((data) => dispatch({ type: RESOLVED_REQUEST, payload: data }), [response]);
+usePipe((data) => dispatch({ type: 'RESOLVED_REQUEST', payload: data }), [response]);
 
-useTask((error) => dispatch({ type: REJECTED_REQUEST, payload: error }), [response.error]);
+usePipe((error) => dispatch({ type: 'REJECTED_REQUEST', payload: error }), [response.error]);
 ```
 
 ### Handle a `Promise` that returns `{ data, error }` without stopping the previous thread
 
 ```typescript
-const { data, error } = useTask((params) => getUser(params), [pipe.every, pipe.destruct, params]);
+const { data, error } = usePipe((params) => getUser(params), [pipe.every, pipe.destruct, params]);
 ```
 
-### Handle a `Promise` that returns `[ data, error ]` without stopping the previous thread
+### Handle a `Promise` that returns `[data, error]` without stopping the previous thread
 
 ```typescript
-const { data, error } = useTask((params) => getUser(params), [pipe.every, pipe.destruct, params]);
+const [data, error] = usePipe((params) => getUser(params), [pipe.every, pipe.destruct, params]);
 ```

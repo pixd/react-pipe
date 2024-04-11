@@ -6,6 +6,8 @@ export type GetUserResponse = {
 
 export function getUser(): Promise<GetUserResponse> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve({ user: { name: 'Anton' }}), 1500);
+    setTimeout(() => resolve({
+      user: { id: 10, name: 'Anton' },
+    }), 2500);
   });
 }

@@ -1,22 +1,56 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
-import { getUser } from '../../api';
-import { useAction, useTask } from '../../lib';
+import { getFriends, getUser } from '../../api';
+import { useAction, usePipe } from '../../lib';
 import { useDispatch, useSelector } from '../../store';
-import { PAGE_INIT, PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_RESOLVE,
-  PAGE_DATA_REQUEST_REJECT, pageInitializationSelectors } from './store';
+import { FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT, PAGE_REFRESH,
+  PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_REJECT, PAGE_DATA_REQUEST_RESOLVE,
+  pageInitializationSelectors } from './store';
 
 export function PageInitialization() {
-  const pageDataRequestState = useSelector(pageInitializationSelectors.selectPageDataRequestState);
-  const user = useSelector(pageInitializationSelectors.selectUser);
-
   usePageInit();
-  usePageInitChannel();
+  usePageDataRequest();
+  useFriendsRequest();
+
+  const dispatch = useDispatch();
+
+  const pageDataRequestState = useSelector(pageInitializationSelectors.selectPageDataRequestState);
+  const friendsRequestState = useSelector(pageInitializationSelectors.selectFriendsRequestState);
+  const user = useSelector(pageInitializationSelectors.selectUser);
+  const friends = useSelector(pageInitializationSelectors.selectFriends);
+
+  const handleRefresh = useCallback(() => {
+    dispatch({ type: PAGE_REFRESH });
+  }, [dispatch]);
 
   return (
-    <div>
-      {pageDataRequestState.isPending ? 'Loading ...' : user?.name}
-    </div>
+    <>
+      <div>
+        <button className="button"
+          onClick={handleRefresh}
+        >
+          Refresh
+        </button>
+      </div>
+      <div>
+        {pageDataRequestState.isPending
+          ? 'User loading ...'
+          : pageDataRequestState.isRejected
+            ? 'User request error'
+            : 'User: ' + user!.name}
+      </div>
+      {user
+        ? (
+          <div>
+            {friendsRequestState.isPending
+              ? 'Friends loading ...'
+              : friendsRequestState.isRejected
+                ? 'Friends request error'
+                : 'Friends: ' + friends!.map((friend) => friend.name).join(', ')}
+          </div>
+        )
+        : null}
+    </>
   );
 }
 
@@ -25,27 +59,49 @@ function usePageInit() {
 
   useEffect(() => {
     dispatch({ type: PAGE_INIT });
+
+    // setTimeout(() => dispatch({ type: PAGE_INIT }), 300);
+
     return () => {
       dispatch({ type: PAGE_RESET });
     };
-  }, [dispatch]);
+  }, []); // eslint-disable-line
 }
 
-function usePageInitChannel() {
+function usePageDataRequest() {
   const dispatch = useDispatch();
 
-  const action = useAction(PAGE_INIT);
+  const actionPipe = useAction([PAGE_INIT, PAGE_REFRESH]);
 
-  const response = useTask(() => {
+  const userPipe = usePipe(() => {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
-  }, [action]);
+  }, [actionPipe]);
 
-  useTask((data) => {
+  usePipe((data) => {
     dispatch({ type: PAGE_DATA_REQUEST_RESOLVE, payload: data });
-  }, [response]);
+  }, [userPipe]);
 
-  useTask((error) => {
+  usePipe((error) => {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
-  }, [response.error]);
+  }, [userPipe.error]);
+}
+
+function useFriendsRequest() {
+  const dispatch = useDispatch();
+
+  const actionPipe = useAction(PAGE_DATA_REQUEST_RESOLVE);
+
+  const friendsPipe = usePipe((action) => {
+    dispatch({ type: FRIENDS_REQUEST });
+    return getFriends({ userId: action.payload.user.id });
+  }, [actionPipe]);
+
+  usePipe((data) => {
+    dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });
+  }, [friendsPipe]);
+
+  usePipe((error) => {
+    dispatch({ type: FRIENDS_REQUEST_REJECT, payload: { error }});
+  }, [friendsPipe.error]);
 }

@@ -1,5 +1,5 @@
-// Avoiding cyclical dependence ???
+export * from './createSelectors';
 export * from './requestStatus';
 
-export * from './createSelectors';
+// Avoiding cyclical dependence
 export * from './createStore';

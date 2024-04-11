@@ -169,6 +169,17 @@ export function forceRejectedRequestState<
   return state;
 }
 
+export const requestState = {
+  idle: createIdleRequestState,
+  active: createActiveRequestState,
+  resolved: createResolvedRequestState,
+  rejected: createRejectedRequestState,
+  forceIdle: forceIdleRequestState,
+  forceActive: forceActiveRequestState,
+  forceResolved: forceResolvedRequestState,
+  forceRejected: forceRejectedRequestState,
+};
+
 export function isIdle(state: RequestState): boolean {
   return state.status === requestStatus.IDLE || state.status === requestStatus.FORCE_IDLE;
 }
