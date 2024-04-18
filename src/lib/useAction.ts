@@ -1,7 +1,7 @@
 import { useStore } from 'react-redux';
 
 import { actionSelector, AnyAction, ChannelHooksStoreRootState, Store } from './store';
-import { BasePipe, StreamGroupValues } from './types';
+import { BasePipe, Instruction } from './types';
 import { useBasePipe, Release, Fill } from './useBasePipe';
 
 export type ActionPipe<
@@ -10,40 +10,38 @@ export type ActionPipe<
 
 export function useAction<
   TAction extends AnyAction = AnyAction,
+  TAdjunct extends Instruction | BasePipe = Instruction | BasePipe,
 >(
   actionType: TAction['type'] | TAction['type'][],
-  connectedPipes?: BasePipe[],
+  adjuncts?: TAdjunct[],
 ): ActionPipe<TAction> {
   const store = useStore<ChannelHooksStoreRootState<TAction>>();
 
-  const [pipe] = useBasePipe(() => createFill(actionType, store), connectedPipes ?? []);
+  const [pipe] = useBasePipe(() => createFill(actionType, store), adjuncts ?? []);
 
   return pipe;
 }
 
 function createFill<
   TAction extends AnyAction,
-  TConnectedPipes extends BasePipe[],
+  TStreamGroupValues extends any[] = any[],
 >(
   actionType: TAction['type'] | TAction['type'][],
   store: Store,
-): Fill<TAction, TConnectedPipes> {
+): Fill<TAction, TStreamGroupValues> {
   const actionTypes = ([] as TAction['type'][]).concat(actionType);
   const streamHeadName = actionTypes.join(' / ');
   let num = 0;
 
-  let prevStreamHead = null;
-
-  return function fill(streamHead: symbol, streamGroupValues: StreamGroupValues<TConnectedPipes>, release: Release<TAction>) {
-    const unsubscribe = store.subscribe(() => {
+  return function fill(streamHead: symbol, streamGroupValues: TStreamGroupValues, release: Release<TAction>) {
+    // TODO Any time subscribe?
+    return store.subscribe(() => {
       const action = actionSelector<TAction>(store.getState());
 
       if (actionTypes.includes(action.type)) {
-        prevStreamHead = Symbol(`${streamHeadName} (#${ ++ num})`);
-        release(prevStreamHead, action, true);
+        const streamHead = Symbol(`${streamHeadName} (#${ ++ num})`);
+        release(streamHead, action);
       }
     });
-
-    return unsubscribe;
   };
 }

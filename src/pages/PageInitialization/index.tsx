@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 
 import { getFriends, getUser } from '../../api';
-import { useAction, usePipe } from '../../lib';
+import pipe, { useAction, usePipe } from '../../lib';
 import { useDispatch, useSelector } from '../../store';
 import { FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT, PAGE_REFRESH,
   PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_REJECT, PAGE_DATA_REQUEST_RESOLVE,
@@ -95,7 +95,7 @@ function useFriendsRequest() {
   const friendsPipe = usePipe((action) => {
     dispatch({ type: FRIENDS_REQUEST });
     return getFriends({ userId: action.payload.user.id });
-  }, [actionPipe]);
+  }, [pipe.debug('friendsPipe'), actionPipe]);
 
   usePipe((data) => {
     dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });

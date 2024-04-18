@@ -1,19 +1,18 @@
 import { useMemo } from 'react';
 
-import { StreamGroupValues } from './types';
-import { BasePipe, DataPipe, UniversalDataPipe } from './types';
+import { Adjunct, DataPipe, StreamGroupValues, UniversalDataPipe } from './types';
 import { useBasePipe, Release, Fill } from './useBasePipe';
 
 export function usePipe<
-  TValue extends any,
-  TConnectedPipes extends [] | [BasePipe] | [BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe] | [BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe, BasePipe] | BasePipe[],
-  TBarrel extends (...args: StreamGroupValues<TConnectedPipes>) => TValue,
+  TValue extends any = any,
+  TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
+  TBarrel extends (...args: StreamGroupValues<TAdjuncts>) => TValue = (...args: StreamGroupValues<TAdjuncts>) => TValue,
 >(
   barrel: TBarrel,
-  connectedPipes: TConnectedPipes,
+  adjuncts: TAdjuncts,
 ): UniversalDataPipe<TBarrel> {
-  const [errorPipe, onErrorRelease] = useBasePipe(() => () => undefined, []);
-  const [pipe] = useBasePipe(() => createFill(barrel, onErrorRelease), connectedPipes);
+  const [errorPipe, errorRelease] = useBasePipe(() => () => undefined, []);
+  const [pipe] = useBasePipe(() => createFill(barrel, errorRelease), adjuncts);
 
   const commonPipe = useMemo(() => {
     const commonPipe = pipe as DataPipe<TValue>;
@@ -25,39 +24,41 @@ export function usePipe<
 }
 
 function createFill<
-  TValue extends any,
-  TConnectedPipes extends BasePipe[],
-  TBarrel extends (...args: StreamGroupValues<TConnectedPipes>) => TValue,
+  TValue extends any = any,
+  TStreamGroupValues extends any[] = any[],
 >(
-  barrel: TBarrel,
-  errorRelease: Release<Error>,
-): Fill<TValue, TConnectedPipes> {
-  return function fill(streamHead: symbol, streamGroupValues: StreamGroupValues<TConnectedPipes>, release: Release<TValue>) {
-    let completed: boolean = false;
-    const complete = () => (completed = true);
-
-    const result = barrel(...streamGroupValues);
+  barrel: (...args: TStreamGroupValues) => TValue,
+  errorRelease: Release,
+): Fill<TValue, TStreamGroupValues> {
+  return function fill(streamHead: symbol, streamGroupValues: TStreamGroupValues, release: Release<TValue>) {
+    let result;
+    try {
+      result = barrel(...streamGroupValues);
+    }
+    catch (error: any) {
+      errorRelease(streamHead, error);
+      return null;
+    }
 
     if (result instanceof Promise) {
+      let active: boolean = true;
+
       result
         .then((result) => {
-          if ( ! completed) {
-            complete();
-            release(streamHead, result);
-          }
+          active && release(streamHead, result);
         })
         .catch((error) => {
-          if ( ! completed) {
-            complete();
-            errorRelease(streamHead, error);
-          }
+          active && errorRelease(streamHead, error);
+        })
+        .finally(() => {
+          active = false;
         });
+
+      return () => (active = false);
     }
     else {
-      complete();
       release(streamHead, result);
+      return null;
     }
-
-    return complete;
   };
 }

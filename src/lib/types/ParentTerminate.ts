@@ -1,3 +1,3 @@
 export type ParentTerminate = {
-  (holderIndex: number): void;
+  (pipeIndex: number, streamHead: symbol): void;
 };

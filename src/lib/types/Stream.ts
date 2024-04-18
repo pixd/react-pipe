@@ -1,4 +1,4 @@
-export type Stream<TValue extends any = any, TOperative extends boolean = boolean> = {
+export type Stream<TValue extends any = any> = {
   value: TValue;
-  operative: TOperative;
+  release: () => void;
 };

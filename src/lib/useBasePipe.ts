@@ -1,46 +1,25 @@
 import { useMemo, useEffect } from 'react';
 
-import { BasePipe, FilledStreamGroup, ParentRelease, ParentTerminate, StreamGroupValues, Stream,
-  StreamGroup } from './types';
+import { isDebugInstruction } from './debug';
+import { deepCopy } from './deepCopy';
+import { Adjunct, BasePipe, DebugInstruction, FilledStreamGroup, Instruction, ParentRelease,
+  ParentTerminate, StreamGroupValues, Stream, StreamGroup, PIPE } from './types';
 
-type Connection = {
+type ChildPipeLink<
+  TValue extends any = any,
+> = {
   selfIndex: number;
-  onRelease: ParentRelease;
+  onRelease: ParentRelease<TValue>;
   onTerminate: ParentTerminate;
 };
 
-function createConnection(selfIndex: number, onRelease: ParentRelease, onTerminate: ParentTerminate): Connection {
-  return {
-    selfIndex,
-    onRelease,
-    onTerminate,
-  };
-}
-
-function createStream<TValue extends any = any>(value: TValue): Stream<TValue> {
-  return {
-    value,
-    operative: true,
-  };
-}
-
-function createStreamGroup<
-  TConnectedPipes extends BasePipe[] = BasePipe[],
->(connectedPipes: TConnectedPipes): StreamGroup<TConnectedPipes> {
-  return new Array(connectedPipes.length).fill(null) as StreamGroup<TConnectedPipes>;
-}
-
-function checkStreamGroup<
-  TConnectedPipes extends BasePipe[] = BasePipe[],
->(streamGroup: StreamGroup<TConnectedPipes>): streamGroup is FilledStreamGroup<TConnectedPipes> {
-  return streamGroup.every((stream) => stream?.operative);
-}
-
-function getStreamGroupValues<
-  TConnectedPipes extends BasePipe[] = BasePipe[],
->(streamGroup: FilledStreamGroup<TConnectedPipes>): StreamGroupValues<TConnectedPipes> {
-  return streamGroup.map((stream) => stream.value) as StreamGroupValues<TConnectedPipes>;
-}
+type ReleaseLink<
+  TValue extends any = any,
+> = {
+  childIndex: number;
+  streamHead: symbol;
+  stream: Stream<TValue>;
+};
 
 export type Release<
   TValue extends any = any,
@@ -48,7 +27,6 @@ export type Release<
   (
     streamHead: symbol,
     value: TValue,
-    shortLived?: boolean,
   ): void;
 };
 
@@ -58,46 +36,59 @@ export type Terminate = {
 
 export type Fill<
   TValue extends any = any,
-  TConnectedPipes extends BasePipe[] = BasePipe[],
+  TStreamGroupValues extends any[] = any[],
 > = {
   (
     streamHead: symbol,
-    streamGroupValues: StreamGroupValues<TConnectedPipes>,
+    streamGroupValues: TStreamGroupValues,
     release: Release<TValue>,
-    terminate: Terminate,
-  ): void | (() => void);
+  ): void | null | (() => void);
 };
 
 export function useBasePipe<
   TValue extends any = any,
-  TConnectedPipes extends BasePipe[] = BasePipe[],
+  TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
 >(
-  createFill: () => Fill<TValue, TConnectedPipes>,
-  connectedPipes: TConnectedPipes,
-): [BasePipe<TValue>, Release<TValue>, Terminate] {
-  const [pipe, release, terminate, unmountTerminate] = useMemo(() => {
-    const fill = createFill();
-    let operative = true;
+  createFill: () => Fill<TValue, StreamGroupValues<TAdjuncts>>,
+  adjuncts: TAdjuncts,
+): [BasePipe<TValue>, Release<TValue>] {
+  const [pipe, release, unmountTerminate] = useMemo(() => {
+    const fill = createFill() as Fill<TValue, StreamGroupValues<BasePipe[]>>;
+    const connectedPipes = adjuncts.filter(isPipe) as BasePipe[];
+    const instructions = adjuncts.filter(isInstruction) as Instruction[];
+    const debugInstruction = instructions.find(isDebugInstruction);
 
-    const outgoingConnections: Connection[] = [];
+    const debugStreamGroups = debugInstruction
+      ? createDebugStreamGroups(debugInstruction)
+      : () => null;
+    const debugStreamGroupRelease = debugInstruction
+      ? createDebugStreamGroupRelease(debugInstruction)
+      : () => null;
 
-    const streamGroups: Record<symbol, StreamGroup<TConnectedPipes>> = {};
+    const streamGroups: Record<symbol, StreamGroup> = {};
 
-    const pipe: BasePipe<TValue> = {
-      connect(selfIndex: number, onRelease: ParentRelease<TValue>, onTerminate: ParentTerminate): void {
-        outgoingConnections.push(createConnection(selfIndex, onRelease, onTerminate));
-      },
-    };
+    const releaseLinks: ReleaseLink[] = [];
 
-    const release = (streamHead: symbol, value: TValue, shortLived?: boolean): void => {
+    let operative: boolean = true;
+    // let prevStreamHead: null | symbol = null;
+
+    const childPipeLinks: ChildPipeLink[] = [];
+    const pipe: BasePipe<TValue> = createPipe(childPipeLinks);
+
+    const release = (streamHead: symbol, value: TValue): void => {
       if (operative) {
-        const stream = createStream(value);
+        // if (prevStreamHead) {
+        //   childPipeLinks.forEach((childPipeLink) => {
+        //     childPipeLink.onTerminate(childPipeLink.selfIndex, prevStreamHead!);
+        //   });
+        //
+        //   prevStreamHead = streamHead;
+        // }
 
-        outgoingConnections.forEach((childPipeLink) => {
-          Promise.resolve().then(() => childPipeLink.onRelease(childPipeLink.selfIndex, streamHead, stream));
+        childPipeLinks.forEach((childPipeLink) => {
+          const releaseLink = pushReleaseLink(releaseLinks, childPipeLink.selfIndex, streamHead, value);
+          childPipeLink.onRelease(childPipeLink.selfIndex, streamHead, releaseLink.stream);
         });
-
-        Promise.resolve().then(() => (stream.operative = ! shortLived));
       }
     };
 
@@ -109,28 +100,37 @@ export function useBasePipe<
           delete streamGroups[streamHead];
         });
 
-        outgoingConnections.forEach((childPipeLink) => {
-          Promise.resolve().then(() => childPipeLink.onTerminate(childPipeLink.selfIndex));
-        });
+        // childPipeLinks.forEach((childPipeLink) => {
+        //   childPipeLink.onTerminate(childPipeLink.selfIndex);
+        // });
       }
     };
 
-    const handleParentRelease = (holderIndex: number, streamHead: symbol, stream: Stream): void => {
+    const handleParentRelease = (pipeIndex: number, streamHead: symbol, stream: Stream): void => {
       if (operative) {
-        const streamGroup = streamGroups[streamHead] ?? (streamGroups[streamHead] = createStreamGroup(connectedPipes));
+        const streamGroup = streamGroups[streamHead] ?? (streamGroups[streamHead] = createStreamGroup(streamHead, connectedPipes.length));
 
-        if (streamGroup[holderIndex] == null) {
-          streamGroup[holderIndex] = stream;
-          if (checkStreamGroup(streamGroup)) {
-            const streamGroupValues = getStreamGroupValues(streamGroup);
-            fill(streamHead, streamGroupValues, release, terminate);
-            delete streamGroups[streamHead];
-          }
+        if ( ! streamGroup.members[pipeIndex]) {
+          streamGroup.members[pipeIndex] = stream;
+        }
+
+        const prevStreamGroups = deepCopy(streamGroups);
+
+        if (checkStreamGroup(streamGroup)) {
+          delete streamGroups[streamHead];
+          debugStreamGroupRelease(streamHead, deepCopy(streamGroups), prevStreamGroups);
+
+          streamGroup.members.forEach((stream) => stream.release());
+          Promise.resolve().then(() => fill(streamHead, getStreamGroupValues(streamGroup), release));
+        }
+        else {
+          // TODO What a pipe address is?
+          debugStreamGroups('???', deepCopy(streamGroups), prevStreamGroups);
         }
       }
     };
 
-    const handleParentTerminate = (): void => {
+    const handleParentTerminate = (pipeIndex: number, streamHead: symbol): void => {
       if (operative) {
         terminate();
       }
@@ -142,10 +142,10 @@ export function useBasePipe<
       connectedPipes.forEach((pipeHolder, index) => pipeHolder.connect(index, handleParentRelease, handleParentTerminate));
     }
     else {
-      unmountTerminate = fill(Symbol(), [] as StreamGroupValues<TConnectedPipes>, release, terminate) ?? unmountTerminate;
+      unmountTerminate = fill(Symbol(), [], release) ?? unmountTerminate;
     }
 
-    return [pipe, release, terminate, unmountTerminate];
+    return [pipe, release, unmountTerminate];
   }, []); // eslint-disable-line
 
   useEffect(() => {
@@ -154,5 +154,98 @@ export function useBasePipe<
     };
   }, []); // eslint-disable-line
 
-  return [pipe, release, terminate];
+  return [pipe, release];
+}
+
+function isPipe(adjunct: Adjunct): adjunct is BasePipe {
+  return adjunct.type === PIPE;
+}
+
+function isInstruction(adjunct: Adjunct): adjunct is Instruction {
+  return 'type' in adjunct;
+}
+
+function createPipe<
+  TValue extends any = any,
+>(childPipeLinks: ChildPipeLink[]): BasePipe<TValue> {
+  return {
+    type: PIPE,
+    connect(selfIndex: number, onRelease: ParentRelease<TValue>, onTerminate: ParentTerminate): void {
+      childPipeLinks.push(createChildPipeLink(selfIndex, onRelease, onTerminate));
+    },
+  };
+}
+
+function createChildPipeLink<
+  TValue extends any = any,
+>(selfIndex: number, onRelease: ParentRelease<TValue>, onTerminate: ParentTerminate): ChildPipeLink {
+  return {
+    selfIndex,
+    onRelease,
+    onTerminate,
+  };
+}
+
+function createStream<
+  TValue extends any = any,
+>(value: TValue, release: () => void): Stream<TValue> {
+  return {
+    value,
+    release,
+  };
+}
+
+function createReleaseLink<
+  TValue extends any = any,
+>(childIndex: number, streamHead: symbol, stream: Stream<TValue>): ReleaseLink {
+  return {
+    childIndex,
+    streamHead,
+    stream,
+  };
+}
+
+function pushReleaseLink<
+  TValue extends any = any,
+>(releaseLinks: ReleaseLink[], childIndex: number, streamHead: symbol, value: TValue): ReleaseLink {
+  const stream = createStream(value, () => releaseLinks.splice(releaseLinks.length, 1));
+
+  const releaseLink = createReleaseLink(childIndex, streamHead, stream);
+
+  releaseLinks.push(releaseLink);
+
+  return releaseLink;
+}
+
+function createStreamGroup<
+  TConnectedPipes extends BasePipe[] = BasePipe[],
+>(streamHead: symbol, length: number): StreamGroup<TConnectedPipes> {
+  return {
+    streamHead,
+    members: Array(length).fill(null),
+  } as StreamGroup<TConnectedPipes>;
+}
+
+function checkStreamGroup<
+  TConnectedPipes extends BasePipe[] = BasePipe[],
+>(streamGroup: StreamGroup<TConnectedPipes>): streamGroup is FilledStreamGroup<TConnectedPipes> {
+  return streamGroup.members.every(Boolean);
+}
+
+function getStreamGroupValues<
+  TConnectedPipes extends BasePipe[] = BasePipe[],
+>(streamGroup: FilledStreamGroup<TConnectedPipes>): StreamGroupValues<TConnectedPipes> {
+  return streamGroup.members.map((stream) => stream.value) as StreamGroupValues<TConnectedPipes>;
+}
+
+function createDebugStreamGroups(debugInstruction: DebugInstruction) {
+  return (pipeAddress: string, value: any, prevValue: any) => {
+    debugInstruction.log('streamGroups change', pipeAddress, value, prevValue);
+  };
+}
+
+function createDebugStreamGroupRelease(debugInstruction: DebugInstruction) {
+  return (streamHead: symbol, value: any, prevValue: any) => {
+    debugInstruction.log('streamGroup release', streamHead.toString(), value, prevValue);
+  };
 }

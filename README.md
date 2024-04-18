@@ -64,7 +64,7 @@ const response = usePipe((params) => getUser(params), [params]);
 const response = usePipe((params) => getUser(params), [pipe.latest, params]);
 ```
 
-In this case, access to the data and to the error can be obtained through the variables `response` and `response.error`. Eg:
+In this case, access to the data and to the error can be obtained through `response` and `response.error`. Eg:
 
 ```typescript
 const dispatch = useDispatch();
@@ -107,7 +107,7 @@ Let's assume that variable named `params` stores a query parameters.
 const response = usePipe((params) => getUser(params), [pipe.every, params]);
 ```
 
-In this case, access to the data and to the error can be obtained through the variables `response` and `response.error`. Eg:
+In this case, access to the data and to the error can be obtained through `response` and `response.error`. Eg:
 
 ```typescript
 const dispatch = useDispatch();

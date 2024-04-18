@@ -1,3 +1,6 @@
+export * from './Adjunct';
+export * from './ConnectedPipes';
+export * from './Instruction';
 export * from './ParentRelease';
 export * from './ParentTerminate';
 export * from './Pipe';
