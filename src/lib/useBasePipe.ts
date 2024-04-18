@@ -45,6 +45,12 @@ export type Fill<
   ): void | null | (() => void);
 };
 
+type InnerState = {
+  streamGroups: Record<symbol, StreamGroup>,
+  releaseLinks: ReleaseLink[],
+  childPipeLinks: ChildPipeLink[],
+};
+
 export function useBasePipe<
   TValue extends any = any,
   TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
@@ -65,15 +71,16 @@ export function useBasePipe<
       ? createDebugStreamGroupRelease(debugInstruction)
       : () => null;
 
-    const streamGroups: Record<symbol, StreamGroup> = {};
-
-    const releaseLinks: ReleaseLink[] = [];
+    const innerState: InnerState = {
+      streamGroups: {},
+      releaseLinks: [],
+      childPipeLinks: [],
+    };
 
     let operative: boolean = true;
     // let prevStreamHead: null | symbol = null;
 
-    const childPipeLinks: ChildPipeLink[] = [];
-    const pipe: BasePipe<TValue> = createPipe(childPipeLinks);
+    const pipe: BasePipe<TValue> = createPipe(innerState.childPipeLinks);
 
     const release = (streamHead: symbol, value: TValue): void => {
       if (operative) {
@@ -85,8 +92,8 @@ export function useBasePipe<
         //   prevStreamHead = streamHead;
         // }
 
-        childPipeLinks.forEach((childPipeLink) => {
-          const releaseLink = pushReleaseLink(releaseLinks, childPipeLink.selfIndex, streamHead, value);
+        innerState.childPipeLinks.forEach((childPipeLink) => {
+          const releaseLink = pushReleaseLink(innerState.releaseLinks, childPipeLink.selfIndex, streamHead, value);
           childPipeLink.onRelease(childPipeLink.selfIndex, streamHead, releaseLink.stream);
         });
       }
@@ -96,8 +103,8 @@ export function useBasePipe<
       if (operative) {
         operative = false;
 
-        Object.getOwnPropertySymbols(streamGroups).forEach((streamHead) => {
-          delete streamGroups[streamHead];
+        Object.getOwnPropertySymbols(innerState.streamGroups).forEach((streamHead) => {
+          delete innerState.streamGroups[streamHead];
         });
 
         // childPipeLinks.forEach((childPipeLink) => {
@@ -108,24 +115,24 @@ export function useBasePipe<
 
     const handleParentRelease = (pipeIndex: number, streamHead: symbol, stream: Stream): void => {
       if (operative) {
-        const streamGroup = streamGroups[streamHead] ?? (streamGroups[streamHead] = createStreamGroup(streamHead, connectedPipes.length));
+        const streamGroup = innerState.streamGroups[streamHead] ?? (innerState.streamGroups[streamHead] = createStreamGroup(streamHead, connectedPipes.length));
 
         if ( ! streamGroup.members[pipeIndex]) {
           streamGroup.members[pipeIndex] = stream;
         }
 
-        const prevStreamGroups = deepCopy(streamGroups);
+        const prevInnerState = deepCopy(innerState);
 
         if (checkStreamGroup(streamGroup)) {
-          delete streamGroups[streamHead];
-          debugStreamGroupRelease(streamHead, deepCopy(streamGroups), prevStreamGroups);
+          delete innerState.streamGroups[streamHead];
+          debugStreamGroupRelease(streamHead, deepCopy(innerState), prevInnerState);
 
           streamGroup.members.forEach((stream) => stream.release());
           Promise.resolve().then(() => fill(streamHead, getStreamGroupValues(streamGroup), release));
         }
         else {
           // TODO What a pipe address is?
-          debugStreamGroups('???', deepCopy(streamGroups), prevStreamGroups);
+          debugStreamGroups('???', deepCopy(innerState), prevInnerState);
         }
       }
     };

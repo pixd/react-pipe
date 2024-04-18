@@ -9,9 +9,9 @@ export function debug(name: string): DebugInstruction {
       let superKey = match ? match[1] : key;
       superKey = name ? name + ': ' + superKey : superKey;
 
-      console.groupCollapsed('%c' + title + ' %c' + superKey, 'color: gray; font-weight: lighter;', 'color: inherit;');
-      console.log('%cprev value%c', 'color: #9E9E9E; font-weight: bold;', 'color: inherit;', prevValue);
-      console.log('%cnext value%c', 'color: #4CAF50; font-weight: bold;', 'color: inherit;', value);
+      console.groupCollapsed('%c ' + title + ' %c' + superKey, 'color: gray; font-weight: lighter;', 'color: inherit;');
+      console.log('%c prev state%c', 'color: #9E9E9E; font-weight: bold;', 'color: inherit;', prevValue);
+      console.log('%c next state%c', 'color: #4CAF50; font-weight: bold;', 'color: inherit;', value);
       console.groupEnd();
     },
   };
