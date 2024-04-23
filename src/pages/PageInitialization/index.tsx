@@ -71,31 +71,32 @@ function usePageInit() {
 function usePageDataRequest() {
   const dispatch = useDispatch();
 
-  const actionPipe = useAction([PAGE_INIT, PAGE_REFRESH]);
+  const actionPipe = useAction([PAGE_INIT, PAGE_REFRESH], [pipe.debug]);
 
-  const userPipe = usePipe(() => {
+  const pageDataPipe = usePipe(() => {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
   }, [actionPipe]);
 
-  usePipe((data) => {
+  usePipe(function pageDataResolvePipe(data) {
     dispatch({ type: PAGE_DATA_REQUEST_RESOLVE, payload: data });
-  }, [userPipe]);
+  }, [pageDataPipe]);
 
-  usePipe((error) => {
+  // TODO incorrect displayName
+  usePipe(function pageDataRejectPipe(error) {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
-  }, [userPipe.error]);
+  }, [pageDataPipe.error]);
 }
 
 function useFriendsRequest() {
   const dispatch = useDispatch();
 
-  const actionPipe = useAction(PAGE_DATA_REQUEST_RESOLVE);
+  const actionPipe = useAction(PAGE_DATA_REQUEST_RESOLVE, [pipe.debug]);
 
   const friendsPipe = usePipe((action) => {
     dispatch({ type: FRIENDS_REQUEST });
     return getFriends({ userId: action.payload.user.id });
-  }, [pipe.debug('friendsPipe'), actionPipe]);
+  }, [actionPipe]);
 
   usePipe((data) => {
     dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });

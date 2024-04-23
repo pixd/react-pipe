@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { createStore } from './store/createStore';
+import { createStore } from './store';
 
 const store = createStore();
 

@@ -1,22 +1,44 @@
 import { createInstruction } from './instruction';
-import { DEBUG_INSTRUCTION, DebugInstruction, Instruction } from './types';
+import { DEBUG_INSTRUCTION, Adjunct, Debugger, DebugInstruction, Instruction } from './types';
 
-export function debug(name: string): DebugInstruction {
+type ExtendedDebugInstruction = DebugInstruction & {
+  (displayName: string): DebugInstruction;
+};
+
+function debugFn(displayName?: string): DebugInstruction {
   return {
     ...createInstruction(DEBUG_INSTRUCTION),
-    log: (title: string, key: string, value: any, prevValue: any) => {
-      const match = key.match(/^Symbol\((.+)\)$/);
-      let superKey = match ? match[1] : key;
-      superKey = name ? name + ': ' + superKey : superKey;
-
-      console.groupCollapsed('%c ' + title + ' %c' + superKey, 'color: gray; font-weight: lighter;', 'color: inherit;');
-      console.log('%c prev state%c', 'color: #9E9E9E; font-weight: bold;', 'color: inherit;', prevValue);
-      console.log('%c next state%c', 'color: #4CAF50; font-weight: bold;', 'color: inherit;', value);
-      console.groupEnd();
-    },
+    createDebugger: () => createDebugger(displayName),
   };
 }
 
-export function isDebugInstruction(instruction: Instruction): instruction is DebugInstruction {
-  return instruction.instructionType === DEBUG_INSTRUCTION;
+export const debug = Object.assign(debugFn, {
+  ...createInstruction(DEBUG_INSTRUCTION),
+  createDebugger: createDebugger,
+}) as ExtendedDebugInstruction;
+
+function createDebugger(displayName: string ='unknown'): Debugger {
+  return {
+    pipeCreated: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c pipe created`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+      console.log('%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      console.groupEnd();
+    },
+    parentPipeRelease: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c parent pipe release`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+      console.log('%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex);
+      console.log('%c stream head      ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
+      console.log('%c stream           ', 'font-weight: bold; color: #03A9F4;', data.stream);
+      console.log('%c prev pipe state  ', 'font-weight: bold; color: #9E9E9E;', data.prevPipeState);
+      console.log('%c next pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      console.groupEnd();
+    },
+    streamGroupRelease: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c stream group release`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+      console.log('%c stream head      ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
+      console.log('%c prev pipe state  ', 'font-weight: bold; color: #9E9E9E;', data.prevPipeState);
+      console.log('%c next pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      console.groupEnd();
+    },
+  }
 }

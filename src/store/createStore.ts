@@ -6,7 +6,7 @@ import { createLogger as createLoggerMiddleware } from 'redux-logger';
 
 import { rootReducer } from './rootReducer';
 
-const loggerMiddleware = createLoggerMiddleware({ collapsed: true });
+const loggerMiddleware = createLoggerMiddleware({ collapsed: true, timestamp: false });
 
 export function createStore(initialState = {}) {
   return createStoreNative(

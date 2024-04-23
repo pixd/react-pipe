@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
 
 import { Adjunct, DataPipe, StreamGroupValues, UniversalDataPipe } from './types';
-import { useBasePipe, Release, Fill } from './useBasePipe';
+import { getDebugInstruction, getNonEmptyDisplayName, useBasePipe, Release, Fill } from './useBasePipe';
 
 export function usePipe<
   TValue extends any = any,
   TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
   TBarrel extends (...args: StreamGroupValues<TAdjuncts>) => TValue = (...args: StreamGroupValues<TAdjuncts>) => TValue,
->(
-  barrel: TBarrel,
-  adjuncts: TAdjuncts,
-): UniversalDataPipe<TBarrel> {
-  const [errorPipe, errorRelease] = useBasePipe(() => () => undefined, []);
-  const [pipe] = useBasePipe(() => createFill(barrel, errorRelease), adjuncts);
+>(barrel: TBarrel, adjuncts: TAdjuncts): UniversalDataPipe<TBarrel> {
+  const { displayName, debugInstruction } = useMemo(() => {
+    const displayName = barrel.name || getNonEmptyDisplayName(adjuncts);
+    const debugInstruction = getDebugInstruction(adjuncts) ?? null;
+    return { displayName, debugInstruction };
+  }, []); // eslint-disable-line
+
+  const [errorPipe, errorRelease] = useBasePipe(() => createErrorPipeFill(displayName), [debugInstruction]);
+  const [pipe] = useBasePipe(() => createDataPipeFill(displayName, barrel, errorRelease), adjuncts);
 
   const commonPipe = useMemo(() => {
     const commonPipe = pipe as DataPipe<TValue>;
@@ -23,14 +26,15 @@ export function usePipe<
   return commonPipe as UniversalDataPipe<TBarrel>;
 }
 
-function createFill<
+function createDataPipeFill<
   TValue extends any = any,
   TStreamGroupValues extends any[] = any[],
 >(
+  displayName: string,
   barrel: (...args: TStreamGroupValues) => TValue,
   errorRelease: Release,
 ): Fill<TValue, TStreamGroupValues> {
-  return function fill(streamHead: symbol, streamGroupValues: TStreamGroupValues, release: Release<TValue>) {
+  const fill = (streamHead: symbol, streamGroupValues: TStreamGroupValues, release: Release<TValue>) => {
     let result;
     try {
       result = barrel(...streamGroupValues);
@@ -61,4 +65,14 @@ function createFill<
       return null;
     }
   };
+
+  fill.displayName = displayName;
+  return fill;
+}
+
+function createErrorPipeFill(displayName: string) {
+  const fill = () => undefined;
+
+  fill.displayName = displayName + '.error';
+  return fill;
 }

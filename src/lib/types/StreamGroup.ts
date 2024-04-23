@@ -1,24 +1,32 @@
 import { BasePipe } from './Pipe';
 import { Stream } from './Stream';
 
-type StreamGroupMembers<TConnectedPipes extends any> = TConnectedPipes extends BasePipe<infer TValue>[]
-  ? (null | Stream<TValue>)[]
-  : TConnectedPipes extends [BasePipe<infer TValue>, ...(infer TRestConnectedPipes)]
-    ? [null | Stream<TValue>, ...StreamGroupMembers<TRestConnectedPipes>]
-    : [];
-
-export type StreamGroup<TConnectedPipes extends BasePipe[] = BasePipe[]> = {
+export type StreamGroup<TAdjuncts extends any = any> = {
   streamHead: symbol;
-  members: StreamGroupMembers<TConnectedPipes>;
+  members: StreamGroupMembers<TAdjuncts>;
 };
 
-type FilledStreamGroupMembers<TConnectedPipes extends any> = TConnectedPipes extends BasePipe<infer TValue>[]
-  ? Stream<TValue>[]
-  : TConnectedPipes extends [BasePipe<infer TValue>, ...(infer TRestConnectedPipes)]
-    ? [Stream<TValue>, ...StreamGroupMembers<TRestConnectedPipes>]
+type StreamGroupMembers<TAdjuncts extends any> = TAdjuncts extends (infer TAdjunct)[]
+  ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
+    ? (null | Stream<TValue>)[]
+    : []
+  : TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
+    ? TAdjunct extends BasePipe<infer TValue>
+      ? [null | Stream<TValue>, ...StreamGroupMembers<TRestAdjuncts>]
+      : StreamGroupMembers<TRestAdjuncts>
     : [];
 
-export type FilledStreamGroup<TConnectedPipes extends BasePipe[] = BasePipe[]> = {
+export type FilledStreamGroup<TAdjuncts extends any = any> = {
   streamHead: symbol;
-  members: FilledStreamGroupMembers<TConnectedPipes>;
+  members: FilledStreamGroupMembers<TAdjuncts>;
 };
+
+type FilledStreamGroupMembers<TAdjuncts extends any> = TAdjuncts extends (infer TAdjunct)[]
+  ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
+    ? Stream<TValue>[]
+    : []
+  : TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
+    ? TAdjunct extends BasePipe<infer TValue>
+      ? [Stream<TValue>, ...StreamGroupMembers<TRestAdjuncts>]
+      : StreamGroupMembers<TRestAdjuncts>
+    : [];
