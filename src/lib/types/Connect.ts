@@ -1,6 +1,6 @@
-import { ParentRelease } from './ParentRelease';
-import { ParentTerminate } from './ParentTerminate';
+import { OnParentStream } from './OnParentStream';
+import { OnParentTerminate } from './OnParentTerminate';
 
 export type Connect<TValue extends any = any> = {
-  (selfIndex: number, onRelease: ParentRelease<TValue>, onTerminate: ParentTerminate): void
+  (onStream: OnParentStream<TValue>, onTerminate: OnParentTerminate): void
 }

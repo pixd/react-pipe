@@ -2,7 +2,7 @@ import { useStore } from 'react-redux';
 
 import { actionSelector, AnyAction, ChannelHooksStoreRootState, Store } from './store';
 import { Adjunct, BasePipe } from './types';
-import { useBasePipe, Release, Fill } from './useBasePipe';
+import { useBasePipe, EmitStream, Fill } from './useBasePipe';
 
 export type ActionPipe<
   TAction extends AnyAction = AnyAction,
@@ -30,21 +30,18 @@ function createFill<
   store: Store,
 ): Fill<TAction, TStreamGroupValues> {
   const actionTypes = ([] as TAction['type'][]).concat(actionType);
-  const streamHeadName = actionTypes[0] + (actionTypes.length > 1 ? ` + ${actionTypes.length - 1}` : '');
-  let num = 0;
 
-  const fill = (streamHead: symbol, streamGroupValues: TStreamGroupValues, release: Release<TAction>) => {
+  const fill = (streamGroupValues: any, emitStream: EmitStream<TAction>) => {
     // TODO Any times subscribe?
     return store.subscribe(() => {
       const action = actionSelector<TAction>(store.getState());
 
       if (actionTypes.includes(action.type)) {
-        const streamHead = Symbol(`${streamHeadName} (#${ ++ num})`);
-        release(streamHead, action);
+        emitStream(action);
       }
     });
   };
 
-  fill.displayName = streamHeadName;
+  fill.displayName = actionTypes[0] + (actionTypes.length > 1 ? ` + ${actionTypes.length - 1}` : '');
   return fill;
 }

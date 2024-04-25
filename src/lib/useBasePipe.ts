@@ -1,17 +1,15 @@
 import { useMemo, useEffect } from 'react';
 
-import { isDebugInstruction, isPipe, isPipeWithDebugInstruction, isPipeWithNonEmptyDisplayName }
-  from './check';
+import { isDebugInstruction, isPipe, isPipeWithDebugInstruction } from './check';
 import { deepCopy } from './deepCopy';
-import { PIPE, Adjunct, BasePipe, BasePipeWithDebugInstruction, BasePipeWithDisplayName,
-  ChildPipeLink, ConnectedPipes, DebugInstruction, FilledStreamGroup, ParentRelease,
-  ParentTerminate, PipeState, ReleaseLink, StreamGroupValues, Stream, StreamGroup } from './types';
+import { PIPE, Adjunct, BasePipe, BasePipeWithDebugInstruction, ChildPipeLink, ConnectedPipes,
+  Debugger, DebugInstruction, FilledStreamGroup, OnParentStream, OnParentTerminate, PipeState,
+  StreamGroupValues, Stream, StreamGroup } from './types';
 
-export type Release<
+export type EmitStream<
   TValue extends any = any,
 > = {
   (
-    streamHead: symbol,
     value: TValue,
   ): void;
 };
@@ -25,60 +23,86 @@ export type Fill<
   TStreamGroupValues extends any[] = any[],
 > = {
   (
-    streamHead: symbol,
     streamGroupValues: TStreamGroupValues,
-    release: Release<TValue>,
+    emitStream: EmitStream<TValue>,
   ): void | null | (() => void);
   displayName?: string;
 };
 
 export function useBasePipe<
   TValue extends any = any,
-  TAdjunct extends null | Adjunct = null | Adjunct,
+  TAdjunct extends Adjunct = Adjunct,
   TAdjuncts extends [] | [TAdjunct] | [TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | (TAdjunct)[] = (TAdjunct)[],
->(
-  createFill: () => Fill<TValue, StreamGroupValues<TAdjuncts>>,
-  adjuncts: TAdjuncts,
-): [BasePipe<TValue>, Release<TValue>] {
-  const [pipe, release, unmountTerminate] = useMemo(() => {
-
+>( createFill: () => Fill<TValue, StreamGroupValues<TAdjuncts>>, adjuncts: TAdjuncts): [BasePipe<TValue>, EmitStream<TValue>] {
+  const [pipe, emitStream, unmountTerminate] = useMemo(() => {
     const fill = createFill();
     // WTF? Why should I use `as` here?
     const connectedPipes = adjuncts.filter(isPipe) as ConnectedPipes<TAdjuncts>;
 
     const displayName = fill.displayName || getNonEmptyDisplayName(adjuncts);
-    const debugInstruction = getDebugInstruction(adjuncts);
-    const debug = debugInstruction?.createDebugger(displayName);
 
-    // if (displayName === 'unknown') {
-    //   throw new Error();
-    // }
+    let debugInstruction: undefined | DebugInstruction;
+    let debug: undefined | Debugger;
+
+    if (process.env.NODE_ENV === 'development') {
+      debugInstruction = getDebugInstruction(adjuncts);
+      debug = debugInstruction?.createDebugger(displayName);
+    }
 
     const state: PipeState<TAdjuncts> = {
       streamGroups: {},
-      releaseLinks: [],
       childPipeLinks: [],
       operative: true,
     };
 
-    // let prevStreamHead: null | symbol = null;
-
     const pipe: BasePipe<TValue> = createPipe(state.childPipeLinks, displayName, debugInstruction);
 
-    const release = (streamHead: symbol, value: TValue): void => {
-      if (state.operative) {
-        // if (prevStreamHead) {
-        //   childPipeLinks.forEach((childPipeLink) => {
-        //     childPipeLink.onTerminate(childPipeLink.selfIndex, prevStreamHead!);
-        //   });
-        //
-        //   prevStreamHead = streamHead;
-        // }
+    let emitNum = 0;
 
-        state.childPipeLinks.forEach((childPipeLink) => {
-          const releaseLink = pushReleaseLink(state.releaseLinks, childPipeLink.selfIndex, streamHead, value);
-          childPipeLink.onRelease(childPipeLink.selfIndex, streamHead, releaseLink.stream);
-        });
+    const getStreamHead = () => Symbol(`${displayName} (emit #${ ++ emitNum})`);
+
+    const emitStream = (optionalStreamName: null | symbol, value: TValue, streamGroup: FilledStreamGroup<TAdjuncts>): void => {
+      if (state.operative) {
+        const streamHead = optionalStreamName ?? getStreamHead();
+
+        if (state.childPipeLinks.length) {
+          if (process.env.NODE_ENV === 'development') {
+            debug?.onStreamEmit(deepCopy({ streamHead, value, pipeState: state }));
+          }
+
+          const streamReleaseCounter: boolean[] = [];
+
+          state.childPipeLinks.forEach((childPipeLink, index) => {
+            streamReleaseCounter[index] = false;
+
+            const stream = createStream(value, () => {
+              if (process.env.NODE_ENV === 'development') {
+                debug?.onStreamRelease(deepCopy({ streamHead, stream, pipeState: state }));
+              }
+
+              streamReleaseCounter[index] = true;
+
+              if (streamReleaseCounter.every(Boolean)) {
+                if (process.env.NODE_ENV === 'development') {
+                  if (streamGroup.members.length) {
+                    debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
+                  }
+                }
+
+                streamGroup.release();
+              }
+            });
+
+            childPipeLink.onStream(streamHead, stream);
+          });
+        }
+        else {
+          if (process.env.NODE_ENV === 'development') {
+            debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
+          }
+
+          streamGroup.release();
+        }
       }
     };
 
@@ -89,57 +113,73 @@ export function useBasePipe<
         Object.getOwnPropertySymbols(state.streamGroups).forEach((streamHead) => {
           delete state.streamGroups[streamHead];
         });
-
-        // childPipeLinks.forEach((childPipeLink) => {
-        //   childPipeLink.onTerminate(childPipeLink.selfIndex);
-        // });
       }
     };
 
-    const handleParentRelease = (parentPipeIndex: number, streamHead: symbol, stream: Stream): void => {
+    const handleParentStream = (parentPipeIndex: number, streamHead: symbol, stream: Stream): void => {
       if (state.operative) {
-        let prevPipeState = deepCopy(state);
+        let prevPipeState: PipeState = state;
+
+        if (process.env.NODE_ENV === 'development') {
+          prevPipeState = deepCopy(state);
+        }
 
         const streamGroup = state.streamGroups[streamHead] ?? (state.streamGroups[streamHead] = createStreamGroup(streamHead, connectedPipes.length));
 
         if ( ! streamGroup.members[parentPipeIndex]) {
           streamGroup.members[parentPipeIndex] = stream;
         }
+        else {
+          stream.release();
+        }
 
-        debug?.parentPipeRelease(deepCopy({ parentPipeIndex, streamHead, stream, prevPipeState, pipeState: deepCopy(state) }));
-
+        if (process.env.NODE_ENV === 'development') {
+          debug?.onParentPipeStream(deepCopy({ parentPipeIndex, streamHead, stream, prevPipeState, pipeState: state }));
+        }
 
         if (checkStreamGroup(streamGroup)) {
-          prevPipeState = deepCopy(state);
-          delete state.streamGroups[streamHead];
-          debug?.streamGroupRelease(deepCopy({ streamHead, prevPipeState, pipeState: deepCopy(state) }));
+          if (process.env.NODE_ENV === 'development') {
+            prevPipeState = deepCopy(state);
+          }
 
-          streamGroup.members.forEach((stream) => stream.release());
-          Promise.resolve().then(() => fill(streamHead, getStreamGroupValues(streamGroup), release));
+          delete state.streamGroups[streamHead];
+
+          if (process.env.NODE_ENV === 'development') {
+            debug?.onStreamGroupFulfill(deepCopy({ streamGroup, prevPipeState, pipeState: state }));
+          }
+
+          fill(getStreamGroupValues(streamGroup), (value) => emitStream(streamHead, value, streamGroup));
         }
       }
     };
 
-    const handleParentTerminate = (pipeIndex: number, streamHead: symbol): void => {
+    const handleParentTerminate = (_parentPipeIndex: number): void => {
       if (state.operative) {
         terminate();
       }
     };
 
+    const fakeStreamHead = Symbol();
+    const fakeStreamGroup = createStreamGroup(fakeStreamHead, 0) as FilledStreamGroup<TAdjuncts>;
+    const fakeEmitStream = (value: TValue) => emitStream(null, value, fakeStreamGroup);
+
     let unmountTerminate = () => {};
 
     if (connectedPipes.length) {
-      connectedPipes.forEach((pipeHolder, index) => pipeHolder.connect(index, handleParentRelease, handleParentTerminate));
+      connectedPipes.forEach((pipeHolder, index) => pipeHolder.connect(
+        (streamHead, stream) => handleParentStream(index, streamHead, stream),
+        () => handleParentTerminate(index)
+      ));
     }
     else {
-      unmountTerminate = fill(Symbol(), [] as any, release) ?? unmountTerminate;
+      unmountTerminate = fill(getStreamGroupValues(fakeStreamGroup), fakeEmitStream) ?? unmountTerminate;
     }
 
-    Promise.resolve().then(() => {
-      debug?.pipeCreated(deepCopy({ pipeState: deepCopy(state) }));
-    });
+    if (process.env.NODE_ENV === 'development') {
+      debug?.onPipeCreate(deepCopy({ pipeState: state }));
+    }
 
-    return [pipe, release, unmountTerminate];
+    return [pipe, fakeEmitStream, unmountTerminate];
   }, []); // eslint-disable-line
 
   useEffect(() => {
@@ -148,7 +188,7 @@ export function useBasePipe<
     };
   }, []); // eslint-disable-line
 
-  return [pipe, release];
+  return [pipe, emitStream];
 }
 
 function createPipe<
@@ -158,18 +198,20 @@ function createPipe<
     type: PIPE,
     displayName,
     debugInstruction,
-    connect(selfIndex, onRelease, onTerminate) {
-      childPipeLinks.push(createChildPipeLink(selfIndex, onRelease, onTerminate));
+    connections: 0,
+    connect(onStream, onTerminate) {
+      this.connections ++;
+      const childPipeLink = createChildPipeLink(onStream, onTerminate);
+      childPipeLinks.push(childPipeLink);
     },
   };
 }
 
 function createChildPipeLink<
   TValue extends any = any,
->(selfIndex: number, onRelease: ParentRelease<TValue>, onTerminate: ParentTerminate): ChildPipeLink {
+>(onStream: OnParentStream<TValue>, onTerminate: OnParentTerminate): ChildPipeLink {
   return {
-    selfIndex,
-    onRelease,
+    onStream,
     onTerminate,
   };
 }
@@ -183,60 +225,40 @@ function createStream<
   };
 }
 
-function createReleaseLink<
-  TValue extends any = any,
->(childIndex: number, streamHead: symbol, stream: Stream<TValue>): ReleaseLink {
-  return {
-    childIndex,
-    streamHead,
-    stream,
-  };
-}
-
-function pushReleaseLink<
-  TValue extends any = any,
->(releaseLinks: ReleaseLink[], childIndex: number, streamHead: symbol, value: TValue): ReleaseLink {
-  const stream = createStream(value, () => releaseLinks.splice(releaseLinks.length, 1));
-
-  const releaseLink = createReleaseLink(childIndex, streamHead, stream);
-
-  releaseLinks.push(releaseLink);
-
-  return releaseLink;
-}
-
 function createStreamGroup<
-  TAdjuncts extends (null | Adjunct)[] = (null | Adjunct)[],
+  TAdjuncts extends Adjunct[] = Adjunct[],
 >(streamHead: symbol, length: number): StreamGroup<TAdjuncts> {
   return {
     streamHead,
     members: Array(length).fill(null),
+    release() {
+      this.members.forEach((stream) => stream?.release());
+    },
   } as StreamGroup<TAdjuncts>;
 }
 
 function checkStreamGroup<
-  TAdjuncts extends (null | Adjunct)[] = (null | Adjunct)[],
+  TAdjuncts extends Adjunct[] = Adjunct[],
 >(streamGroup: StreamGroup<TAdjuncts>): streamGroup is FilledStreamGroup<TAdjuncts> {
   return streamGroup.members.every(Boolean);
 }
 
 function getStreamGroupValues<
-  TAdjuncts extends (null | Adjunct)[] = (null | Adjunct)[],
+  TAdjuncts extends Adjunct[] = Adjunct[],
 >(streamGroup: FilledStreamGroup<TAdjuncts>): StreamGroupValues<TAdjuncts> {
   return streamGroup.members.map((stream) => stream.value) as StreamGroupValues<TAdjuncts>;
 }
 
-export function getDisplayName(adjuncts: (null | Adjunct)[]) {
-  const displayName = adjuncts.find<BasePipeWithDisplayName>(isPipeWithNonEmptyDisplayName)?.displayName;
-  return displayName == null ? null : `${displayName} / [*]`;
+export function getDisplayName(adjuncts: Adjunct[]) {
+  const mainPipe = adjuncts.find<BasePipe>(isPipe);
+  return mainPipe?.displayName ? `${mainPipe.displayName} / [${mainPipe.connections + 1}]` : null;
 }
 
-export function getNonEmptyDisplayName(adjuncts: (null | Adjunct)[]) {
-  const displayName = adjuncts.find<BasePipeWithDisplayName>(isPipeWithNonEmptyDisplayName)?.displayName;
-  return displayName == null ? 'unknown' : `${displayName} / [*]`;
+export function getNonEmptyDisplayName(adjuncts: Adjunct[]) {
+  return getDisplayName(adjuncts) || 'unknown';
 }
 
-export function getDebugInstruction(adjuncts: (null | Adjunct)[]) {
+export function getDebugInstruction(adjuncts: Adjunct[]) {
   return adjuncts.find<DebugInstruction>(isDebugInstruction)
     ?? adjuncts.find<BasePipeWithDebugInstruction>(isPipeWithDebugInstruction)?.debugInstruction;
 }

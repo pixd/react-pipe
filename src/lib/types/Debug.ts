@@ -1,4 +1,7 @@
 import { Instruction } from './Instruction';
+import { PipeState } from './PipeState';
+import { Stream } from './Stream';
+import { StreamGroup } from './StreamGroup';
 
 export const DEBUG_INSTRUCTION = Symbol('DEBUG_INSTRUCTION');
 
@@ -7,7 +10,10 @@ export type DebugInstruction = Instruction<typeof DEBUG_INSTRUCTION> & {
 };
 
 export type Debugger = {
-  pipeCreated: (data: { pipeState: any } ) => void;
-  parentPipeRelease: (data: { parentPipeIndex: number, streamHead: symbol, stream: any, prevPipeState: any, pipeState: any } ) => void;
-  streamGroupRelease: (data: { streamHead: symbol, prevPipeState: any, pipeState: any } ) => void;
+  onPipeCreate: (data: { pipeState: any }) => void;
+  onParentPipeStream: (data: { parentPipeIndex: number, streamHead: symbol, stream: Stream, prevPipeState: PipeState, pipeState: PipeState }) => void;
+  onStreamGroupFulfill: (data: { streamGroup: StreamGroup, prevPipeState: PipeState, pipeState: PipeState }) => void;
+  onStreamRelease: (data: { streamHead: symbol, stream: Stream, pipeState: PipeState }) => void;
+  onStreamGroupRelease: (data: { streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onStreamEmit: (data: { streamHead: symbol, value: any, pipeState: PipeState }) => void;
 };

@@ -7,6 +7,7 @@ export type BasePipe<TValue extends any = any> = {
   type: typeof PIPE;
   displayName?: string;
   debugInstruction?: DebugInstruction;
+  connections: number;
   connect: Connect<TValue>;
 };
 

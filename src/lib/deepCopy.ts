@@ -1,4 +1,4 @@
-export function deepCopy(data: any, circleHack: any[][] = []): any {
+export function deepCopy<TData extends any>(data: TData, circleHack: any[][] = []): TData {
   const circleHackDataIndex = circleHack.findIndex((circleHackData) => circleHackData[0] === data);
   if (circleHackDataIndex >= 0) {
     return circleHack[circleHackDataIndex][1];
@@ -7,23 +7,22 @@ export function deepCopy(data: any, circleHack: any[][] = []): any {
     return data;
   }
   else if (Array.isArray(data)) {
-    const nextData: typeof data = [];
+    const nextData = [] as TData;
     const nextCircleHack = [...circleHack, [data, nextData]];
 
     data.forEach((member, index) => {
+      // @ts-ignore
       nextData[index] = deepCopy(member, nextCircleHack)
     });
 
     return nextData;
   }
-  else if (typeof data === 'function') {
-    return '[[FUNCTION]]';
-  }
   else if (typeof data === 'object') {
-    const nextData: typeof data = {};
+    const nextData = {} as TData;
     const nextCircleHack = [...circleHack, [data, nextData]];
 
     [...Object.getOwnPropertyNames(data), ...Object.getOwnPropertySymbols(data)].forEach((key) => {
+      // @ts-ignore
       nextData[key] = deepCopy(data[key], nextCircleHack);
     });
 

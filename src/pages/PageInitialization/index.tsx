@@ -10,7 +10,7 @@ import { FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_
 export function PageInitialization() {
   usePageInit();
   usePageDataRequest();
-  useFriendsRequest();
+  // useFriendsRequest();
 
   const dispatch = useDispatch();
 
@@ -78,12 +78,11 @@ function usePageDataRequest() {
     return getUser();
   }, [actionPipe]);
 
-  usePipe(function pageDataResolvePipe(data) {
+  usePipe((data) => {
     dispatch({ type: PAGE_DATA_REQUEST_RESOLVE, payload: data });
   }, [pageDataPipe]);
 
-  // TODO incorrect displayName
-  usePipe(function pageDataRejectPipe(error) {
+  usePipe((error) => {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
   }, [pageDataPipe.error]);
 }

@@ -1,4 +1,4 @@
 import { Instruction } from './Instruction';
 import { BasePipe } from './Pipe';
 
-export type Adjunct = Instruction | BasePipe;
+export type Adjunct = undefined | null | BasePipe | Instruction;

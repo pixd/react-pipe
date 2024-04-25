@@ -1,21 +1,30 @@
 import { useMemo } from 'react';
 
-import { Adjunct, DataPipe, StreamGroupValues, UniversalDataPipe } from './types';
-import { getDebugInstruction, getNonEmptyDisplayName, useBasePipe, Release, Fill } from './useBasePipe';
+import { Adjunct, DataPipe, DebugInstruction, StreamGroupValues, UniversalDataPipe } from './types';
+import { getDebugInstruction, getNonEmptyDisplayName, useBasePipe, Fill, EmitStream }
+  from './useBasePipe';
 
 export function usePipe<
   TValue extends any = any,
   TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
   TBarrel extends (...args: StreamGroupValues<TAdjuncts>) => TValue = (...args: StreamGroupValues<TAdjuncts>) => TValue,
 >(barrel: TBarrel, adjuncts: TAdjuncts): UniversalDataPipe<TBarrel> {
-  const { displayName, debugInstruction } = useMemo(() => {
-    const displayName = barrel.name || getNonEmptyDisplayName(adjuncts);
-    const debugInstruction = getDebugInstruction(adjuncts) ?? null;
-    return { displayName, debugInstruction };
-  }, []); // eslint-disable-line
+  let displayName: undefined | string;
+  let debugInstruction: null | DebugInstruction = null;
 
-  const [errorPipe, errorRelease] = useBasePipe(() => createErrorPipeFill(displayName), [debugInstruction]);
-  const [pipe] = useBasePipe(() => createDataPipeFill(displayName, barrel, errorRelease), adjuncts);
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { dn, di } = useMemo(() => {
+      const displayName = barrel.name || getNonEmptyDisplayName(adjuncts);
+      const debugInstruction = getDebugInstruction(adjuncts) ?? null;
+
+      return { dn: displayName, di: debugInstruction };
+    }, []); // eslint-disable-line
+    displayName = dn; debugInstruction = di;
+  }
+
+  const [errorPipe, errorEmitStream] = useBasePipe(() => createErrorPipeFill(displayName), [debugInstruction]);
+  const [pipe] = useBasePipe(() => createDataPipeFill(barrel, errorEmitStream, displayName), adjuncts);
 
   const commonPipe = useMemo(() => {
     const commonPipe = pipe as DataPipe<TValue>;
@@ -30,17 +39,17 @@ function createDataPipeFill<
   TValue extends any = any,
   TStreamGroupValues extends any[] = any[],
 >(
-  displayName: string,
   barrel: (...args: TStreamGroupValues) => TValue,
-  errorRelease: Release,
+  errorEmitStream: EmitStream,
+  displayName?: string,
 ): Fill<TValue, TStreamGroupValues> {
-  const fill = (streamHead: symbol, streamGroupValues: TStreamGroupValues, release: Release<TValue>) => {
+  const fill = (streamGroupValues: TStreamGroupValues, emitStream: EmitStream<TValue>) => {
     let result;
     try {
       result = barrel(...streamGroupValues);
     }
     catch (error: any) {
-      errorRelease(streamHead, error);
+      errorEmitStream(error);
       return null;
     }
 
@@ -49,10 +58,10 @@ function createDataPipeFill<
 
       result
         .then((result) => {
-          active && release(streamHead, result);
+          active && emitStream(result);
         })
         .catch((error) => {
-          active && errorRelease(streamHead, error);
+          active && errorEmitStream(error);
         })
         .finally(() => {
           active = false;
@@ -61,7 +70,7 @@ function createDataPipeFill<
       return () => (active = false);
     }
     else {
-      release(streamHead, result);
+      emitStream(result);
       return null;
     }
   };
@@ -70,7 +79,7 @@ function createDataPipeFill<
   return fill;
 }
 
-function createErrorPipeFill(displayName: string) {
+function createErrorPipeFill(displayName?: string) {
   const fill = () => undefined;
 
   fill.displayName = displayName + '.error';

@@ -1,10 +1,9 @@
-import { ParentRelease } from './ParentRelease';
-import { ParentTerminate } from './ParentTerminate';
+import { OnParentStream } from './OnParentStream';
+import { OnParentTerminate } from './OnParentTerminate';
 
 export type ChildPipeLink<
   TValue extends any = any,
 > = {
-  selfIndex: number;
-  onRelease: ParentRelease<TValue>;
-  onTerminate: ParentTerminate;
+  onStream: OnParentStream<TValue>;
+  onTerminate: OnParentTerminate;
 };
