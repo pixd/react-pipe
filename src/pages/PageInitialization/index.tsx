@@ -10,7 +10,7 @@ import { FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_
 export function PageInitialization() {
   usePageInit();
   usePageDataRequest();
-  // useFriendsRequest();
+  useFriendsRequest();
 
   const dispatch = useDispatch();
 

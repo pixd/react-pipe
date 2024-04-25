@@ -5,11 +5,11 @@ import { getDebugInstruction, getNonEmptyDisplayName, useBasePipe, Fill, EmitStr
   from './useBasePipe';
 
 export function usePipe<
-  TValue extends any = any,
   TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
-  TBarrel extends (...args: StreamGroupValues<TAdjuncts>) => TValue = (...args: StreamGroupValues<TAdjuncts>) => TValue,
->(barrel: TBarrel, adjuncts: TAdjuncts): UniversalDataPipe<TBarrel> {
-  let displayName: undefined | string;
+  TBarrel extends (...args: StreamGroupValues<TAdjuncts>) => any = (...args: StreamGroupValues<TAdjuncts>) => any,
+  TValue extends ReturnType<TBarrel> = ReturnType<TBarrel>,
+>(barrel: TBarrel, adjuncts: TAdjuncts): UniversalDataPipe<TValue> {
+  let displayName: string;
   let debugInstruction: null | DebugInstruction = null;
 
   if (process.env.NODE_ENV === 'development') {
@@ -32,7 +32,7 @@ export function usePipe<
     return commonPipe;
   }, []); // eslint-disable-line
 
-  return commonPipe as UniversalDataPipe<TBarrel>;
+  return commonPipe as UniversalDataPipe<TValue>;
 }
 
 function createDataPipeFill<

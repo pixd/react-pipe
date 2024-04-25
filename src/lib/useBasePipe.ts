@@ -41,12 +41,12 @@ export function useBasePipe<
 
     const displayName = fill.displayName || getNonEmptyDisplayName(adjuncts);
 
-    let debugInstruction: undefined | DebugInstruction;
-    let debug: undefined | Debugger;
+    let debugInstruction: null | DebugInstruction = null;
+    let debug: null | Debugger = null;
 
     if (process.env.NODE_ENV === 'development') {
       debugInstruction = getDebugInstruction(adjuncts);
-      debug = debugInstruction?.createDebugger(displayName);
+      debug = debugInstruction?.createDebugger(displayName) ?? null;
     }
 
     const state: PipeState<TAdjuncts> = {
@@ -58,12 +58,11 @@ export function useBasePipe<
     const pipe: BasePipe<TValue> = createPipe(state.childPipeLinks, displayName, debugInstruction);
 
     let emitNum = 0;
-
     const getStreamHead = () => Symbol(`${displayName} (emit #${ ++ emitNum})`);
 
-    const emitStream = (optionalStreamName: null | symbol, value: TValue, streamGroup: FilledStreamGroup<TAdjuncts>): void => {
+    const emitStream = (optionalStreamHead: null | symbol, value: TValue, streamGroup: FilledStreamGroup<TAdjuncts>): void => {
       if (state.operative) {
-        const streamHead = optionalStreamName ?? getStreamHead();
+        const streamHead = optionalStreamHead ?? getStreamHead();
 
         if (state.childPipeLinks.length) {
           if (process.env.NODE_ENV === 'development') {
@@ -193,7 +192,7 @@ export function useBasePipe<
 
 function createPipe<
   TValue extends any = any,
->(childPipeLinks: ChildPipeLink[], displayName?: string, debugInstruction?: DebugInstruction): BasePipe<TValue> {
+>(childPipeLinks: ChildPipeLink[], displayName?: null | string, debugInstruction?: null | DebugInstruction): BasePipe<TValue> {
   return {
     type: PIPE,
     displayName,
@@ -209,7 +208,7 @@ function createPipe<
 
 function createChildPipeLink<
   TValue extends any = any,
->(onStream: OnParentStream<TValue>, onTerminate: OnParentTerminate): ChildPipeLink {
+>(onStream: OnParentStream<TValue>, onTerminate: OnParentTerminate): ChildPipeLink<TValue> {
   return {
     onStream,
     onTerminate,
@@ -249,16 +248,17 @@ function getStreamGroupValues<
   return streamGroup.members.map((stream) => stream.value) as StreamGroupValues<TAdjuncts>;
 }
 
-export function getDisplayName(adjuncts: Adjunct[]) {
+export function getDisplayName(adjuncts: Adjunct[]): string {
   const mainPipe = adjuncts.find<BasePipe>(isPipe);
-  return mainPipe?.displayName ? `${mainPipe.displayName} / [${mainPipe.connections + 1}]` : null;
+  return mainPipe?.displayName ? `${mainPipe.displayName} / [${mainPipe.connections + 1}]` : '';
 }
 
-export function getNonEmptyDisplayName(adjuncts: Adjunct[]) {
+export function getNonEmptyDisplayName(adjuncts: Adjunct[]): string {
   return getDisplayName(adjuncts) || 'unknown';
 }
 
-export function getDebugInstruction(adjuncts: Adjunct[]) {
+export function getDebugInstruction(adjuncts: Adjunct[]): null | DebugInstruction {
   return adjuncts.find<DebugInstruction>(isDebugInstruction)
-    ?? adjuncts.find<BasePipeWithDebugInstruction>(isPipeWithDebugInstruction)?.debugInstruction;
+    ?? adjuncts.find<BasePipeWithDebugInstruction>(isPipeWithDebugInstruction)?.debugInstruction
+    ?? null;
 }

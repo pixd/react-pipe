@@ -5,8 +5,8 @@ export const PIPE = Symbol('PIPE');
 
 export type BasePipe<TValue extends any = any> = {
   type: typeof PIPE;
-  displayName?: string;
-  debugInstruction?: DebugInstruction;
+  displayName?: null | string;
+  debugInstruction?: null | DebugInstruction;
   connections: number;
   connect: Connect<TValue>;
 };
@@ -15,9 +15,9 @@ export type DataPipe<TValue extends any = any> = BasePipe<TValue> & {
   error: BasePipe;
 };
 
-export type UniversalDataPipe<TBarrel extends (...args: any) => any> = Promise<any> extends ReturnType<TBarrel>
-  ? DataPipe<Exclude<ReturnType<TBarrel>, Promise<any>> | (Extract<ReturnType<TBarrel>, Promise<any>> extends Promise<infer TValue> ? TValue : never)>
-  : BasePipe<ReturnType<TBarrel>>;
+export type UniversalDataPipe<TValue extends any = any> = Promise<any> extends TValue
+  ? DataPipe<Exclude<TValue, Promise<any>> | (Extract<TValue, Promise<any>> extends Promise<infer TPromiseValue> ? TPromiseValue : never)>
+  : BasePipe<TValue>;
 
 export type BasePipeWithDebugInstruction<TValue extends any = any> = BasePipe<TValue> & {
   debugInstruction: DebugInstruction;
