@@ -2,11 +2,11 @@ import { useMemo, useEffect } from 'react';
 
 import { isDebugInstruction, isPipe, isPipeWithDebugInstruction } from './check';
 import { deepCopy } from './deepCopy';
-import { PIPE, Adjunct, BasePipe, BasePipeWithDebugInstruction, ChildPipeLink, ConnectedPipes,
+import { PIPE, Adjunct, BasePipe, BasePipeWithDebugInstruction, DataPipe, DownstreamConnection,
   Debugger, DebugInstruction, FilledStreamGroup, OnParentStream, OnParentTerminate, PipeState,
   StreamGroupValues, Stream, StreamGroup } from './types';
 
-export type EmitStream<
+export type Emit<
   TValue extends any = any,
 > = {
   (
@@ -24,194 +24,267 @@ export type Fill<
 > = {
   (
     streamGroupValues: TStreamGroupValues,
-    emitStream: EmitStream<TValue>,
-  ): void | null | (() => void);
+    emitStream: Emit<TValue>,
+    emitError: Emit,
+  ): null | (() => void);
   displayName?: string;
 };
+
+export type PipeKit<
+  TValue extends any = any,
+> = [DataPipe<TValue>, null | (() => void)];
 
 export function useBasePipe<
   TValue extends any = any,
   TAdjunct extends Adjunct = Adjunct,
   TAdjuncts extends [] | [TAdjunct] | [TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | [TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct, TAdjunct] | (TAdjunct)[] = (TAdjunct)[],
->( createFill: () => Fill<TValue, StreamGroupValues<TAdjuncts>>, adjuncts: TAdjuncts): [BasePipe<TValue>, EmitStream<TValue>] {
-  const [pipe, emitStream, unmountTerminate] = useMemo(() => {
-    const fill = createFill();
-    // WTF? Why should I use `as` here?
-    const connectedPipes = adjuncts.filter(isPipe) as ConnectedPipes<TAdjuncts>;
+>(
+  createFill: () => Fill<TValue, StreamGroupValues<TAdjuncts>>,
+  adjuncts?: TAdjuncts,
+): DataPipe<TValue>
 
-    const displayName = fill.displayName || getNonEmptyDisplayName(adjuncts);
+export function useBasePipe(createFill: () => Fill, adjuncts: Adjunct[]): DataPipe {
+  const [pipe, onUnmount] = useMemo(() => {
+    return createPipeKit(createFill, adjuncts);
+  }, []); // eslint-disable-line
 
-    let debugInstruction: null | DebugInstruction = null;
-    let debug: null | Debugger = null;
+  if (onUnmount) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      return onUnmount;
+    }, []); // eslint-disable-line
+  }
 
-    if (process.env.NODE_ENV === 'development') {
-      debugInstruction = getDebugInstruction(adjuncts);
-      debug = debugInstruction?.createDebugger(displayName) ?? null;
-    }
+  return pipe;
+}
 
-    const state: PipeState<TAdjuncts> = {
-      streamGroups: {},
-      childPipeLinks: [],
-      operative: true,
-    };
+function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
+  const state: PipeState = {
+    operative: true,
+    streamGroups: {},
+    upstreamPipes: adjuncts.filter(isPipe),
+    downstreamConnections: [],
+    errorPipeDownstreamConnections: [],
+  };
 
-    const pipe: BasePipe<TValue> = createPipe(state.childPipeLinks, displayName, debugInstruction);
+  const fill = createFill();
 
-    let emitNum = 0;
-    const getStreamHead = () => Symbol(`${displayName} (emit #${ ++ emitNum})`);
+  const displayName = fill.displayName || getNonEmptyDisplayName(adjuncts);
+  const errorPipeDisplayName = `${displayName} (error)`;
 
-    const emitStream = (optionalStreamHead: null | symbol, value: TValue, streamGroup: FilledStreamGroup<TAdjuncts>): void => {
-      if (state.operative) {
-        const streamHead = optionalStreamHead ?? getStreamHead();
+  let debugInstruction: null | DebugInstruction = null;
+  let debug: null | Debugger = null;
+  if (process.env.NODE_ENV === 'development') {
+    debugInstruction = getDebugInstruction(adjuncts);
+    debug = debugInstruction?.createDebugger(displayName) ?? null;
+  }
 
-        if (state.childPipeLinks.length) {
-          if (process.env.NODE_ENV === 'development') {
-            debug?.onStreamEmit(deepCopy({ streamHead, value, pipeState: state }));
-          }
+  const createStreamHead = getStreamHeadCreator(displayName);
 
-          const streamReleaseCounter: boolean[] = [];
-
-          state.childPipeLinks.forEach((childPipeLink, index) => {
-            streamReleaseCounter[index] = false;
-
-            const stream = createStream(value, () => {
-              if (process.env.NODE_ENV === 'development') {
-                debug?.onStreamRelease(deepCopy({ streamHead, stream, pipeState: state }));
-              }
-
-              streamReleaseCounter[index] = true;
-
-              if (streamReleaseCounter.every(Boolean)) {
-                if (process.env.NODE_ENV === 'development') {
-                  if (streamGroup.members.length) {
-                    debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
-                  }
-                }
-
-                streamGroup.release();
-              }
-            });
-
-            childPipeLink.onStream(streamHead, stream);
-          });
-        }
-        else {
-          if (process.env.NODE_ENV === 'development') {
-            debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
-          }
-
-          streamGroup.release();
-        }
+  const emitStream = (streamHead: symbol, streamGroup: FilledStreamGroup, value: any): void => {
+    if (state.operative) {
+      if (process.env.NODE_ENV === 'development') {
+        debug?.onStreamEmit(deepCopy({ streamHead, value, pipeState: state }));
       }
-    };
 
-    const terminate = (): void => {
-      if (state.operative) {
-        state.operative = false;
+      if (state.downstreamConnections.length) {
+        const streamReleaseCounter: boolean[] = [];
 
-        Object.getOwnPropertySymbols(state.streamGroups).forEach((streamHead) => {
-          delete state.streamGroups[streamHead];
+        state.downstreamConnections.forEach((downstreamConnection, index) => {
+          streamReleaseCounter[index] = false;
+
+          const stream = createStream(value, () => {
+            if (process.env.NODE_ENV === 'development') {
+              debug?.onStreamRelease(deepCopy({ streamHead, stream, pipeState: state }));
+            }
+
+            streamReleaseCounter[index] = true;
+
+            if (streamReleaseCounter.every(Boolean)) {
+              if (process.env.NODE_ENV === 'development') {
+                debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
+              }
+
+              streamGroup.release();
+            }
+          });
+
+          downstreamConnection.onStream(streamHead, stream);
         });
       }
-    };
+      else {
+        if (process.env.NODE_ENV === 'development') {
+          debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
+        }
 
-    const handleParentStream = (parentPipeIndex: number, streamHead: symbol, stream: Stream): void => {
-      if (state.operative) {
-        let prevPipeState: PipeState = state;
+        streamGroup.release();
+      }
+    }
+  };
 
+  const emitError = (streamHead: symbol, streamGroup: FilledStreamGroup, error: any): void => {
+    if (state.operative) {
+      if (process.env.NODE_ENV === 'development') {
+        debug?.onErrorEmit(deepCopy({ streamHead, error, pipeState: state }));
+      }
+
+      if (state.errorPipeDownstreamConnections.length) {
+        const streamReleaseCounter: boolean[] = [];
+
+        state.errorPipeDownstreamConnections.forEach((downstreamConnection, index) => {
+          streamReleaseCounter[index] = false;
+
+          const stream = createStream(error, () => {
+            if (process.env.NODE_ENV === 'development') {
+              debug?.onStreamRelease(deepCopy({ streamHead, stream, pipeState: state }));
+            }
+
+            streamReleaseCounter[index] = true;
+
+            if (streamReleaseCounter.every(Boolean)) {
+              if (process.env.NODE_ENV === 'development') {
+                debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
+              }
+
+              streamGroup.release();
+            }
+          });
+
+          downstreamConnection.onStream(streamHead, stream);
+        });
+      }
+      else {
+        if (process.env.NODE_ENV === 'development') {
+          debug?.onStreamGroupRelease(deepCopy({ streamGroup, pipeState: state }));
+        }
+
+        streamGroup.release();
+      }
+    }
+  };
+
+  const terminate = (): void => {
+    if (state.operative) {
+      state.operative = false;
+
+      Object.getOwnPropertySymbols(state.streamGroups).forEach((streamHead) => {
+        delete state.streamGroups[streamHead];
+      });
+    }
+  };
+
+  const handleParentPipeStream = (parentPipeIndex: number, streamHead: symbol, stream: Stream): void => {
+    if (state.operative) {
+      let prevPipeState = state;
+      if (process.env.NODE_ENV === 'development') {
+        prevPipeState = deepCopy(state);
+      }
+
+      const streamGroup = state.streamGroups[streamHead]
+        ?? (state.streamGroups[streamHead] = createStreamGroup(streamHead, state.upstreamPipes.length));
+
+      if ( ! streamGroup.members[parentPipeIndex]) {
+        streamGroup.members[parentPipeIndex] = stream;
+      }
+      else {
+        stream.release();
+      }
+
+      if (process.env.NODE_ENV === 'development') {
+        debug?.onParentPipeStream(deepCopy({ parentPipeIndex, streamHead, stream, prevPipeState, pipeState: state }));
+      }
+
+      if (checkStreamGroup(streamGroup)) {
         if (process.env.NODE_ENV === 'development') {
           prevPipeState = deepCopy(state);
         }
 
-        const streamGroup = state.streamGroups[streamHead] ?? (state.streamGroups[streamHead] = createStreamGroup(streamHead, connectedPipes.length));
-
-        if ( ! streamGroup.members[parentPipeIndex]) {
-          streamGroup.members[parentPipeIndex] = stream;
-        }
-        else {
-          stream.release();
-        }
+        delete state.streamGroups[streamHead];
 
         if (process.env.NODE_ENV === 'development') {
-          debug?.onParentPipeStream(deepCopy({ parentPipeIndex, streamHead, stream, prevPipeState, pipeState: state }));
+          debug?.onStreamGroupFulfill(deepCopy({ streamGroup, prevPipeState, pipeState: state }));
         }
 
-        if (checkStreamGroup(streamGroup)) {
-          if (process.env.NODE_ENV === 'development') {
-            prevPipeState = deepCopy(state);
-          }
-
-          delete state.streamGroups[streamHead];
-
-          if (process.env.NODE_ENV === 'development') {
-            debug?.onStreamGroupFulfill(deepCopy({ streamGroup, prevPipeState, pipeState: state }));
-          }
-
-          fill(getStreamGroupValues(streamGroup), (value) => emitStream(streamHead, value, streamGroup));
-        }
+        fill(
+          getStreamGroupValues(streamGroup),
+          (...args) => emitStream(streamHead, streamGroup, ...args),
+          (...args) => emitError(streamHead, streamGroup, ...args),
+        );
       }
-    };
-
-    const handleParentTerminate = (_parentPipeIndex: number): void => {
-      if (state.operative) {
-        terminate();
-      }
-    };
-
-    const fakeStreamHead = Symbol();
-    const fakeStreamGroup = createStreamGroup(fakeStreamHead, 0) as FilledStreamGroup<TAdjuncts>;
-    const fakeEmitStream = (value: TValue) => emitStream(null, value, fakeStreamGroup);
-
-    let unmountTerminate = () => {};
-
-    if (connectedPipes.length) {
-      connectedPipes.forEach((pipeHolder, index) => pipeHolder.connect(
-        (streamHead, stream) => handleParentStream(index, streamHead, stream),
-        () => handleParentTerminate(index)
-      ));
     }
-    else {
-      unmountTerminate = fill(getStreamGroupValues(fakeStreamGroup), fakeEmitStream) ?? unmountTerminate;
+  };
+
+  const handleParentPipeTerminate = (_parentPipeIndex: number): void => {
+    if (state.operative) {
+      terminate();
     }
+  };
 
-    if (process.env.NODE_ENV === 'development') {
-      debug?.onPipeCreate(deepCopy({ pipeState: state }));
-    }
+  let onUnmount = null;
 
-    return [pipe, fakeEmitStream, unmountTerminate];
-  }, []); // eslint-disable-line
+  if (state.upstreamPipes.length) {
+    state.upstreamPipes.forEach((upstreamPipe, index) => upstreamPipe.connect(
+      (...args) => handleParentPipeStream(index, ...args),
+      (...args) => handleParentPipeTerminate(index, ...args)
+    ));
+  }
+  else {
+    const mountStreamHead = createStreamHead('mount');
+    const mountStreamGroup = createStreamGroup(mountStreamHead, 0) as FilledStreamGroup;
 
-  useEffect(() => {
-    return () => {
-      unmountTerminate();
-    };
-  }, []); // eslint-disable-line
+    onUnmount = fill(
+      getStreamGroupValues(mountStreamGroup),
+      (...args) => emitStream(mountStreamHead, mountStreamGroup, ...args),
+      (...args) => emitError(mountStreamHead, mountStreamGroup, ...args),
+    );
+  }
 
-  return [pipe, emitStream];
+  const errorPipe: BasePipe = createPipe(state.errorPipeDownstreamConnections);
+  errorPipe.displayName = errorPipeDisplayName;
+  errorPipe.debugInstruction = debugInstruction;
+
+  const pipe: BasePipe = createPipe(state.downstreamConnections);
+  pipe.displayName = displayName;
+  pipe.debugInstruction = debugInstruction;
+
+  const dataPipe = pipe as DataPipe;
+  dataPipe.error = errorPipe;
+
+  if (process.env.NODE_ENV === 'development') {
+    debug?.onPipeCreate(deepCopy({ pipeState: state }));
+  }
+
+  return [dataPipe, onUnmount];
 }
 
 function createPipe<
   TValue extends any = any,
->(childPipeLinks: ChildPipeLink[], displayName?: null | string, debugInstruction?: null | DebugInstruction): BasePipe<TValue> {
+>(downstreamConnections: DownstreamConnection[]): BasePipe<TValue> {
   return {
     type: PIPE,
-    displayName,
-    debugInstruction,
     connections: 0,
     connect(onStream, onTerminate) {
       this.connections ++;
-      const childPipeLink = createChildPipeLink(onStream, onTerminate);
-      childPipeLinks.push(childPipeLink);
+      const downstreamConnection = createDownstreamConnection(onStream, onTerminate);
+      downstreamConnections.push(downstreamConnection);
     },
   };
 }
 
-function createChildPipeLink<
+function createDownstreamConnection<
   TValue extends any = any,
->(onStream: OnParentStream<TValue>, onTerminate: OnParentTerminate): ChildPipeLink<TValue> {
+>(onStream: OnParentStream<TValue>, onTerminate: OnParentTerminate): DownstreamConnection<TValue> {
   return {
     onStream,
     onTerminate,
+  };
+}
+
+function getStreamHeadCreator(displayName: string) {
+  let emitNum = 0;
+  return function createStreamHead(optionalDesc?: string) {
+    const desc = optionalDesc ?? `emit #${ ++ emitNum}`;
+    return Symbol(`${displayName} (${desc})`);
   };
 }
 
@@ -258,7 +331,8 @@ export function getNonEmptyDisplayName(adjuncts: Adjunct[]): string {
 }
 
 export function getDebugInstruction(adjuncts: Adjunct[]): null | DebugInstruction {
-  return adjuncts.find<DebugInstruction>(isDebugInstruction)
+  return null
+    ?? adjuncts.find<DebugInstruction>(isDebugInstruction)
     ?? adjuncts.find<BasePipeWithDebugInstruction>(isPipeWithDebugInstruction)?.debugInstruction
     ?? null;
 }

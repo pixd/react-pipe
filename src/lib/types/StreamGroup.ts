@@ -1,13 +1,17 @@
 import { BasePipe } from './Pipe';
 import { Stream } from './Stream';
 
-export type StreamGroup<TAdjuncts extends any = any> = {
+export type StreamGroup<
+  TAdjuncts extends any = any,
+> = {
   streamHead: symbol;
   members: StreamGroupMembers<TAdjuncts>;
   release: () => void;
 };
 
-type StreamGroupMembers<TAdjuncts extends any> = TAdjuncts extends (infer TAdjunct)[]
+type StreamGroupMembers<
+  TAdjuncts extends any = any,
+> = TAdjuncts extends (infer TAdjunct)[]
   ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
     ? (null | Stream<TValue>)[]
     : []
@@ -17,11 +21,15 @@ type StreamGroupMembers<TAdjuncts extends any> = TAdjuncts extends (infer TAdjun
       : StreamGroupMembers<TRestAdjuncts>
     : [];
 
-export type FilledStreamGroup<TAdjuncts extends any = any> = Omit<StreamGroup<TAdjuncts>, 'members'> & {
+export type FilledStreamGroup<
+  TAdjuncts extends any = any,
+> = Omit<StreamGroup<TAdjuncts>, 'members'> & {
   members: FilledStreamGroupMembers<TAdjuncts>;
 };
 
-type FilledStreamGroupMembers<TAdjuncts extends any> = TAdjuncts extends (infer TAdjunct)[]
+type FilledStreamGroupMembers<
+  TAdjuncts extends any = any,
+> = TAdjuncts extends (infer TAdjunct)[]
   ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
     ? Stream<TValue>[]
     : []

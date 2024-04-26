@@ -1,7 +1,9 @@
 import { BasePipe } from './Pipe';
 import { Stream } from './Stream';
 
-export type StreamGroupValues<TItems extends any> = TItems extends (infer TItem)[]
+export type StreamGroupValues<
+  TItems extends any = any,
+> = TItems extends (infer TItem)[]
   ? Extract<TItem, BasePipe> extends BasePipe<infer TValue>
     ? TValue[]
     : Extract<TItem, Stream> extends Stream<infer TValue>

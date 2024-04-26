@@ -16,4 +16,5 @@ export type Debugger = {
   onStreamRelease: (data: { streamHead: symbol, stream: Stream, pipeState: PipeState }) => void;
   onStreamGroupRelease: (data: { streamGroup: StreamGroup, pipeState: PipeState }) => void;
   onStreamEmit: (data: { streamHead: symbol, value: any, pipeState: PipeState }) => void;
+  onErrorEmit: (data: { streamHead: symbol, error: any, pipeState: PipeState }) => void;
 };

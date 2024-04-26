@@ -1,7 +1,7 @@
 import { OnParentStream } from './OnParentStream';
 import { OnParentTerminate } from './OnParentTerminate';
 
-export type ChildPipeLink<
+export type DownstreamConnection<
   TValue extends any = any,
 > = {
   onStream: OnParentStream<TValue>;

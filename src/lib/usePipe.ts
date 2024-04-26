@@ -1,55 +1,27 @@
-import { useMemo } from 'react';
-
-import { Adjunct, DataPipe, DebugInstruction, StreamGroupValues, UniversalDataPipe } from './types';
-import { getDebugInstruction, getNonEmptyDisplayName, useBasePipe, Fill, EmitStream }
-  from './useBasePipe';
+import { Adjunct, StreamGroupValues, UniversalDataPipe } from './types';
+import { useBasePipe, Emit } from './useBasePipe';
 
 export function usePipe<
   TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
-  TBarrel extends (...args: StreamGroupValues<TAdjuncts>) => any = (...args: StreamGroupValues<TAdjuncts>) => any,
-  TValue extends ReturnType<TBarrel> = ReturnType<TBarrel>,
->(barrel: TBarrel, adjuncts: TAdjuncts): UniversalDataPipe<TValue> {
-  let displayName: string;
-  let debugInstruction: null | DebugInstruction = null;
-
-  if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { dn, di } = useMemo(() => {
-      const displayName = barrel.name || getNonEmptyDisplayName(adjuncts);
-      const debugInstruction = getDebugInstruction(adjuncts) ?? null;
-
-      return { dn: displayName, di: debugInstruction };
-    }, []); // eslint-disable-line
-    displayName = dn; debugInstruction = di;
-  }
-
-  const [errorPipe, errorEmitStream] = useBasePipe(() => createErrorPipeFill(displayName), [debugInstruction]);
-  const [pipe] = useBasePipe(() => createDataPipeFill(barrel, errorEmitStream, displayName), adjuncts);
-
-  const commonPipe = useMemo(() => {
-    const commonPipe = pipe as DataPipe<TValue>;
-    commonPipe.error = errorPipe;
-    return commonPipe;
-  }, []); // eslint-disable-line
-
-  return commonPipe as UniversalDataPipe<TValue>;
+  TPipeBody extends (...args: StreamGroupValues<TAdjuncts>) => any = (...args: StreamGroupValues<TAdjuncts>) => any,
+  TValue extends ReturnType<TPipeBody> = ReturnType<TPipeBody>,
+>(pipeBody: TPipeBody, adjuncts?: TAdjuncts): UniversalDataPipe<TValue> {
+  return useBasePipe(() => createFill(pipeBody), adjuncts);
 }
 
-function createDataPipeFill<
+function createFill<
   TValue extends any = any,
-  TStreamGroupValues extends any[] = any[],
+  TArgs extends any[] = any[],
 >(
-  barrel: (...args: TStreamGroupValues) => TValue,
-  errorEmitStream: EmitStream,
-  displayName?: string,
-): Fill<TValue, TStreamGroupValues> {
-  const fill = (streamGroupValues: TStreamGroupValues, emitStream: EmitStream<TValue>) => {
+  pipeBody: (...args: TArgs) => TValue | Promise<TValue>,
+) {
+  const fill = (streamGroupValues: TArgs, emitStream: Emit<TValue>, emitError: Emit) => {
     let result;
     try {
-      result = barrel(...streamGroupValues);
+      result = pipeBody(...streamGroupValues);
     }
     catch (error: any) {
-      errorEmitStream(error);
+      emitError(error);
       return null;
     }
 
@@ -61,7 +33,7 @@ function createDataPipeFill<
           active && emitStream(result);
         })
         .catch((error) => {
-          active && errorEmitStream(error);
+          active && emitError(error);
         })
         .finally(() => {
           active = false;
@@ -75,13 +47,6 @@ function createDataPipeFill<
     }
   };
 
-  fill.displayName = displayName;
-  return fill;
-}
-
-function createErrorPipeFill(displayName?: string) {
-  const fill = () => undefined;
-
-  fill.displayName = displayName + '.error';
+  fill.displayName = pipeBody.name;
   return fill;
 }

@@ -56,7 +56,14 @@ function createDebugger(displayName: string ='unknown'): Debugger {
     onStreamEmit: (data) => {
       console.groupCollapsed(`%c ${displayName}:%c pipe emitted a stream`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
       console.log('%c stream head  ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
-      console.log('%c release value', 'font-weight: bold; color: #03A9F4;', data.value);
+      console.log('%c emitted value', 'font-weight: bold; color: #03A9F4;', data.value);
+      console.log('%c pipe state   ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      console.groupEnd();
+    },
+    onErrorEmit: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c pipe emitted an error`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+      console.log('%c stream head  ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
+      console.log('%c emitted error', 'font-weight: bold; color: #03A9F4;', data.error);
       console.log('%c pipe state   ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
