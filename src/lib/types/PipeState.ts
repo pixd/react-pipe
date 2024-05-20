@@ -1,6 +1,6 @@
 import { Adjunct } from './Adjunct';
 import { DownstreamConnection } from './DownstreamConnection';
-import { StreamGroups } from './StreamGroups';
+import { StreamGroups } from './StreamGroup';
 import { UpstreamPipes } from './UpstreamPipes';
 
 export type PipeState<
@@ -8,9 +8,16 @@ export type PipeState<
   TError extends any = any,
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
-  operative: boolean;
-  streamGroups: StreamGroups<TAdjuncts>;
   upstreamPipes: UpstreamPipes<TAdjuncts>;
+  streamGroups: StreamGroups<TAdjuncts>;
+  dataPipe: CommonPipeState<TValue>;
+  errorPipe: CommonPipeState<TError>;
+};
+
+export type CommonPipeState<
+  TValue extends any = any,
+> = {
+  uniqKey: symbol;
   downstreamConnections: DownstreamConnection<TValue>[];
-  errorPipeDownstreamConnections: DownstreamConnection<TError>[];
+  operative: boolean;
 };

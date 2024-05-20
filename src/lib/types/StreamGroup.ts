@@ -1,12 +1,19 @@
+import { Adjunct } from './Adjunct';
 import { BasePipe } from './Pipe';
 import { Stream } from './Stream';
 
+export type StreamGroupStatus = 'idle' | 'active' | 'finished';
+
 export type StreamGroup<
-  TAdjuncts extends any = any,
+  TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
+  uniqKey: symbol;
   streamHead: symbol;
+  status: StreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;
-  release: () => void;
+  emitValueGroups: null | Record<symbol, boolean[]>;
+  emitErrorGroups: null | Record<symbol, boolean[]>;
+  finish: null | (() => void);
 };
 
 type StreamGroupMembers<
@@ -21,20 +28,18 @@ type StreamGroupMembers<
       : StreamGroupMembers<TRestAdjuncts>
     : [];
 
-export type FilledStreamGroup<
-  TAdjuncts extends any = any,
-> = Omit<StreamGroup<TAdjuncts>, 'members'> & {
-  members: FilledStreamGroupMembers<TAdjuncts>;
-};
+export type StreamGroups<
+  TAdjuncts extends Adjunct[] = Adjunct[],
+> = Record<symbol, StreamGroup<TAdjuncts>>;
 
-type FilledStreamGroupMembers<
-  TAdjuncts extends any = any,
+export type StreamGroupValues<
+  TAdjuncts extends any[] = any[],
 > = TAdjuncts extends (infer TAdjunct)[]
   ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
-    ? Stream<TValue>[]
+    ? TValue[]
     : []
   : TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
     ? TAdjunct extends BasePipe<infer TValue>
-      ? [Stream<TValue>, ...StreamGroupMembers<TRestAdjuncts>]
-      : StreamGroupMembers<TRestAdjuncts>
+      ? [TValue, ...StreamGroupValues<TRestAdjuncts>]
+      : StreamGroupValues<TRestAdjuncts>
     : [];

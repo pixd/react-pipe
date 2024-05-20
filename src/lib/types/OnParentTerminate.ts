@@ -1,3 +1,5 @@
 export type OnParentTerminate = {
-  (): void;
+  (
+    streamHead: symbol,
+  ): void;
 };

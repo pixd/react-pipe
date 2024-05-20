@@ -1,3 +1,4 @@
+import { FINAL, Final } from './FINAL';
 import { Adjunct, StreamGroupValues, UniversalDataPipe } from './types';
 import { useBasePipe, Emit } from './useBasePipe';
 
@@ -13,15 +14,15 @@ function createFill<
   TValue extends any = any,
   TArgs extends any[] = any[],
 >(
-  pipeBody: (...args: TArgs) => TValue | Promise<TValue>,
+  pipeBody: { (...args: TArgs): TValue | Promise<TValue>, displayName?: string },
 ) {
-  const fill = (streamGroupValues: TArgs, emitStream: Emit<TValue>, emitError: Emit) => {
+  const fill = (streamGroupValues: TArgs, emitStream: Emit<TValue | Final<TValue>>, emitError: Emit) => {
     let result;
     try {
       result = pipeBody(...streamGroupValues);
     }
     catch (error: any) {
-      emitError(error);
+      emitError(FINAL(error));
       return null;
     }
 
@@ -30,10 +31,10 @@ function createFill<
 
       result
         .then((result) => {
-          active && emitStream(result);
+          active && emitStream(FINAL(result));
         })
         .catch((error) => {
-          active && emitError(error);
+          active && emitError(FINAL(error));
         })
         .finally(() => {
           active = false;
@@ -42,11 +43,11 @@ function createFill<
       return () => (active = false);
     }
     else {
-      emitStream(result);
+      emitStream(FINAL(result));
       return null;
     }
   };
 
-  fill.displayName = pipeBody.name;
+  fill.displayName = pipeBody.displayName || pipeBody.name;
   return fill;
 }

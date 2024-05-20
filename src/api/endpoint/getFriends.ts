@@ -14,8 +14,8 @@ export function getFriends(params: GetFriendsParams): Promise<GetFriendsResponse
     setTimeout(() => resolve({
       params,
       friends: [
-        { id: 74, name: 'Max' },
-        { id: 12, name: 'Victor' },
+        { id: params.userId + 10, name: 'Max' },
+        { id: params.userId + 70, name: 'Victor' },
       ],
     }), 2500);
   });

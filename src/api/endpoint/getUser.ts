@@ -20,4 +20,4 @@ export function getUser(): Promise<GetUserResponse> {
 //   });
 // }
 
-let id = 10;
+let id = 1;

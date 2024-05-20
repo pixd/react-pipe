@@ -27,16 +27,15 @@ function createFill(
   const actionTypes = ([] as string[]).concat(actionType);
 
   const fill = (streamGroupValues: any, emitStream: Emit) => {
-    // TODO Any times subscribe?
     return store.subscribe(() => {
       const action = actionSelector(store.getState());
 
       if (actionTypes.includes(action.type)) {
-        emitStream(action);
+        Promise.resolve().then(() => emitStream(action));
       }
     });
   };
 
-  fill.displayName = actionTypes[0] + (actionTypes.length > 1 ? ` + ${actionTypes.length - 1}` : '');
+  fill.displayName = actionTypes.length > 1 ? `${actionTypes[0]} + ${actionTypes.length - 1}` : actionTypes[0];
   return fill;
 }

@@ -6,6 +6,7 @@ const pageAction = (actionType: string) => 'PageInitialization/' + actionType;
 export const PAGE_INIT = pageAction('PAGE_INIT');
 export const PAGE_RESET = pageAction('PAGE_RESET');
 export const PAGE_REFRESH = pageAction('PAGE_REFRESH');
+export const ABORT_REQUEST = pageAction('ABORT_REQUEST');
 
 export const PAGE_DATA_REQUEST = pageAction('PAGE_DATA_REQUEST');
 export const PAGE_DATA_REQUEST_RESOLVE = pageAction('PAGE_DATA_REQUEST_RESOLVE');
@@ -31,18 +32,29 @@ export const initialState: State = {
   friendsRequestState: requestState.idle(),
 };
 
-export const pageInitializationReducer = (state = initialState, action: AnyAction): State => {
-  switch (action.type) {
+export const pageInitializationReducer = (state = initialState, { type, payload }: AnyAction): State => {
+  switch (type) {
     case PAGE_INIT: {
-      return state;
+      return { ...state };
     }
     case PAGE_RESET: {
-      return state;
+      return { ...state };
     }
     case PAGE_REFRESH: {
       return {
         ...initialState,
         pageDataRequestState: requestState.forceIdle(),
+      };
+    }
+    case ABORT_REQUEST: {
+      return {
+        ...state,
+        pageDataRequestState: state.pageDataRequestState.isActive
+          ? requestState.aborted()
+          : state.pageDataRequestState,
+        friendsRequestState: state.friendsRequestState.isActive
+          ? requestState.aborted()
+          : state.friendsRequestState,
       };
     }
     case PAGE_DATA_REQUEST: {
@@ -55,13 +67,13 @@ export const pageInitializationReducer = (state = initialState, action: AnyActio
       return {
         ...state,
         pageDataRequestState: requestState.resolved(),
-        user: action.payload.user,
+        user: payload.user,
       };
     }
     case PAGE_DATA_REQUEST_REJECT: {
       return {
         ...state,
-        pageDataRequestState: requestState.rejected(action.payload.error),
+        pageDataRequestState: requestState.rejected(payload.error),
       };
     }
     case FRIENDS_REQUEST: {
@@ -74,13 +86,13 @@ export const pageInitializationReducer = (state = initialState, action: AnyActio
       return {
         ...state,
         friendsRequestState: requestState.resolved(),
-        friends: action.payload.friends,
+        friends: payload.friends,
       };
     }
     case FRIENDS_REQUEST_REJECT: {
       return {
         ...state,
-        friendsRequestState: requestState.rejected(action.payload.error),
+        friendsRequestState: requestState.rejected(payload.error),
       };
     }
     default: {

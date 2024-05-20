@@ -1,16 +1,21 @@
 import { Connect } from './Connect';
 import { DebugInstruction } from './Debug';
 
-export const PIPE = Symbol('PIPE');
+export const PIPE_ENTITY_TYPE = Symbol('PIPE_ENTITY_TYPE');
+
+export type PipeType = 'data' | 'error';
 
 export type BasePipe<
   TValue extends any = any,
 > = {
-  type: typeof PIPE;
-  displayName?: null | string;
-  debugInstruction?: null | DebugInstruction;
-  connections: number;
+  entityType: typeof PIPE_ENTITY_TYPE;
+  type: PipeType;
+  uniqKey: symbol;
+  displayName: null | string;
+  debugInstruction: null | DebugInstruction;
   connect: Connect<TValue>;
+  cancel: () => void;
+  die: () => void;
 };
 
 export type DataPipe<

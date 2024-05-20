@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect } from 'react';
 
 import { getFriends, getUser } from '../../api';
-import pipe, { useAction, usePipe } from '../../lib';
+import { useAction, initDebugPanel, usePipe } from '../../lib';
 import { useDispatch, useSelector } from '../../store';
-import { FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT, PAGE_REFRESH,
-  PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_REJECT, PAGE_DATA_REQUEST_RESOLVE,
+import { ABORT_REQUEST, FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT,
+  PAGE_REFRESH, PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_REJECT, PAGE_DATA_REQUEST_RESOLVE,
   pageInitializationSelectors } from './store';
+
+const { debugPanel } = initDebugPanel();
 
 export function PageInitialization() {
   usePageInit();
   usePageDataRequest();
-  useFriendsRequest();
 
   const dispatch = useDispatch();
 
@@ -23,6 +24,10 @@ export function PageInitialization() {
     dispatch({ type: PAGE_REFRESH });
   }, [dispatch]);
 
+  const handleAbort = useCallback(() => {
+    dispatch({ type: ABORT_REQUEST });
+  }, [dispatch]);
+
   return (
     <>
       <div>
@@ -31,22 +36,32 @@ export function PageInitialization() {
         >
           Refresh
         </button>
+        {' '}
+        <button className="button"
+          onClick={handleAbort}
+        >
+          Abort
+        </button>
       </div>
       <div>
-        {pageDataRequestState.isPending
-          ? 'User loading ...'
+        {'User: ' + (pageDataRequestState.isPending
+          ? 'loading...'
           : pageDataRequestState.isRejected
-            ? 'User request error'
-            : 'User: ' + user!.name}
+            ? 'request error'
+            : pageDataRequestState.isAborted
+              ? 'request aborted'
+              : `${user!.name} [id: ${user!.id}]`)}
       </div>
       {user
         ? (
           <div>
-            {friendsRequestState.isPending
-              ? 'Friends loading ...'
+            {'Friends: ' + (friendsRequestState.isPending
+              ? 'loading...'
               : friendsRequestState.isRejected
-                ? 'Friends request error'
-                : 'Friends: ' + friends!.map((friend) => friend.name).join(', ')}
+                ? 'request error'
+                : friendsRequestState.isAborted
+                  ? 'request aborted'
+                  : friends!.map((friend) => `${friend.name} [id: ${friend.id}]`).join(', '))}
           </div>
         )
         : null}
@@ -59,7 +74,6 @@ function usePageInit() {
 
   useEffect(() => {
     dispatch({ type: PAGE_INIT });
-
     // setTimeout(() => dispatch({ type: PAGE_INIT }), 300);
 
     return () => {
@@ -71,31 +85,30 @@ function usePageInit() {
 function usePageDataRequest() {
   const dispatch = useDispatch();
 
-  const actionPipe = useAction([PAGE_INIT, PAGE_REFRESH], [pipe.debug]);
+  const actionPipe = useAction([PAGE_INIT, PAGE_REFRESH], [debugPanel]);
 
-  const pageDataPipe = usePipe(() => {
+  const abortPipe = useAction(ABORT_REQUEST, [debugPanel, actionPipe]);
+
+  usePipe(actionPipe.cancel, [abortPipe]);
+
+  const pageDataRequestPipe = usePipe(() => {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
   }, [actionPipe]);
 
-  usePipe((data) => {
+  const pageDataPipe = usePipe((data) => {
     dispatch({ type: PAGE_DATA_REQUEST_RESOLVE, payload: data });
-  }, [pageDataPipe]);
+    return data;
+  }, [pageDataRequestPipe]);
 
   usePipe((error) => {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
-  }, [pageDataPipe.error]);
-}
+  }, [pageDataRequestPipe.error]);
 
-function useFriendsRequest() {
-  const dispatch = useDispatch();
-
-  const actionPipe = useAction(PAGE_DATA_REQUEST_RESOLVE, [pipe.debug]);
-
-  const friendsPipe = usePipe((action) => {
+  const friendsPipe = usePipe((data) => {
     dispatch({ type: FRIENDS_REQUEST });
-    return getFriends({ userId: action.payload.user.id });
-  }, [actionPipe]);
+    return getFriends({ userId: data.user.id });
+  }, [pageDataPipe]);
 
   usePipe((data) => {
     dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });

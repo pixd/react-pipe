@@ -1,6 +1,9 @@
-.App {
+body {
   background-color: #282c34;
-  color: white;
+}
+
+.App {
+  color: #cbced2;
   font-size: calc(10px + 2vmin);
   line-height: 1.6em;
   min-height: 100vh;

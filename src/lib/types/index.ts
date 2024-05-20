@@ -9,6 +9,4 @@ export * from './Pipe';
 export * from './PipeState';
 export * from './Stream';
 export * from './StreamGroup';
-export * from './StreamGroups';
-export * from './StreamGroupValues';
 export * from './UpstreamPipes';

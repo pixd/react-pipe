@@ -17,6 +17,10 @@ export function deepCopy<TData extends any>(data: TData, circleHack: any[][] = [
 
     return nextData;
   }
+  else if (typeof data === 'function') {
+    // eslint-disable-next-line no-new-func
+    return (() => {}) as TData;
+  }
   else if (typeof data === 'object') {
     const nextData = {} as TData;
     const nextCircleHack = [...circleHack, [data, nextData]];

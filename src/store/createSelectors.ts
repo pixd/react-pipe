@@ -1,5 +1,3 @@
-import { isIdle, isActive, isResolved, isRejected, isPending } from './requestStatus';
-
 type State = Record<string, any>;
 
 type RootState<TStateName extends string = string, TState extends State = State> = {
@@ -70,27 +68,27 @@ export function createSelectors<
       const idleSelectorName = createStatusSelectorName(key, 'Idle');
       // @ts-ignore
       selectors[idleSelectorName] = (rootState: TRootState) =>
-        isIdle(stateSelector(rootState)[key]);
+        stateSelector(rootState)[key].isIdle;
 
       const activeSelectorName = createStatusSelectorName(key, 'Active');
       // @ts-ignore
       selectors[activeSelectorName] = (rootState: TRootState) =>
-        isActive(stateSelector(rootState)[key]);
+        stateSelector(rootState)[key].isActive;
 
       const resolvedSelectorName = createStatusSelectorName(key, 'Resolved');
       // @ts-ignore
       selectors[resolvedSelectorName] = (rootState: TRootState) =>
-        isResolved(stateSelector(rootState)[key]);
+        stateSelector(rootState)[key].isResolved;
 
       const rejectedSelectorName = createStatusSelectorName(key, 'Rejected');
       // @ts-ignore
       selectors[rejectedSelectorName] = (rootState: TRootState) =>
-        isRejected(stateSelector(rootState)[key]);
+        stateSelector(rootState)[key].isRejected;
 
       const pendingSelectorName = createStatusSelectorName(key, 'Pending');
       // @ts-ignore
       selectors[pendingSelectorName] = (rootState: TRootState) =>
-        isPending(stateSelector(rootState)[key]);
+        stateSelector(rootState)[key].isPending;
     }
 
     return selectors;
