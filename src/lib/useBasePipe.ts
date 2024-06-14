@@ -3,9 +3,10 @@ import { useMemo, useEffect } from 'react';
 import { isDebugInstruction, isPipe, isPipeWithDebugInstruction } from './check';
 import { deepCopy } from './deepCopy';
 import { isFinal, Final } from './FINAL';
+import { mountStreamHead } from './mountStreamHead';
 import { PIPE_ENTITY_TYPE, Adjunct, BasePipe, BasePipeWithDebugInstruction, CommonPipeState, DataPipe,
   DownstreamConnection, Debugger, DebugInstruction, OnParentStream, OnParentTerminate, PipeType,
-  PipeState, Stream, StreamGroupValues, StreamGroup } from './types';
+  PipeState, Stream, StreamGroup, StreamGroupMembers, StreamGroupValues } from './types';
 
 export type Emit<
   TValue extends any = any,
@@ -29,7 +30,7 @@ export type Fill<
 
 export type PipeKit<
   TValue extends any = any,
-> = [DataPipe<TValue>, null | (() => void)];
+> = [DataPipe<TValue>, undefined | (() => void)];
 
 export function useBasePipe<
   TValue extends any = any,
@@ -44,9 +45,7 @@ export function useBasePipe(createFill: () => Fill, adjuncts: Adjunct[]): DataPi
     return createPipeKit(createFill, adjuncts);
   }, []); // eslint-disable-line
 
-  useEffect(() => {
-    return () => onUnmount?.();
-  }, [onUnmount]);
+  useEffect(() => onUnmount, [onUnmount]);
 
   return pipe;
 }
@@ -92,7 +91,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
         const streamReleaseCounter: boolean[] = Array(state.dataPipe.downstreamConnections.length).fill(false);
 
-        streamGroup.emitValueGroups![streamHead] = streamReleaseCounter;
+        streamGroup.emitValueGroups[streamHead] = streamReleaseCounter;
 
         state.dataPipe.downstreamConnections.forEach((downstreamConnection, index) => {
           const stream = createStream(getEmittedValue(value), () => {
@@ -103,7 +102,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
             streamReleaseCounter[index] = true;
 
             if (streamReleaseCounter.every(Boolean)) {
-              delete streamGroup.emitValueGroups![streamHead];
+              delete streamGroup.emitValueGroups[streamHead];
               tryReleaseStreamGroup(streamGroup);
             }
           });
@@ -151,7 +150,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
         const streamReleaseCounter: boolean[] = Array(state.errorPipe.downstreamConnections.length).fill(false);
 
-        streamGroup.emitErrorGroups![streamHead] = streamReleaseCounter;
+        streamGroup.emitErrorGroups[streamHead] = streamReleaseCounter;
 
         state.errorPipe.downstreamConnections.forEach((downstreamConnection, index) => {
           const stream = createStream(getEmittedValue(error), () => {
@@ -162,7 +161,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
             streamReleaseCounter[index] = true;
 
             if (streamReleaseCounter.every(Boolean)) {
-              delete streamGroup.emitErrorGroups![streamHead];
+              delete streamGroup.emitErrorGroups[streamHead];
               tryReleaseStreamGroup(streamGroup);
             }
           });
@@ -219,8 +218,6 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
         }
 
         streamGroup.status = 'active';
-        streamGroup.emitValueGroups = {};
-        streamGroup.emitErrorGroups = {};
 
         if (process.env.NODE_ENV === 'development') {
           debug?.onStreamGroupFulfill(deepCopy({ streamGroup, prevPipeState, pipeState: state }));
@@ -254,6 +251,30 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     }
   };
 
+  const handleCancel = () => {
+    let prevPipeState = state;
+    if (process.env.NODE_ENV === 'development') {
+      prevPipeState = deepCopy(state);
+      debug?.onPipeCancel(deepCopy({ pipeState: state }));
+    }
+
+    Object.getOwnPropertySymbols(state.streamGroups).forEach((streamHead) => {
+      terminateStreamGroup(state.streamGroups[streamHead]);
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      debug?.onPipeCanceled(deepCopy({ prevPipeState, pipeState: state }));
+    }
+  };
+
+  const handleEmit = (value: any) => {
+    // TODO Log this
+    const mountStreamGroup = state.streamGroups[mountStreamHead] = createStreamGroup(mountStreamHead, 0);
+    mountStreamGroup.status = 'active';
+
+    emitValue(mountStreamGroup, value);
+  };
+
   const finishStreamGroup = (streamGroup: StreamGroup) => {
     streamGroup.status = 'finished';
     streamGroup.finish?.();
@@ -265,7 +286,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
   const tryReleaseStreamGroup = (streamGroup: StreamGroup) => {
     if (isStreamGroupFinished(streamGroup)) {
-      if ( ! Object.values(streamGroup.emitValueGroups!).length && ! Object.values(streamGroup.emitErrorGroups!).length) {
+      if ( ! Object.values(streamGroup.emitValueGroups).length && ! Object.values(streamGroup.emitErrorGroups).length) {
         releaseStreamGroup(streamGroup);
       }
     }
@@ -296,7 +317,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
       if (state.dataPipe.downstreamConnections.length) {
         Object.getOwnPropertySymbols(streamGroup.emitValueGroups).forEach((streamHead) => {
-          streamGroup.emitValueGroups![streamHead].forEach((released, index) => {
+          streamGroup.emitValueGroups[streamHead].forEach((released, index) => {
             if ( ! released) {
               state.dataPipe.downstreamConnections[index].onTerminate(streamHead);
             }
@@ -306,7 +327,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
       if (state.errorPipe.downstreamConnections.length) {
         Object.getOwnPropertySymbols(streamGroup.emitErrorGroups).forEach((streamHead) => {
-          streamGroup.emitErrorGroups![streamHead].forEach((released, index) => {
+          streamGroup.emitErrorGroups[streamHead].forEach((released, index) => {
             if ( ! released) {
               state.errorPipe.downstreamConnections[index].onTerminate(streamHead);
             }
@@ -320,22 +341,6 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     }
     else {
       releaseStreamGroup(streamGroup);
-    }
-  };
-
-  const handleCancel = () => {
-    let prevPipeState = state;
-    if (process.env.NODE_ENV === 'development') {
-      prevPipeState = deepCopy(state);
-      debug?.onPipeCancel(deepCopy({ pipeState: state }));
-    }
-
-    Object.getOwnPropertySymbols(state.streamGroups).forEach((streamHead) => {
-      terminateStreamGroup(state.streamGroups[streamHead]);
-    });
-
-    if (process.env.NODE_ENV === 'development') {
-      debug?.onPipeCanceled(deepCopy({ prevPipeState, pipeState: state }));
     }
   };
 
@@ -353,9 +358,18 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
       }
     });
   }
+  else {
+    const mountStreamGroup = state.streamGroups[mountStreamHead] = createStreamGroup(mountStreamHead, 0);
+    mountStreamGroup.status = 'active';
+    mountStreamGroup.finish = fill(
+      [],
+      (...args) => emitValue(mountStreamGroup, ...args),
+      (...args) => emitError(mountStreamGroup, ...args),
+    );
+  }
 
-  const pipe: BasePipe = createPipe('data', state.dataPipe, handleCancel, () => null);
-  const errorPipe: BasePipe = createPipe('error', state.errorPipe, handleCancel, () => null);
+  const pipe: BasePipe = createPipe('data', state.dataPipe, handleEmit, handleCancel, () => null);
+  const errorPipe: BasePipe = createPipe('error', state.errorPipe, handleEmit, handleCancel, () => null);
 
   const dataPipe = pipe as DataPipe;
   dataPipe.error = errorPipe;
@@ -378,34 +392,12 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     debug?.onPipeCreate(deepCopy({ pipeState: state }));
   }
 
-  let onUnmount = null;
-
-  if ( ! state.upstreamPipes.length) {
-    let mountStreamHead = Symbol();
-    if (process.env.NODE_ENV === 'development') {
-      mountStreamHead = Symbol(`${displayName} (mount)`);
-    }
-
-    const mountStreamGroup = createStreamGroup(mountStreamHead, 0);
-    state.streamGroups[mountStreamHead] = mountStreamGroup;
-
-    mountStreamGroup.status = 'active';
-    mountStreamGroup.emitValueGroups = {};
-    mountStreamGroup.emitErrorGroups = {};
-
-    mountStreamGroup.finish = fill(
-      [],
-      (...args) => emitValue(mountStreamGroup, ...args),
-      (...args) => emitError(mountStreamGroup, ...args),
-    );
-  }
-
-  return [dataPipe, onUnmount];
+  return [dataPipe, undefined];
 }
 
 export function createPipe<
   TValue extends any = any,
->(pipeType: PipeType, pipeState: CommonPipeState, cancel: () => void, die: () => void): BasePipe<TValue> {
+>(pipeType: PipeType, pipeState: CommonPipeState, emit: (value: TValue) => void, cancel: () => void, die: () => void): BasePipe<TValue> {
   return {
     entityType: PIPE_ENTITY_TYPE,
     type: pipeType,
@@ -420,6 +412,7 @@ export function createPipe<
         connectionIndex: connectionNum - 1,
       };
     },
+    emit,
     cancel,
     die,
   };
@@ -434,14 +427,6 @@ function createDownstreamConnection<
   };
 }
 
-// function getStreamHeadCreator(displayName: string) {
-//   let emitNum = 0;
-//   return function createStreamHead(optionalDesc?: string) {
-//     const desc = optionalDesc ?? `emit #${ ++ emitNum}`;
-//     return Symbol(`${displayName} (${desc})`);
-//   };
-// }
-
 function createStream<
   TValue extends any = any,
 >(value: TValue, release: () => void): Stream<TValue> {
@@ -451,28 +436,32 @@ function createStream<
   };
 }
 
-function createStreamGroup(streamHead: symbol, length: number): StreamGroup {
+function createStreamGroup<
+  TAdjuncts extends Adjunct[] = Adjunct[],
+>(streamHead: symbol, length: number): StreamGroup<TAdjuncts> {
   const uniqKey = Symbol();
 
   return {
     uniqKey,
     streamHead,
     status: 'idle',
-    members: Array(length).fill(null),
-    emitValueGroups: null,
-    emitErrorGroups: null,
+    members: createStreamGroupMembers(length),
+    emitValueGroups: {},
+    emitErrorGroups: {},
     finish: null,
   };
+}
+
+function createStreamGroupMembers<
+  TAdjuncts extends Adjunct[] = Adjunct[],
+>(length: number): StreamGroupMembers<TAdjuncts> {
+  return Array(length).fill(null) as StreamGroupMembers<TAdjuncts>;
 }
 
 function isStreamGroupFulfilled<
   TAdjuncts extends Adjunct[] = Adjunct[],
 >(streamGroup: StreamGroup<TAdjuncts>): boolean {
   return streamGroup.members.every(Boolean);
-}
-
-function isStreamGroupIdle(streamGroup: StreamGroup): boolean {
-  return streamGroup.status === 'idle';
 }
 
 function isStreamGroupActive(streamGroup: StreamGroup): boolean {

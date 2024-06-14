@@ -11,12 +11,12 @@ export type StreamGroup<
   streamHead: symbol;
   status: StreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;
-  emitValueGroups: null | Record<symbol, boolean[]>;
-  emitErrorGroups: null | Record<symbol, boolean[]>;
+  emitValueGroups: Record<symbol, boolean[]>;
+  emitErrorGroups: Record<symbol, boolean[]>;
   finish: null | (() => void);
 };
 
-type StreamGroupMembers<
+export type StreamGroupMembers<
   TAdjuncts extends any = any,
 > = TAdjuncts extends (infer TAdjunct)[]
   ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>

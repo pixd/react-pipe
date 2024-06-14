@@ -8,7 +8,7 @@ export type ActionPipe<
   TAction extends AnyAction = AnyAction,
 > = BasePipe<TAction>;
 
-export function useAction<
+export function useActionPipe<
   TAction extends AnyAction = AnyAction,
   TAdjunct extends Adjunct = Adjunct,
 >(

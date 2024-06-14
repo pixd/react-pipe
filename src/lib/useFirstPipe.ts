@@ -22,4 +22,4 @@
 //   }, [pipe]);
 // }
 
-export function useFirst() {}
+export function useFirstPipe() {}

@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
+import { HeartSolidIcon } from './icons/HeartSolidIcon';
 import { LockSolidIcon } from './icons/LockSolidIcon';
-import { SyncAltSolidIcon } from './icons/SyncAltSolidIcon';
 import { TintSolidIcon } from './icons/TintSolidIcon';
 import { TrashSolidIcon } from './icons/TrashSolidIcon';
 import { createInstruction } from './instruction';
 import { DEBUG_INSTRUCTION_TYPE, BasePipe, Debugger, PipeState, StreamGroup, StreamGroups }
   from './types';
 
-const COLOR = '#cbced2';
+const COLOR = '#a9b2c4';
 const BACKGROUND_COLOR = '#292e38';
+const ALT_BACKGROUND_COLOR = '#262a32';
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
 const FONT_SIZE = '1rem';
 
@@ -427,10 +428,10 @@ function Panel(props: AppProps) {
 const pipeBoxWidth = 0.2;
 const pipeBoxRadius = 0.4;
 const lineSpace = 1.3;
-const inShift = 1.8;
+const inShift = 1.7;
 const inGap = 1.4;
 const inTapLength = 0;
-const outShift = 1.4;
+const outShift = 3.4;
 const outGap = 1.4;
 const centerGap = 1.4;
 const borderRadius = 0.4;
@@ -466,6 +467,15 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
 
   const baseOutDataWidth = round((pipe.maxDataConnectionLevel - 1) * lineSpace + outGap);
   const baseOutErrorWidth = round((pipe.maxErrorConnectionLevel - 1) * lineSpace + outGap);
+
+  const dataClassName = [
+    'ReactPipeDebugPanel-PipeData',
+    pipe.streamEntries.length > 0 ? 'ReactPipeDebugPanel-PipeConnected' : null,
+  ].filter(Boolean).join(' ');
+  const outClassName = [
+    'ReactPipeDebugPanel-PipeOut',
+    pipe.streamConnections.filter((connection) => connection.directionType === 'connection').length > 0 ? 'ReactPipeDebugPanel-PipeConnected' : null,
+  ].filter(Boolean).join(' ');
 
   return (
     <div className="ReactPipeDebugPanel-Pipe" style={style}>
@@ -598,7 +608,7 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
       <div className="ReactPipeDebugPanel-PipeBody"
         onClick={() => handlePipeClick(pipe)}
       >
-        <div className="ReactPipeDebugPanel-PipeData">
+        <div className={dataClassName}>
           {pipe.streamGroupFrames.map((streamGroup, index) => {
             return (
               <div key={index} className="ReactPipeDebugPanel-StreamGroup">
@@ -606,7 +616,7 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
                   {streamGroup.data.members.map((member, index) => {
                     const className = [
                       'ReactPipeDebugPanel-StreamGroupMember',
-                      member ? 'ReactPipeDebugPanel-StreamGroupMember-Filled' : 'ReactPipeDebugPanel-StreamGroupMember-Empty',
+                      member ? 'ReactPipeDebugPanel-StreamGroupStatus-Success' : 'ReactPipeDebugPanel-StreamGroupStatus-Muted',
                     ].join(' ');
 
                     return (
@@ -629,13 +639,13 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
                       )
                     : streamGroup.data.status === 'active'
                       ? (
-                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Active">
-                          <SyncAltSolidIcon />
+                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Active ReactPipeDebugPanel-StreamGroupStatus-Pulse">
+                          <HeartSolidIcon />
                         </div>
                       )
                       : (
                         <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Muted">
-                          <SyncAltSolidIcon />
+                          <HeartSolidIcon />
                         </div>
                       )}
                 </div>
@@ -643,8 +653,8 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
             );
           })}
         </div>
-        <div className="ReactPipeDebugPanel-PipeError">
-          ERROR ⮕
+        <div className={outClassName}>
+
         </div>
       </div>
       <div className="ReactPipeDebugPanel-PipeName">
@@ -663,8 +673,6 @@ const heelColor = '#758596';
 const shadowColor = '#282c34';
 const pipeBoxColor = '#758596';
 const streamGroupMemberHeight = 0.9;
-const emptyStreamGroupMemberColor = '#4b515f';
-const filledStreamGroupMemberColor = '#3dba67';
 const mutedStatusColor = '#4b515f';
 const activeStatusColor = '#3d94ba';
 const successStatusColor = '#3dba67';
@@ -685,18 +693,13 @@ const styles = `
   }
 
   .ReactPipeDebugPanel-Pipe {
-    border: ${pipeBoxWidth}em solid ${pipeBoxColor};
-    border-radius: ${pipeBoxRadius}em;
-    color: #cbced2;
     position: relative;
   }
 
   .ReactPipeDebugPanel-Connections {
-    height: calc(100% + ${round(pipeBoxWidth * 2)}em);
-    left: -${pipeBoxWidth}em;
+    height: 100%;
     position: absolute;
-    top: -${pipeBoxWidth}em;
-    width: calc(100% + ${round(pipeBoxWidth * 2)}em);
+    width: 100%;
   }
 
   .ReactPipeDebugPanel-DataOut,
@@ -900,8 +903,9 @@ const styles = `
   }
 
   .ReactPipeDebugPanel-PipeBody {
+    border: ${pipeBoxWidth}em solid ${pipeBoxColor};
+    border-radius: ${pipeBoxRadius}em;
     cursor: pointer;
-    display: flex;
     position: relative;
     z-index: 1;
   }
@@ -911,11 +915,22 @@ const styles = `
     padding: 0.4em;
     width: 35em;
   }
+  
+  .ReactPipeDebugPanel-PipeOut {
+    background-color: ${ALT_BACKGROUND_COLOR};
+    border-top: 1px dashed #4e5b6a;
+    padding: 0.4em;
+  }
+
+  .ReactPipeDebugPanel-PipeConnected {
+    min-height: 3.2em;
+  }
 
   .ReactPipeDebugPanel-StreamGroup {
     background: #242933;
     border: 0.1em solid #222427;
     border-radius: 0.2em;
+    height: fit-content;
     margin-right: 0.4em;
     padding: 0.5em 0.6em;
   }
@@ -936,14 +951,6 @@ const styles = `
     margin-left: 0.7em;
   }
 
-  .ReactPipeDebugPanel-StreamGroupMember-Empty svg {
-    fill: ${emptyStreamGroupMemberColor};
-  }
-
-  .ReactPipeDebugPanel-StreamGroupMember-Filled svg {
-    fill: ${filledStreamGroupMemberColor};
-  }
-
   .ReactPipeDebugPanel-StreamGroupStatus-Muted svg {
     fill: ${mutedStatusColor};
   }
@@ -960,17 +967,31 @@ const styles = `
     fill: ${warningStatusColor};
   }
 
-  .ReactPipeDebugPanel-PipeError {
-    align-items: end;
-    display: flex;
-    font-size: 0.86em;
-    justify-content: right;
-    padding: 0.6em 0.6em 0.2em;
-    text-align: center;
-    width: 5em;
+  .ReactPipeDebugPanel-StreamGroupStatus-Pulse svg {
+    animation: pulse 2s infinite;
   }
 
   .ReactPipeDebugPanel-PipeName {
-    padding: 0.6em;
+    font-size: 0.9em;
+    padding: 0.3em 0 0.6em 0.6em;
+    _text-align: center;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    80% {
+      transform: scale(0.9);
+    }
+    85% {
+      transform: scale(1.2);
+    }
+    90% {
+      transform: scale(0.9);
+    }
+    95% {
+      transform: scale(1);
+    }
   }
 `;
