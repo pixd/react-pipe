@@ -86,16 +86,18 @@ function usePageInit() {
 function usePageDataRequest() {
   const dispatch = useDispatch();
 
-  const actionPipe = useActionPipe([PAGE_INIT, PAGE_REFRESH], [debugPanel]);
+  const mountPipe = useMountPipe([debugPanel]);
 
-  const abortPipe = useActionPipe(ABORT_REQUEST, [actionPipe]);
+  const requestActionPipe = useActionPipe([PAGE_INIT, PAGE_REFRESH], [mountPipe]);
 
-  usePipe(actionPipe.cancel, [abortPipe]);
+  const abortPipe = useActionPipe(ABORT_REQUEST, [mountPipe]);
+
+  usePipe(requestActionPipe.cancel, [abortPipe]);
 
   const pageDataRequestPipe = usePipe(() => {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
-  }, [actionPipe]);
+  }, [requestActionPipe]);
 
   usePipe((error) => {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
@@ -106,16 +108,17 @@ function usePageDataRequest() {
     return data;
   }, [pageDataRequestPipe]);
 
-  const friendsPipe = usePipe((data) => {
+  const friendsRequestPipe = usePipe((data) => {
     dispatch({ type: FRIENDS_REQUEST });
-    return getFriends({ userId: data.user.id });
+    // @ts-ignore
+    return getFriends({ userId: data.users.id });
   }, [pageDataPipe]);
 
   usePipe((error) => {
     dispatch({ type: FRIENDS_REQUEST_REJECT, payload: { error }});
-  }, [friendsPipe.error]);
+  }, [friendsRequestPipe.error]);
 
   usePipe((data) => {
     dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });
-  }, [friendsPipe]);
+  }, [friendsRequestPipe]);
 }

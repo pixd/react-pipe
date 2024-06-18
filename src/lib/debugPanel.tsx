@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
+import { BugSolidIcon } from './icons/BugSolidIcon';
+import { DatabaseSolidIcon } from './icons/DatabaseSolidIcon';
 import { HeartSolidIcon } from './icons/HeartSolidIcon';
+import { HomeAltSolidIcon } from './icons/HomeAltSolidIcon';
 import { LockSolidIcon } from './icons/LockSolidIcon';
 import { TintSolidIcon } from './icons/TintSolidIcon';
 import { TrashSolidIcon } from './icons/TrashSolidIcon';
 import { createInstruction } from './instruction';
+import { MOUNT_STREAM_HEAD } from './mountStreamHead';
 import { DEBUG_INSTRUCTION_TYPE, BasePipe, Debugger, PipeState, StreamGroup, StreamGroups }
   from './types';
 
@@ -27,11 +31,21 @@ type PipeFrame = {
   maxErrorConnectionLevel: number;
   maxDataEntryLevel: number;
   maxErrorEntryLevel: number;
+  emitStreamFrames: EmitStreamFrame[];
 };
 
 type StreamGroupFrame = {
   deleted: boolean;
   data: StreamGroup;
+};
+
+type StreamValueType = 'data' | 'error';
+
+type EmitStreamFrame = {
+  streamHead: symbol;
+  value: any;
+  valueType: StreamValueType;
+  released: boolean;
 };
 
 const getDefaultPipeFrame = (): Omit<PipeFrame, 'displayName' | 'pipeState'> => {
@@ -40,11 +54,12 @@ const getDefaultPipeFrame = (): Omit<PipeFrame, 'displayName' | 'pipeState'> => 
     streamGroupFrames: [],
     streamEntries: [],
     maxDataLevel: 0,
-    maxDataConnectionLevel: 0,
     maxErrorLevel: 0,
+    maxDataConnectionLevel: 0,
     maxErrorConnectionLevel: 0,
     maxDataEntryLevel: 0,
     maxErrorEntryLevel: 0,
+    emitStreamFrames: [],
   };
 };
 
@@ -109,8 +124,9 @@ export function initDebugPanel() {
       deleted: false,
     };
 
-    let streamGroupFrames = addStreamGroupFrame(pipeFrame.streamGroupFrames, streamGroupFrame);
+    let [streamGroupFrames] = addStreamGroupFrame(pipeFrame.streamGroupFrames, streamGroupFrame);
     streamGroupFrames = updateStreamGroupFrames(streamGroupFrames, data.pipeState.streamGroups);
+    const emitStreamFrames = updateEmitStreamFrames(pipeFrame.emitStreamFrames, data.pipeState.streamGroups);
 
     const pipeFrames = [...state.pipeFrames];
 
@@ -118,6 +134,35 @@ export function initDebugPanel() {
       ...pipeFrame,
       pipeState: data.pipeState,
       streamGroupFrames,
+      emitStreamFrames,
+    };
+
+    updatePanel({
+      ...state,
+      pipeFrames,
+    });
+  };
+
+  const onEmit = (data: { streamHead: symbol, value: any, valueType: StreamValueType, streamGroup: StreamGroup, pipeState: PipeState }) => {
+    const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
+      return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
+    });
+
+    const pipeFrame = state.pipeFrames[pipeFrameIndex];
+
+    const emitStreamFrame = { streamHead: data.streamHead, value: data.value, valueType: data.valueType, released: false };
+
+    const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
+    let [emitStreamFrames] = addEmitStreamFrame(pipeFrame.emitStreamFrames, emitStreamFrame);
+    emitStreamFrames = updateEmitStreamFrames(emitStreamFrames, data.pipeState.streamGroups);
+
+    const pipeFrames = [...state.pipeFrames];
+
+    pipeFrames[pipeFrameIndex] = {
+      ...pipeFrame,
+      pipeState: data.pipeState,
+      streamGroupFrames,
+      emitStreamFrames,
     };
 
     updatePanel({
@@ -134,6 +179,7 @@ export function initDebugPanel() {
     const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
     const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
+    const emitStreamFrames = updateEmitStreamFrames(pipeFrame.emitStreamFrames, data.pipeState.streamGroups);
 
     const pipeFrames = [...state.pipeFrames];
 
@@ -141,6 +187,7 @@ export function initDebugPanel() {
       ...pipeFrame,
       pipeState: data.pipeState,
       streamGroupFrames,
+      emitStreamFrames,
     };
 
     updatePanel({
@@ -152,45 +199,61 @@ export function initDebugPanel() {
   const createDebugger = (displayName: string = 'unknown'): Debugger => {
     return {
       onPipeCreate: (data) => {
+        console.log('onPipeCreate', data);
         onPipeCreate(displayName, data);
       },
       onPipeCancel: (data) => {
+        console.log('onPipeCancel', data);
         updatePipeState(data);
       },
       onPipeCanceled: (data) => {
+        console.log('onPipeCanceled', data);
         updatePipeState(data);
       },
+      onMountStream: (data) => {
+        console.log('onMountStream', data);
+        onParentPipeStream(data);
+      },
       onParentPipeStream: (data) => {
+        console.log('onParentPipeStream', data);
         onParentPipeStream(data);
       },
       onParentPipeTerminate: (data) => {
+        console.log('onParentPipeTerminate', data);
         updatePipeState(data);
       },
       onParentPipeTerminated: (data) => {
+        console.log('onParentPipeTerminated', data);
         updatePipeState(data);
       },
       onStreamGroupFulfill: (data) => {
+        console.log('onStreamGroupFulfill', data);
         updatePipeState(data);
       },
       onStreamRelease: (data) => {
+        console.log('onStreamRelease', data);
         updatePipeState(data);
       },
       onStreamGroupFinished: (data) => {
+        console.log('onStreamGroupFinished', data);
         updatePipeState(data);
       },
       onStreamGroupRelease: (data) => {
+        console.log('onStreamGroupRelease', data);
         updatePipeState(data);
       },
       onStreamGroupReleased: (data) => {
+        console.log('onStreamGroupReleased', data);
         updatePipeState(data);
       },
       onStreamGroupTerminate: (data) => {
+        console.log('onStreamGroupTerminate', data);
         updatePipeState(data);
       },
-      onStreamEmit: (data) => {},
-      onStreamFinalEmit: (data) => {},
-      onErrorEmit: (data) => {},
-      onErrorFinalEmit: (data) => {},
+      onEmit: (data) => {
+        console.log('onEmit', data);
+        onEmit(data);
+      },
     }
   };
 
@@ -234,7 +297,14 @@ function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): [PipeFr
     ...pipeFrames.map((pipe) => {
       return {
         ...pipe,
-        ...getDefaultPipeFrame(),
+        streamConnections: [],
+        streamEntries: [],
+        maxDataLevel: 0,
+        maxErrorLevel: 0,
+        maxDataConnectionLevel: 0,
+        maxErrorConnectionLevel: 0,
+        maxDataEntryLevel: 0,
+        maxErrorEntryLevel: 0,
       } as PipeFrame;
     }),
     newPipeFrame,
@@ -288,8 +358,8 @@ function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): [PipeFr
         const sourceUniqKey = destination.pipeState.dataPipe.uniqKey;
         const destinationUniqKey = source.pipeState.errorPipe.uniqKey;
 
-        nextPipeFrames.slice(sourceIndex + 1, destinationIndex).forEach((pipeData) => {
-          pipeData.streamConnections.push({
+        nextPipeFrames.slice(sourceIndex + 1, destinationIndex).forEach((pipeFrame) => {
+          pipeFrame.streamConnections.push({
             type: upstreamPipe.type,
             directionType: 'pass-through',
             lineGlobalIndex,
@@ -297,7 +367,7 @@ function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): [PipeFr
             source: sourceUniqKey,
             destination: destinationUniqKey,
           });
-          pipeData[maxLevelProp] = Math.max(pipeData[maxLevelProp], level);
+          pipeFrame[maxLevelProp] = Math.max(pipeFrame[maxLevelProp], level);
         });
 
         source.streamConnections.push({
@@ -351,7 +421,7 @@ function getUpstreamPipeParams(upstreamPipe: BasePipe, pipeFrames: PipeFrame[]):
   return [sourceIndex, level];
 }
 
-function addStreamGroupFrame(streamGroupFrames: StreamGroupFrame[], newStreamGroupFrame: StreamGroupFrame): StreamGroupFrame[] {
+function addStreamGroupFrame(streamGroupFrames: StreamGroupFrame[], newStreamGroupFrame: StreamGroupFrame): [StreamGroupFrame[]] {
   const streamGroupFrameIndex = streamGroupFrames.findIndex((streamGroupFrame) => {
     return streamGroupFrame.data.uniqKey === newStreamGroupFrame.data.uniqKey;
   })
@@ -359,13 +429,16 @@ function addStreamGroupFrame(streamGroupFrames: StreamGroupFrame[], newStreamGro
   const nextStreamGroupFrames = [...streamGroupFrames];
 
   if (streamGroupFrameIndex > -1) {
-    nextStreamGroupFrames[streamGroupFrameIndex] = newStreamGroupFrame;
+    nextStreamGroupFrames[streamGroupFrameIndex] = {
+      ...nextStreamGroupFrames[streamGroupFrameIndex],
+      data: newStreamGroupFrame.data,
+    };
   }
   else {
     nextStreamGroupFrames.push(newStreamGroupFrame);
   }
 
-  return nextStreamGroupFrames;
+  return [nextStreamGroupFrames]
 }
 
 function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], streamGroups: StreamGroups): any {
@@ -378,6 +451,7 @@ function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], streamGr
       return {
         ...streamGroupFrame,
         data: streamGroups[streamHead],
+        deleted: false,
       };
     }
     else {
@@ -386,6 +460,35 @@ function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], streamGr
         deleted: true,
       }
     }
+  });
+}
+
+function addEmitStreamFrame(emitStreamFrames: EmitStreamFrame[], newEmitStreamFrame: EmitStreamFrame): [EmitStreamFrame[]] {
+  const nextEmitStreamFrames = [
+    ...emitStreamFrames,
+    newEmitStreamFrame,
+  ];
+
+  return [nextEmitStreamFrames];
+}
+
+function updateEmitStreamFrames(emitStreamFrames: EmitStreamFrame[], streamGroups: StreamGroups) {
+  return emitStreamFrames.map((emitStreamFrame) => {
+    const released = Object.getOwnPropertySymbols(streamGroups).every((streamHead) => {
+      return null
+      ?? (Object.getOwnPropertySymbols(streamGroups[streamHead].emitValueGroups).find((emitGroupStreamHead) => {
+        return emitGroupStreamHead === emitStreamFrame.streamHead && ! streamGroups[streamHead].emitValueGroups[emitGroupStreamHead].every(Boolean);
+      }) && false)
+      ?? (Object.getOwnPropertySymbols(streamGroups[streamHead].emitErrorGroups).find((emitGroupStreamHead) => {
+        return emitGroupStreamHead === emitStreamFrame.streamHead && ! streamGroups[streamHead].emitErrorGroups[emitGroupStreamHead].every(Boolean);
+      }) && false)
+      ?? true;
+    });
+
+    return {
+      ...emitStreamFrame,
+      released,
+    };
   });
 }
 
@@ -428,15 +531,15 @@ function Panel(props: AppProps) {
 const pipeBoxWidth = 0.2;
 const pipeBoxRadius = 0.4;
 const lineSpace = 1.3;
-const inShift = 1.7;
-const inGap = 1.4;
+const inShift = 1.84;
+const inGap = 1.1;
 const inTapLength = 0;
-const outShift = 3.4;
-const outGap = 1.4;
-const centerGap = 1.4;
+const outShift = 3.2;
+const outGap = 1.2;
+const centerGap = 0.8;
 const borderRadius = 0.4;
 const lineWidth = 0.2;
-const shadowWidth = 0.6;
+const shadowWidth = 0.46;
 const heelWidth = 0.38;
 const heelLength = 0.8;
 const holeWidth = 0.16;
@@ -445,6 +548,7 @@ const holeLength = 0.46;
 const shadowShift = round((shadowWidth - lineWidth) / 2);
 const heelShift = round((heelWidth - lineWidth) / 2);
 const heelRadius = round(borderRadius + heelShift);
+const pipeInnerBoxRadius = round(pipeBoxRadius - pipeBoxWidth);
 
 type PipeProps = {
   maxPipeLineIndex: number;
@@ -467,15 +571,6 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
 
   const baseOutDataWidth = round((pipe.maxDataConnectionLevel - 1) * lineSpace + outGap);
   const baseOutErrorWidth = round((pipe.maxErrorConnectionLevel - 1) * lineSpace + outGap);
-
-  const dataClassName = [
-    'ReactPipeDebugPanel-PipeData',
-    pipe.streamEntries.length > 0 ? 'ReactPipeDebugPanel-PipeConnected' : null,
-  ].filter(Boolean).join(' ');
-  const outClassName = [
-    'ReactPipeDebugPanel-PipeOut',
-    pipe.streamConnections.filter((connection) => connection.directionType === 'connection').length > 0 ? 'ReactPipeDebugPanel-PipeConnected' : null,
-  ].filter(Boolean).join(' ');
 
   return (
     <div className="ReactPipeDebugPanel-Pipe" style={style}>
@@ -608,53 +703,112 @@ const Pipe = React.memo(function Pipe(props: PipeProps) {
       <div className="ReactPipeDebugPanel-PipeBody"
         onClick={() => handlePipeClick(pipe)}
       >
-        <div className={dataClassName}>
-          {pipe.streamGroupFrames.map((streamGroup, index) => {
-            return (
-              <div key={index} className="ReactPipeDebugPanel-StreamGroup">
-                <div className="ReactPipeDebugPanel-StreamGroupMembers">
-                  {streamGroup.data.members.map((member, index) => {
-                    const className = [
-                      'ReactPipeDebugPanel-StreamGroupMember',
-                      member ? 'ReactPipeDebugPanel-StreamGroupStatus-Success' : 'ReactPipeDebugPanel-StreamGroupStatus-Muted',
-                    ].join(' ');
+        <div className="ReactPipeDebugPanel-PipeData">
+          {pipe.streamGroupFrames.length === 0
+            ? (
+              <div className="ReactPipeDebugPanel-StreamGroup" style={{ visibility: 'hidden' }}>
+                <div className="ReactPipeDebugPanel-StreamGroupMember" />
+              </div>
+            )
+            : pipe.streamGroupFrames.map((streamGroupFrame, index) => {
+              const className = [
+                'ReactPipeDebugPanel-StreamGroup',
+                streamGroupFrame.data.status === 'finished' && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+              ].filter(Boolean).join(' ');
 
-                    return (
-                      <div key={index} className={className}>
-                        <TintSolidIcon />
+              return (
+                <div key={index} className={className}>
+                  {streamGroupFrame.data.streamHead === MOUNT_STREAM_HEAD
+                    ? (
+                      <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-StreamGroupStatus-Success">
+                        <HomeAltSolidIcon />
                       </div>
-                    );
-                  })}
-                  {streamGroup.data.status === 'finished'
-                    ? streamGroup.deleted
-                      ? (
-                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Warning">
-                          <TrashSolidIcon />
+                    )
+                    : streamGroupFrame.data.members.map((member, index) => {
+                      const className = [
+                        'ReactPipeDebugPanel-StreamGroupMember',
+                        'ReactPipeDebugPanel-TintSolidIcon',
+                        member ? 'ReactPipeDebugPanel-StreamGroupStatus-Success' : 'ReactPipeDebugPanel-StreamGroupStatus-Muted',
+                      ].join(' ');
+
+                      return (
+                        <div key={index + className} className={className}>
+                          <TintSolidIcon />
                         </div>
-                      )
-                      : (
-                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Warning">
+                      );
+                    })}
+                  {streamGroupFrame.data.status === 'finished'
+                    ? streamGroupFrame.deleted
+                      ? (
+                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Warning ReactPipeDebugPanel-TrashSolidIcon">
                           <LockSolidIcon />
                         </div>
                       )
-                    : streamGroup.data.status === 'active'
+                      : (
+                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Warning ReactPipeDebugPanel-LockSolidIcon">
+                          <LockSolidIcon />
+                        </div>
+                      )
+                    : streamGroupFrame.data.status === 'active'
                       ? (
-                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Active ReactPipeDebugPanel-StreamGroupStatus-Pulse">
-                          <HeartSolidIcon />
+                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Active ReactPipeDebugPanel-StreamGroupStatus-Pulse ReactPipeDebugPanel-HeartSolidIcon">
+                          <HeartSolidIcon key="a" />
                         </div>
                       )
                       : (
-                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Muted">
-                          <HeartSolidIcon />
+                        <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-StreamGroupStatus-Muted ReactPipeDebugPanel-HeartSolidIcon">
+                          <HeartSolidIcon key="b" />
                         </div>
                       )}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
-        <div className={outClassName}>
+        <div className="ReactPipeDebugPanel-PipeOut">
+          <div className="ReactPipeDebugPanel-EmitDataOut">
+            {pipe.emitStreamFrames.filter((emitStreamFrame) => emitStreamFrame.valueType === 'data').length === 0
+              ? (
+                <div className="ReactPipeDebugPanel-StreamGroup" style={{ visibility: 'hidden' }}>
+                  <div className="ReactPipeDebugPanel-StreamGroupMember" />
+                </div>
+              )
+              : pipe.emitStreamFrames.filter((emitStreamFrame) => emitStreamFrame.valueType === 'data').map((emitStreamFrame, index) => {
+                const className = [
+                  'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-DatabaseSolidIcon ReactPipeDebugPanel-StreamGroupStatus-Success',
+                  emitStreamFrame.released ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+                ].filter(Boolean).join(' ');
 
+                return (
+                  <div key={index} className="ReactPipeDebugPanel-StreamGroup">
+                    <div className={className}>
+                      <DatabaseSolidIcon key={className} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div className="ReactPipeDebugPanel-EmitErrorOut">
+            {pipe.emitStreamFrames.filter((emitStreamFrame) => emitStreamFrame.valueType === 'error').length === 0
+              ? (
+                <div className="ReactPipeDebugPanel-StreamGroup" style={{ visibility: 'hidden' }}>
+                  <div className="ReactPipeDebugPanel-StreamGroupMember" />
+                </div>
+              )
+              : pipe.emitStreamFrames.filter((emitStreamFrame) => emitStreamFrame.valueType === 'error').map((emitStreamFrame, index) => {
+                const className = [
+                  'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-BugSolidIcon ReactPipeDebugPanel-StreamGroupStatus-Error',
+                  emitStreamFrame.released ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+                ].filter(Boolean).join(' ');
+
+                return (
+                  <div key={index} className="ReactPipeDebugPanel-StreamGroup">
+                    <div className={className}>
+                      <BugSolidIcon key={className} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
         </div>
       </div>
       <div className="ReactPipeDebugPanel-PipeName">
@@ -670,13 +824,12 @@ function round(value: number) {
 
 const lineColor = '#5d6e7e';
 const heelColor = '#758596';
-const shadowColor = '#282c34';
 const pipeBoxColor = '#758596';
-const streamGroupMemberHeight = 0.9;
 const mutedStatusColor = '#4b515f';
 const activeStatusColor = '#3d94ba';
 const successStatusColor = '#3dba67';
 const warningStatusColor = '#ba7f3d';
+const errorStatusColor = '#cd5656';
 
 const styles = `
   .ReactPipeDebugPanel {
@@ -759,10 +912,11 @@ const styles = `
     width: 100%;
   }
 
+  .ReactPipeDebugPanel-DataOut > div:before,
   .ReactPipeDebugPanel-PathThrough > div:before,
   .ReactPipeDebugPanel-DataEntry > div:before,
   .ReactPipeDebugPanel-ErrorEntry > div:before {
-    background-color: ${shadowColor};
+    background-color: ${BACKGROUND_COLOR};
   }
 
   .ReactPipeDebugPanel-DataOut > div:after,
@@ -773,6 +927,7 @@ const styles = `
     background-color: ${lineColor};
   }
 
+  .ReactPipeDebugPanel-DataOut > div:before,
   .ReactPipeDebugPanel-DataEntry > div:nth-child(2):before,
   .ReactPipeDebugPanel-ErrorEntry > div:nth-child(2):before {
     height: ${shadowWidth}em;
@@ -780,10 +935,10 @@ const styles = `
   }
 
   .ReactPipeDebugPanel-PathThrough > div:before,
-  .ReactPipeDebugPanel-DataEntry > div:first-child:before,
-  .ReactPipeDebugPanel-DataEntry > div:last-child:before,
-  .ReactPipeDebugPanel-ErrorEntry > div:first-child:before,
-  .ReactPipeDebugPanel-ErrorEntry > div:last-child:before {
+  .ReactPipeDebugPanel-DataEntry > div:nth-child(1):before,
+  .ReactPipeDebugPanel-DataEntry > div:nth-child(3):before,
+  .ReactPipeDebugPanel-ErrorEntry > div:nth-child(1):before,
+  .ReactPipeDebugPanel-ErrorEntry > div:nth-child(3):before {
     left: -${shadowShift}em;
     width: ${shadowWidth}em;
   }
@@ -907,48 +1062,69 @@ const styles = `
     border-radius: ${pipeBoxRadius}em;
     cursor: pointer;
     position: relative;
+    width: 35em;
     z-index: 1;
   }
 
   .ReactPipeDebugPanel-PipeData {
     display: flex;
     padding: 0.4em;
-    width: 35em;
-  }
-  
-  .ReactPipeDebugPanel-PipeOut {
-    background-color: ${ALT_BACKGROUND_COLOR};
-    border-top: 1px dashed #4e5b6a;
-    padding: 0.4em;
+    position: relative;
   }
 
-  .ReactPipeDebugPanel-PipeConnected {
-    min-height: 3.2em;
+  .ReactPipeDebugPanel-PipeOut {
+    justify-content: space-between;
+    border-top: 1px dashed #3e4551;
+    display: flex;
+  }
+
+  .ReactPipeDebugPanel-EmitDataOut {
+    background-color: ${ALT_BACKGROUND_COLOR};
+    border-radius: 0 0 0 ${pipeInnerBoxRadius}em;
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    padding: 0.4em;
+    position: relative;
+  }
+
+  .ReactPipeDebugPanel-EmitErrorOut {
+    background-color: #322c2c;
+    border-left: 1px dashed #3e4551;
+    border-radius: 0 0 ${pipeInnerBoxRadius}em 0;
+    display: flex;
+    overflow: hidden;
+    padding: 0.4em;
+    position: relative;
+    width: 8em;
   }
 
   .ReactPipeDebugPanel-StreamGroup {
+    align-items: center;
     background: #242933;
     border: 0.1em solid #222427;
     border-radius: 0.2em;
+    display: flex;
     height: fit-content;
     margin-right: 0.4em;
     padding: 0.5em 0.6em;
   }
 
-  .ReactPipeDebugPanel-StreamGroupMembers {
+  .ReactPipeDebugPanel-StreamGroupMember {
     align-items: center;
     display: flex;
+    justify-content: center;
+    height: 1em;
+    width: 1em;
   }
 
-  .ReactPipeDebugPanel-StreamGroupMember {}
-
   .ReactPipeDebugPanel-StreamGroupMember svg {
+    animation: pulse 1.6s;
     display: block;
-    height: ${streamGroupMemberHeight}em;
   }
 
   .ReactPipeDebugPanel-StreamGroupMember + .ReactPipeDebugPanel-StreamGroupMember {
-    margin-left: 0.7em;
+    margin-left: 0.3em;
   }
 
   .ReactPipeDebugPanel-StreamGroupStatus-Muted svg {
@@ -967,30 +1143,65 @@ const styles = `
     fill: ${warningStatusColor};
   }
 
+  .ReactPipeDebugPanel-StreamGroupStatus-Error svg {
+    fill: ${errorStatusColor};
+  }
+
   .ReactPipeDebugPanel-StreamGroupStatus-Pulse svg {
-    animation: pulse 2s infinite;
+    animation: pulse 1.6s infinite;
+  }
+
+  .ReactPipeDebugPanel-DatabaseSolidIcon svg {
+    width: 0.76em;
+  }
+
+  .ReactPipeDebugPanel-BugSolidIcon svg {
+    width: 0.9em;
+  }
+
+  .ReactPipeDebugPanel-HeartSolidIcon svg {
+    width: 0.96em;
+  }
+
+  .ReactPipeDebugPanel-LockSolidIcon svg {
+    width: 0.8em;
+  }
+
+  .ReactPipeDebugPanel-TrashSolidIcon svg {
+    width: 0.8em;
+  }
+
+  .ReactPipeDebugPanel-TintSolidIcon svg {
+    width: 0.64em;
+  }
+
+  .ReactPipeDebugPanel-HomeAltSolidIcon svg {
+    width: 1em;
+  }
+
+  .ReactPipeDebugPanel-InactiveIcon svg {
+    opacity: 0.4;
   }
 
   .ReactPipeDebugPanel-PipeName {
-    font-size: 0.9em;
-    padding: 0.3em 0 0.6em 0.6em;
-    _text-align: center;
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
   }
 
   @keyframes pulse {
     0% {
       transform: scale(1);
     }
-    80% {
+    5% {
       transform: scale(0.9);
     }
-    85% {
+    10% {
       transform: scale(1.2);
     }
-    90% {
+    15% {
       transform: scale(0.9);
     }
-    95% {
+    20% {
       transform: scale(1);
     }
   }

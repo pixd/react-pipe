@@ -1,1 +1,1 @@
-export const mountStreamHead = Symbol('MOUNT_STREAM_HEAD');
+export const MOUNT_STREAM_HEAD = Symbol('MOUNT_STREAM_HEAD');
