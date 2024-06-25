@@ -1,0 +1,1 @@
+export { initDebugPanel } from './main';

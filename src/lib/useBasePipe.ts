@@ -370,6 +370,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
   dataPipe.error = errorPipe;
 
   if (process.env.NODE_ENV === 'development') {
+    displayName && (state.displayName = displayName);
     displayName = displayName || 'unknown';
     debugInstruction = getDebugInstruction(adjuncts);
     debug = debugInstruction?.createDebugger(displayName) ?? null;

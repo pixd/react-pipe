@@ -8,6 +8,7 @@ export type PipeState<
   TError extends any = any,
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
+  displayName?: string;
   upstreamPipes: UpstreamPipes<TAdjuncts>;
   streamGroups: StreamGroups<TAdjuncts>;
   dataPipe: CommonPipeState<TValue>;

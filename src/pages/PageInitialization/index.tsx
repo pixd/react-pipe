@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect } from 'react';
 
 import { getFriends, getUser } from '../../api';
-import { initDebugPanel, useActionPipe, useMountPipe, usePipe } from '../../lib';
+import { useActionPipe, useMountPipe, usePipe } from '../../lib';
+import { initDebugPanel } from '../../lib/debug-panel';
 import { useDispatch, useSelector } from '../../store';
 import { ABORT_REQUEST, FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT,
   PAGE_REFRESH, PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_REJECT, PAGE_DATA_REQUEST_RESOLVE,
@@ -88,37 +89,36 @@ function usePageDataRequest() {
 
   const mountPipe = useMountPipe([debugPanel]);
 
-  const requestActionPipe = useActionPipe([PAGE_INIT, PAGE_REFRESH], [mountPipe]);
+  const requestActionsPipe = useActionPipe([PAGE_INIT, PAGE_REFRESH], [mountPipe]);
 
-  const abortPipe = useActionPipe(ABORT_REQUEST, [mountPipe]);
+  const abortRequestPipe = useActionPipe(ABORT_REQUEST, [mountPipe]);
 
-  usePipe(requestActionPipe.cancel, [abortPipe]);
+  usePipe(requestActionsPipe.cancel, [abortRequestPipe]);
 
-  const pageDataRequestPipe = usePipe(() => {
+  const pageDataRequestPipe = usePipe(function pageDataRequestPipe() {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
-  }, [requestActionPipe]);
+  }, [requestActionsPipe]);
 
-  usePipe((error) => {
+  usePipe(function pageDataRequestRejectPipe(error) {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
   }, [pageDataRequestPipe.error]);
 
-  const pageDataPipe = usePipe((data) => {
+  const pageDataRequestResolvePipe = usePipe(function pageDataRequestResolvePipe(data) {
     dispatch({ type: PAGE_DATA_REQUEST_RESOLVE, payload: data });
     return data;
   }, [pageDataRequestPipe]);
 
-  const friendsRequestPipe = usePipe((data) => {
+  const friendsRequestPipe = usePipe(function friendsRequestPipe(data) {
     dispatch({ type: FRIENDS_REQUEST });
-    // @ts-ignore
-    return getFriends({ userId: data.users.id });
-  }, [pageDataPipe]);
+    return getFriends({ userId: data.user.id });
+  }, [pageDataRequestResolvePipe]);
 
-  usePipe((error) => {
+  usePipe(function friendsRequestRejectPipe(error) {
     dispatch({ type: FRIENDS_REQUEST_REJECT, payload: { error }});
   }, [friendsRequestPipe.error]);
 
-  usePipe((data) => {
+  usePipe(function friendsRequestResolvePipe(data) {
     dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });
   }, [friendsRequestPipe]);
 }

@@ -18,14 +18,14 @@ export type StreamGroup<
 
 export type StreamGroupMembers<
   TAdjuncts extends any = any,
-> = TAdjuncts extends (infer TAdjunct)[]
-  ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
-    ? (null | Stream<TValue>)[]
-    : []
-  : TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
-    ? TAdjunct extends BasePipe<infer TValue>
-      ? [null | Stream<TValue>, ...StreamGroupMembers<TRestAdjuncts>]
-      : StreamGroupMembers<TRestAdjuncts>
+> = TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
+  ? TAdjunct extends BasePipe<infer TValue>
+    ? [null | Stream<TValue>, ...StreamGroupMembers<TRestAdjuncts>]
+    : StreamGroupMembers<TRestAdjuncts>
+  : TAdjuncts extends (infer TAdjunct)[]
+    ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
+      ? (null | Stream<TValue>)[]
+      : []
     : [];
 
 export type StreamGroups<
@@ -34,12 +34,12 @@ export type StreamGroups<
 
 export type StreamGroupValues<
   TAdjuncts extends any[] = any[],
-> = TAdjuncts extends (infer TAdjunct)[]
-  ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
-    ? TValue[]
-    : []
-  : TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
-    ? TAdjunct extends BasePipe<infer TValue>
-      ? [TValue, ...StreamGroupValues<TRestAdjuncts>]
-      : StreamGroupValues<TRestAdjuncts>
+> = TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
+  ? TAdjunct extends BasePipe<infer TValue>
+    ? [TValue, ...StreamGroupValues<TRestAdjuncts>]
+    : StreamGroupValues<TRestAdjuncts>
+  : TAdjuncts extends (infer TAdjunct)[]
+    ? Extract<TAdjunct, BasePipe> extends BasePipe<infer TValue>
+      ? TValue[]
+      : []
     : [];

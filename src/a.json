@@ -1,0 +1,25 @@
+{
+  "buttons": [
+    {
+      "id": 19,
+      "name": "Заявки РОО",
+      "typeUrl": 1,
+      "urlTargetSystem": "/smbq/ro-office/ReactApp.js",
+      "applicationName": "ReactApp",
+      "mainComponent": "./App",
+      "processName": "ro-office",
+      "orderNum": 19,
+      "isActive": true,
+      "isWoClient": true,
+      "isWoRepresentative": true,
+      "accessRoles": [
+        "FRCORP-MANAGER_ACQUIRING",
+        "FRCORP-TELLER_US",
+        "FRCORP-HEAD_TELLER_US",
+        "FRCORP-LEADER_MANAGER_MS",
+        "FRCORP-LEADER_MANAGER_SS"
+      ],
+      "comment": "Заявки регионального операционного офиса"
+    }
+  ]
+}
