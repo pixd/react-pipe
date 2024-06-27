@@ -1,6 +1,6 @@
 import { Stream } from './Stream';
 
-export type OnParentStream<
+export type OnParentPipeStreamEmit<
   TValue extends any = any,
 > = {
   (

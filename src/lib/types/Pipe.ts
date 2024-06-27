@@ -15,7 +15,7 @@ export type BasePipe<
   debugInstruction: null | DebugInstruction;
   connect: Connect<TValue>;
   emit: (value: TValue) => void;
-  cancel: () => void;
+  reset: () => void;
   die: () => void;
 };
 

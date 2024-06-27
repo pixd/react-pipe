@@ -25,13 +25,13 @@ function createDebugger(displayName: string ='unknown'): Debugger {
       console.log('%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
-    onPipeCancel: (data) => {
-      console.groupCollapsed(`%c ${displayName}:%c pipe is canceling`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+    onPipeReset: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c pipe is resetting`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
       console.log('%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
-    onPipeCanceled: (data) => {
-      console.groupCollapsed(`%c ${displayName}:%c pipe canceled`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+    onPipeResetted: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c pipe resetted`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
       console.log('%c prev pipe state  ', 'font-weight: bold; color: #9E9E9E;', data.prevPipeState);
       console.log('%c next pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
@@ -44,7 +44,7 @@ function createDebugger(displayName: string ='unknown'): Debugger {
       console.log('%c next pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
-    onParentPipeStream: (data) => {
+    onParentPipeStreamEmit: (data) => {
       console.groupCollapsed(`%c ${displayName}:%c pipe received a stream`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
       console.log('%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex);
       console.log('%c stream head      ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
@@ -54,15 +54,15 @@ function createDebugger(displayName: string ='unknown'): Debugger {
       console.log('%c next pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
-    onParentPipeTerminate: (data) => {
-      console.groupCollapsed(`%c ${displayName}:%c pipe is terminating`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+    onParentPipeStreamTerminate: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c pipe is terminating a stream`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
       console.log('%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex);
       console.log('%c stream head      ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
       console.log('%c pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
-    onParentPipeTerminated: (data) => {
-      console.groupCollapsed(`%c ${displayName}:%c pipe terminated`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+    onParentPipeStreamTerminated: (data) => {
+      console.groupCollapsed(`%c ${displayName}:%c pipe terminated a stream`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
       console.log('%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex);
       console.log('%c stream head      ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
       console.log('%c prev pipe state  ', 'font-weight: bold; color: #9E9E9E;', data.prevPipeState);

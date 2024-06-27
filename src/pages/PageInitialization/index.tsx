@@ -93,7 +93,7 @@ function usePageDataRequest() {
 
   const abortRequestPipe = useActionPipe(ABORT_REQUEST, [mountPipe]);
 
-  usePipe(requestActionsPipe.cancel, [abortRequestPipe]);
+  usePipe(requestActionsPipe.reset, [abortRequestPipe]);
 
   const pageDataRequestPipe = usePipe(function pageDataRequestPipe() {
     dispatch({ type: PAGE_DATA_REQUEST });

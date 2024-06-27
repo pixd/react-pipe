@@ -6,6 +6,7 @@ export type PanelState = {
   maxPipeLineIndex: number;
   maxDataLevel: number;
   maxErrorLevel: number;
+  selectedPipe: null | symbol;
 };
 
 export type PipeFrame = {

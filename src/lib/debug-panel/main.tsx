@@ -21,6 +21,7 @@ const initialState: PanelState = {
   maxPipeLineIndex: 0,
   maxDataLevel: 0,
   maxErrorLevel: 0,
+  selectedPipe: null,
 };
 
 export function initDebugPanel() {
@@ -46,21 +47,21 @@ export function initDebugPanel() {
     </>
   );
 
-  const createDebugger = (displayName: any): Debugger => {
+  const createDebugger = (): Debugger => {
     return {
       onPipeCreate: (data) => {
         updatePanel((state) => {
           return onLog(onPipeCreate(state, data), { name: 'onPipeCreate', data });
         });
       },
-      onPipeCancel: (data) => {
+      onPipeReset: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onPipeCreate', data });
+          return onLog(updatePipeState(state, data), { name: 'onPipeReset', data });
         });
       },
-      onPipeCanceled: (data) => {
+      onPipeResetted: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onPipeCanceled', data });
+          return onLog(updatePipeState(state, data), { name: 'onPipeResetted', data });
         });
       },
       onMountStream: (data) => {
@@ -68,19 +69,19 @@ export function initDebugPanel() {
           return onLog(onParentPipeStream(state, data), { name: 'onMountStream', data });
         });
       },
-      onParentPipeStream: (data) => {
+      onParentPipeStreamEmit: (data) => {
         updatePanel((state) => {
-          return onLog(onParentPipeStream(state, data), { name: 'onParentPipeStream', data });
+          return onLog(onParentPipeStream(state, data), { name: 'onParentPipeStreamEmit', data });
         });
       },
-      onParentPipeTerminate: (data) => {
+      onParentPipeStreamTerminate: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onParentPipeTerminate', data });
+          return onLog(updatePipeState(state, data), { name: 'onParentPipeStreamTerminate', data });
         });
       },
-      onParentPipeTerminated: (data) => {
+      onParentPipeStreamTerminated: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onParentPipeTerminated', data });
+          return onLog(updatePipeState(state, data), { name: 'onParentPipeStreamTerminated', data });
         });
       },
       onStreamGroupFulfill: (data) => {

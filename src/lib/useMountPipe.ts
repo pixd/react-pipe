@@ -14,7 +14,7 @@ export function useMountPipe<
 
   useEffect(() => {
     pipe.emit(null);
-    return () => pipe.cancel();
+    return () => pipe.reset();
   }, [pipe]);
 
   return pipe;
