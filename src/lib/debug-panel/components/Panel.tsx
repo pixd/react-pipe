@@ -1,10 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
-import { LINE_SPACE, OUT_GAP } from '../styles-constants';
-import { selectEmittedStreamFrame, selectStreamGroupFrame } from '../tools';
-import { PanelState } from '../types';
-import { ConsoleRecords } from './ConsoleRecords';
-import { Pipe } from './Pipe';
+import { selectEmittedStream, selectPipe, selectStreamGroup } from '../tools';
+import { EventTargetType, PanelState } from '../types';
+import { Console } from './Console';
+import { Schema } from './Schema';
 
 export type AppProps = {
   classNamePrefix: string;
@@ -19,48 +18,55 @@ export function Panel(props: AppProps) {
 
   subscribe(setPanelState);
 
-  const handleStreamGroupSelection = useCallback((uniqKey: symbol, selected: boolean) => {
-    setPanelState((state) => {
-      return {
-        ...state,
-        pipeFrames: selectStreamGroupFrame(uniqKey, selected, state.pipeFrames),
-      };
-    })
+  const handlePipeSelection = useCallback((uniqKey: symbol) => {
+    setPanelState((state) => selectPipe([uniqKey, uniqKey], state));
   }, []);
 
-  const handleEmittedStreamSelection = useCallback((streamHead: symbol, selected: boolean) => {
-    setPanelState((state) => {
-      return {
-        ...state,
-        pipeFrames: selectEmittedStreamFrame(streamHead, selected, state.pipeFrames),
-      };
-    })
+  const handleStreamGroupSelection = useCallback((uniqKey: [symbol, symbol]) => {
+    setPanelState((state) => selectStreamGroup(uniqKey, state));
   }, []);
 
-  const style = {
-    paddingLeft: `${panelState.maxDataLevel * LINE_SPACE + OUT_GAP}em`,
-    paddingRight: `${panelState.maxErrorLevel * LINE_SPACE + OUT_GAP}em`,
-  };
+  const handleEmittedStreamSelection = useCallback((uniqKey: [symbol, symbol]) => {
+    setPanelState((state) => selectEmittedStream(uniqKey, state));
+  }, []);
+
+  const handleEventSelect = useCallback((eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => {
+    switch (eventTargetType) {
+      case 'pipe': {
+        setPanelState((state) => selectPipe(eventTargetKey, state));
+        break;
+      }
+      case 'streamGroup': {
+        setPanelState((state) => selectStreamGroup(eventTargetKey, state));
+        break;
+      }
+      case 'stream': {
+        setPanelState((state) => selectEmittedStream(eventTargetKey, state));
+        break;
+      }
+      default: {
+        const badEventTargetType: never = eventTargetType;
+        throw new Error('Bad event target type: ' + badEventTargetType);
+      }
+    }
+  }, []);
 
   return (
     <div className="ReactPipeDebugPanel">
       <div className="ReactPipeDebugPanel-Inner">
-        <div className="ReactPipeDebugPanel-Console">
-          <ConsoleRecords
-            records={panelState.debugRecords} />
-        </div>
-        <div className="ReactPipeDebugPanel-Schema" style={style}>
-          {panelState.pipeFrames.map((pipe, index) => {
-            return (
-              <Pipe key={index}
-                maxPipeLineIndex={panelState.maxPipeLineIndex}
-                pipeFrame={pipe}
-                onStreamGroupSelection={handleStreamGroupSelection}
-                onEmittedStreamSelection={handleEmittedStreamSelection}
-              />
-            );
-          })}
-        </div>
+        <Console
+          records={panelState.debugRecords}
+          onEventSelect={handleEventSelect} />
+        <Schema
+          pipeFrames={panelState.pipeFrames}
+          maxDataLevel={panelState.maxDataLevel}
+          maxErrorLevel={panelState.maxErrorLevel}
+          selectedPipe={panelState.selectedPipe}
+          selectedStreamGroup={panelState.selectedStreamGroup}
+          selectedEmittedStream={panelState.selectedEmittedStream}
+          onPipeSelection={handlePipeSelection}
+          onStreamGroupSelection={handleStreamGroupSelection}
+          onEmittedStreamSelection={handleEmittedStreamSelection} />
       </div>
       <div className="ReactPipeDebugPanel-FakeSpace" />
     </div>

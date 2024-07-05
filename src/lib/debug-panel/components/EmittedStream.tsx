@@ -5,17 +5,20 @@ import { DatabaseSolidIcon } from '../icons/DatabaseSolidIcon';
 import { EmittedStreamFrame, StreamValueType } from '../types';
 
 export type EmittedStreamProps = {
+  pipeUniqKey: symbol;
   streamValueType: StreamValueType;
   emittedStreamFrame: EmittedStreamFrame;
-  onEmittedStreamSelection: (streamHead: symbol, selected: boolean) => void;
+  selected: boolean;
+  onEmittedStreamSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const EmittedStream = React.memo(function EmittedStream(props: EmittedStreamProps) {
-  const { streamValueType, emittedStreamFrame, onEmittedStreamSelection } = props;
+  const { pipeUniqKey, streamValueType, emittedStreamFrame, selected, onEmittedStreamSelection }
+    = props;
 
   const className = [
     'ReactPipeDebugPanel-StreamGroup',
-    emittedStreamFrame.selected ? 'ReactPipeDebugPanel-StreamGroup-Selected' : null,
+    selected ? 'ReactPipeDebugPanel-StreamGroup-Selected' : null,
   ].filter(Boolean).join(' ');
 
   const iconClassName = [
@@ -25,7 +28,7 @@ export const EmittedStream = React.memo(function EmittedStream(props: EmittedStr
   ].filter(Boolean).join(' ');
 
   const handleEmittedStreamClick = () => {
-    onEmittedStreamSelection(emittedStreamFrame.streamHead, ! emittedStreamFrame.selected);
+    onEmittedStreamSelection([pipeUniqKey, emittedStreamFrame.streamHead]);
 
     console.log({
       streamReleased: emittedStreamFrame.released,

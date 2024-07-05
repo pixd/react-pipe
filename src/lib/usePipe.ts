@@ -1,3 +1,5 @@
+// noinspection JSAnnotator,TypeScriptValidateTypes
+
 import { FINAL, Final } from './FINAL';
 import { Adjunct, StreamGroupValues, UniversalDataPipe } from './types';
 import { useBasePipe, Emit } from './useBasePipe';

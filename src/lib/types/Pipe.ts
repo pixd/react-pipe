@@ -11,12 +11,13 @@ export type BasePipe<
   entityType: typeof PIPE_ENTITY_TYPE;
   type: PipeType;
   uniqKey: symbol;
-  displayName: null | string;
-  debugInstruction: null | DebugInstruction;
+  displayName?: null | string;
+  debugInstruction?: null | DebugInstruction;
   connect: Connect<TValue>;
   emit: (value: TValue) => void;
+  throw: (error: any) => void;
   reset: () => void;
-  die: () => void;
+  terminate: () => void;
 };
 
 export type DataPipe<

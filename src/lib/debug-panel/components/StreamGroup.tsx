@@ -8,16 +8,18 @@ import { TintSolidIcon } from '../icons/TintSolidIcon';
 import { StreamGroupFrame } from '../types';
 
 export type StreamGroupProps = {
+  pipeUniqKey: symbol;
   streamGroupFrame: StreamGroupFrame;
-  onStreamGroupSelection: (uniqKey: symbol, selected: boolean) => void;
+  selected: boolean;
+  onStreamGroupSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupProps) {
-  const { streamGroupFrame, onStreamGroupSelection } = props;
+  const { pipeUniqKey, streamGroupFrame, selected, onStreamGroupSelection } = props;
 
   const className = [
     'ReactPipeDebugPanel-StreamGroup',
-    streamGroupFrame.selected ? 'ReactPipeDebugPanel-StreamGroup-Selected' : null,
+    selected ? 'ReactPipeDebugPanel-StreamGroup-Selected' : null,
   ].filter(Boolean).join(' ');
 
   const statusClassName = [
@@ -31,7 +33,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
   ].filter(Boolean).join(' ');
 
   const handleStreamGroupClick = () => {
-    onStreamGroupSelection(streamGroupFrame.data.uniqKey, ! streamGroupFrame.selected);
+    onStreamGroupSelection([pipeUniqKey, streamGroupFrame.data.uniqKey]);
 
     const members = Array(streamGroupFrame.data.members.length);
     streamGroupFrame.data.members.forEach((member, index) => {

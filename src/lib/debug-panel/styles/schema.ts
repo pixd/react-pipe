@@ -1,5 +1,5 @@
-import { ALT_BACKGROUND_COLOR, IN_GAP, MAIM_CLASS_NAME, PIPE_BORDER_RADIUS, PIPE_BORDER_WIDTH,
-  PIPE_INNER_BORDER_RADIUS } from '../styles-constants';
+import { ALT_BACKGROUND_COLOR, BACKGROUND_COLOR, IN_GAP, MAIM_CLASS_NAME, PIPE_BORDER_RADIUS,
+  PIPE_BORDER_WIDTH, PIPE_INNER_BORDER_RADIUS } from '../styles-constants';
 import { css } from '../styles-tools';
 
 const PIPE_BORDER_COLOR = '#758596';
@@ -16,11 +16,16 @@ export const styles = css`
   }
 
   .${MAIM_CLASS_NAME}-PipeBody {
+    background-color: ${BACKGROUND_COLOR};
     border: ${PIPE_BORDER_WIDTH}em solid ${PIPE_BORDER_COLOR};
     border-radius: ${PIPE_BORDER_RADIUS}em;
     position: relative;
     width: 35em;
     z-index: 1;
+  }
+
+  .${MAIM_CLASS_NAME}-Pipe-Selected .${MAIM_CLASS_NAME}-PipeBody {
+    border-color: #cfe142;
   }
 
   .${MAIM_CLASS_NAME}-PipeIn {
@@ -70,6 +75,14 @@ export const styles = css`
     z-index: 1;
   }
 
+  .${MAIM_CLASS_NAME}-StreamGroup-Selected {
+    border-color: #cfe142;
+  }
+
+  .${MAIM_CLASS_NAME}-StreamGroup-SelectedMinor {
+    border-color: #cfe142;
+  }
+
   .${MAIM_CLASS_NAME}-StreamGroupMember {
     align-items: center;
     display: flex;
@@ -85,15 +98,6 @@ export const styles = css`
 
   .${MAIM_CLASS_NAME}-StreamGroupMember + .${MAIM_CLASS_NAME}-StreamGroupMember {
     margin-left: 0.3em;
-  }
-
-  .${MAIM_CLASS_NAME}-StreamGroup-Selected,
-  .${MAIM_CLASS_NAME}-StreamGroup-SelectedMinor {
-    border-color: #556789;
-  }
-
-  .${MAIM_CLASS_NAME}-StreamGroup-Selected {
-    background-color: #3e4d6c;
   }
 
   .${MAIM_CLASS_NAME}-PipeName {

@@ -13,7 +13,7 @@ import { BACKGROUND_COLOR, COLOR, FONT_FAMILY, FONT_SIZE, MAIM_CLASS_NAME }
   from './styles-constants';
 import { addPipeFrame, addEmittedStreamFrame, addStreamGroupFrame, updateEmittedStreamFrames,
   updateStreamGroupFrames } from './tools';
-import { DebugEvent, PanelState, PipeFrame, StreamValueType } from './types';
+import { DebugEvent, DebugRecord, PanelState, PipeFrame, StreamValueType } from './types';
 
 const initialState: PanelState = {
   debugRecords: [],
@@ -22,6 +22,9 @@ const initialState: PanelState = {
   maxDataLevel: 0,
   maxErrorLevel: 0,
   selectedPipe: null,
+  selectedStreamGroup: null,
+  selectedEmittedStream: null,
+  selectedDebugRecord: null,
 };
 
 export function initDebugPanel() {
@@ -51,72 +54,172 @@ export function initDebugPanel() {
     return {
       onPipeCreate: (data) => {
         updatePanel((state) => {
-          return onLog(onPipeCreate(state, data), { name: 'onPipeCreate', data });
+          return onLog(onPipeCreate(state, data), {
+            eventTargetType: 'pipe',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
+            name: 'onPipeCreate',
+            data,
+          });
         });
       },
-      onPipeReset: (data) => {
+      onPipeResetStart: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onPipeReset', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'pipe',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
+            name: 'onPipeResetStart',
+            data,
+          });
         });
       },
-      onPipeResetted: (data) => {
+      onPipeResetComplete: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onPipeResetted', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'pipe',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
+            name: 'onPipeResetComplete',
+            data,
+          });
         });
       },
       onMountStream: (data) => {
         updatePanel((state) => {
-          return onLog(onParentPipeStream(state, data), { name: 'onMountStream', data });
+          return onLog(onStreamGroupCreate(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
+            name: 'onMountStream',
+            data,
+          });
         });
       },
       onParentPipeStreamEmit: (data) => {
         updatePanel((state) => {
-          return onLog(onParentPipeStream(state, data), { name: 'onParentPipeStreamEmit', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
+            name: 'onParentPipeStreamEmit',
+            data,
+          });
         });
       },
-      onParentPipeStreamTerminate: (data) => {
+      onParentPipeStreamTerminateStart: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onParentPipeStreamTerminate', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
+            name: 'onParentPipeStreamTerminateStart',
+            data,
+          });
         });
       },
-      onParentPipeStreamTerminated: (data) => {
+      onParentPipeStreamTerminateComplete: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onParentPipeStreamTerminated', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
+            name: 'onParentPipeStreamTerminateComplete',
+            data,
+          });
+        });
+      },
+      onStreamGroupCreate: (data) => {
+        updatePanel((state) => {
+          return onLog(onStreamGroupCreate(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupCreate',
+            data,
+          });
+        });
+      },
+      onStreamGroupUpdate: (data) => {
+        updatePanel((state) => {
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupUpdate',
+            data,
+          });
         });
       },
       onStreamGroupFulfill: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onStreamGroupFulfill', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupFulfill',
+            data,
+          });
         });
       },
       onStreamRelease: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onStreamRelease', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
+            name: 'onStreamRelease',
+            data,
+          });
         });
       },
-      onStreamGroupFinished: (data) => {
+      onStreamGroupFinish: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onStreamGroupFinished', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupFinish',
+            data,
+          });
         });
       },
-      onStreamGroupRelease: (data) => {
+      onStreamGroupReleaseStart: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onStreamGroupRelease', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupReleaseStart',
+            data,
+          });
         });
       },
-      onStreamGroupReleased: (data) => {
+      onStreamGroupReleaseComplete: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onStreamGroupReleased', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupReleaseComplete',
+            data,
+          });
         });
       },
-      onStreamGroupTerminate: (data) => {
+      onStreamGroupTerminateStart: (data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), { name: 'onStreamGroupTerminate', data });
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupTerminateStart',
+            data,
+          });
+        });
+      },
+      onStreamGroupTerminateComplete: (data) => {
+        updatePanel((state) => {
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'streamGroup',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
+            name: 'onStreamGroupTerminateComplete',
+            data,
+          });
         });
       },
       onEmit: (data) => {
         updatePanel((state) => {
-          return onLog(onEmit(state, data), { name: 'onEmit', data });
+          return onLog(onEmit(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
+            name: 'onEmit',
+            data,
+          });
         });
       },
     }
@@ -142,25 +245,42 @@ function getDefaultPipeFrame(): Omit<PipeFrame, 'displayName' | 'pipeState'> {
     maxDataEntryLevel: 0,
     maxErrorEntryLevel: 0,
     emittedStreamFrames: [],
-    selected: false,
   };
 }
 
-function onLog(state: PanelState, debugEvent: DebugEvent): PanelState {
+function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
   console.log(debugEvent.name, debugEvent.data);
 
   const time = prepareTime(Date.now());
 
-  const lastDebugRecordWithPilot = state.debugRecords.findLast((debugRecord) => debugRecord.pilot);
+  const lastDebugRecordWithPilot = panelState.debugRecords.findLast((debugRecord) => debugRecord.pilot);
 
   let pilot;
   if (debugEvent.data.pipeState.displayName !== lastDebugRecordWithPilot?.pilot) {
     pilot = debugEvent.data.pipeState.displayName;
   }
 
+  const selectedEventKey = panelState.selectedPipe ?? panelState.selectedStreamGroup ?? panelState.selectedEmittedStream;
+
+  const selected = !! selectedEventKey && debugEvent.eventTargetKey[1] === selectedEventKey[1];
+  const pilotSelected = !! selectedEventKey && debugEvent.data.pipeState.dataPipe.uniqKey === selectedEventKey[1];
+
+  const record: DebugRecord = {
+    time,
+    selected,
+    pilot,
+    pilotSelected,
+    debugEvent,
+    timeTravel: {
+      ...panelState,
+      debugRecords: [],
+      selectedDebugRecord: null,
+    },
+  };
+
   return {
-    ...state,
-    debugRecords: [...state.debugRecords, { pilot, time, debugEvent }],
+    ...panelState,
+    debugRecords: [...panelState.debugRecords, record],
   };
 }
 
@@ -182,14 +302,14 @@ function onPipeCreate(state: PanelState, data: { pipeState: PipeState }): PanelS
   };
 }
 
-function onParentPipeStream(state: PanelState, data: { streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
+function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
   });
 
   const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
-  const streamGroupFrame = { data: data.streamGroup, deleted: false, selected: false };
+  const streamGroupFrame = { data: data.streamGroup, deleted: false };
 
   let [streamGroupFrames] = addStreamGroupFrame(pipeFrame.streamGroupFrames, streamGroupFrame);
   streamGroupFrames = updateStreamGroupFrames(streamGroupFrames, data.pipeState.streamGroups);
@@ -217,7 +337,7 @@ function onEmit(state: PanelState, data: { streamHead: symbol, value: any, value
 
   const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
-  const emittedStreamFrame = { streamHead: data.streamHead, value: data.value, valueType: data.valueType, released: false, selected: false };
+  const emittedStreamFrame = { streamHead: data.streamHead, value: data.value, valueType: data.valueType, released: false };
 
   const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
   let [emittedStreamFrames] = addEmittedStreamFrame(pipeFrame.emittedStreamFrames, emittedStreamFrame);
@@ -278,9 +398,9 @@ function createElement() {
 
 function prepareTime(dateTime: number): string {
   const date = new Date(dateTime);
-  const hours = ('0' + date.getHours()).substr(-2);
-  const minutes = ('0' + date.getMinutes()).substr(-2);
-  const seconds = ('0' + date.getSeconds()).substr(-2);
-  const mSeconds = dateTime.toString().substr(-3);
+  const hours = ('0' + date.getHours()).slice(-2);
+  const minutes = ('0' + date.getMinutes()).slice(-2);
+  const seconds = ('0' + date.getSeconds()).slice(-2);
+  const mSeconds = dateTime.toString().slice(-3);
   return hours + ':' + minutes + ':' + seconds + '.' + mSeconds;
 }

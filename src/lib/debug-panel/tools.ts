@@ -1,5 +1,7 @@
+// noinspection TypeScriptValidateTypes
+
 import { BasePipe, StreamGroups } from '../types';
-import { EmittedStreamFrame, PipeFrame, StreamGroupFrame } from './types';
+import { EmittedStreamFrame, PanelState, PipeFrame, StreamGroupFrame } from './types';
 
 export function getUpstreamPipeParams(upstreamPipe: BasePipe, pipeFrames: PipeFrame[]): [number, number] {
   const levels: boolean[] = [];
@@ -225,56 +227,71 @@ export function updateEmittedStreamFrames(emittedStreamFrames: EmittedStreamFram
   return changed ? nextEmittedStreamFrames : emittedStreamFrames;
 }
 
-export function selectStreamGroupFrame(uniqKey: symbol, selected: boolean, pipeFrames: PipeFrame[]): PipeFrame[] {
-  return pipeFrames.map((pipeFrame) => {
-    let changed = false;
+export function selectPipe(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
+  const selected = ! (panelState.selectedPipe && panelState.selectedPipe[1] === uniqKey[1]);
 
-    const nextStreamGroupFrames = pipeFrame.streamGroupFrames.map((streamGroupFrame) => {
-      const nextSelected = streamGroupFrame.data.uniqKey === uniqKey ? selected : false;
+  let nextState: PanelState = {
+    ...panelState,
+    selectedPipe: selected ? uniqKey : null,
+    selectedStreamGroup: null,
+    selectedEmittedStream: null,
+  };
 
-      if (streamGroupFrame.selected !== nextSelected) {
-        changed = true;
+  nextState = selectDebugRecords(uniqKey, nextState);
 
-        return {
-          ...streamGroupFrame,
-          selected: nextSelected,
-        };
-      }
-      else {
-        return streamGroupFrame;
-      }
-    });
-
-    return {
-      ...pipeFrame,
-      streamGroupFrames: changed ? nextStreamGroupFrames : pipeFrame.streamGroupFrames,
-    };
-  });
+  return nextState;
 }
 
-export function selectEmittedStreamFrame(streamHead: symbol, selected: boolean, pipeFrames: PipeFrame[]): PipeFrame[] {
-  return pipeFrames.map((pipeFrame) => {
-    let changed = false;
+export function selectStreamGroup(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
+  const selected = ! (panelState.selectedStreamGroup && panelState.selectedStreamGroup[1] === uniqKey[1]);
 
-    const nextEmittedStreamFrames = pipeFrame.emittedStreamFrames.map((emittedStreamFrame) => {
-      const nextSelected = emittedStreamFrame.streamHead === streamHead ? selected : false;
+  let nextState: PanelState = {
+    ...panelState,
+    selectedPipe: null,
+    selectedStreamGroup: selected ? uniqKey : null,
+    selectedEmittedStream: null,
+  };
 
-      if (emittedStreamFrame.selected !== nextSelected) {
-        changed = true;
+  nextState = selectDebugRecords(uniqKey, nextState);
 
-        return {
-          ...emittedStreamFrame,
-          selected: nextSelected,
-        };
-      }
-      else {
-        return emittedStreamFrame;
-      }
-    });
+  return nextState;
+}
 
-    return {
-      ...pipeFrame,
-      emittedStreamFrames: changed ? nextEmittedStreamFrames : pipeFrame.emittedStreamFrames,
-    };
+export function selectEmittedStream(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
+  const selected = ! (panelState.selectedEmittedStream && panelState.selectedEmittedStream[1] === uniqKey[1]);
+
+  let nextState: PanelState = {
+    ...panelState,
+    selectedPipe: null,
+    selectedStreamGroup: null,
+    selectedEmittedStream: selected ? uniqKey : null,
+  };
+
+  nextState = selectDebugRecords(uniqKey, nextState);
+
+  return nextState;
+}
+
+function selectDebugRecords(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
+  const selectedEventKey = panelState.selectedPipe?.[1] ?? panelState.selectedStreamGroup?.[1] ?? panelState.selectedEmittedStream?.[1] ?? null;
+  const selected = selectedEventKey === uniqKey[1];
+  let debugRecordsChanged = false;
+
+  const debugRecords = panelState.debugRecords.map((debugRecord) => {
+    const nextPilotSelected = debugRecord.debugEvent.data.pipeState.dataPipe.uniqKey === uniqKey[1] ? selected : false;
+    const nextSelected = debugRecord.debugEvent.eventTargetKey[1] === uniqKey[1] ? selected : false;
+
+    if (debugRecord.selected !== nextSelected || debugRecord.pilotSelected !== nextPilotSelected) {
+      debugRecordsChanged = true;
+      return { ...debugRecord, selected: nextSelected, pilotSelected: nextPilotSelected };
+    }
+    else {
+      return debugRecord;
+    }
   });
+
+  return {
+    ...panelState,
+    debugRecords: debugRecordsChanged ? debugRecords : panelState.debugRecords,
+  };
 }

@@ -6,12 +6,15 @@ import { EmittedStreamFrame } from '../types';
 import { EmittedStream } from './EmittedStream';
 
 export type PipeOutProps = {
+  pipeUniqKey: symbol;
   emittedStreamFrames: EmittedStreamFrame[];
-  onEmittedStreamSelection: (streamHead: symbol, selected: boolean) => void;
+  selectedEmittedStream: null | symbol;
+  onEmittedStreamSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
-  const { emittedStreamFrames, onEmittedStreamSelection } = props;
+  const { pipeUniqKey, emittedStreamFrames, selectedEmittedStream, onEmittedStreamSelection }
+    = props;
 
   const dataEmittedStreamFrames: EmittedStreamFrame[] = [];
   const errorEmittedStreamFrames: EmittedStreamFrame[] = [];
@@ -33,10 +36,14 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
         </span>
         {dataEmittedStreamFrames.length
           ? dataEmittedStreamFrames.map((emittedStreamFrame, index) => {
+            const selected = emittedStreamFrame.streamHead === selectedEmittedStream;
+
             return (
               <EmittedStream key={index}
+                pipeUniqKey={pipeUniqKey}
                 streamValueType="data"
                 emittedStreamFrame={emittedStreamFrame}
+                selected={selected}
                 onEmittedStreamSelection={onEmittedStreamSelection} />
             );
           })
@@ -49,10 +56,14 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
         </span>
         {errorEmittedStreamFrames.length
           ? errorEmittedStreamFrames.map((emittedStreamFrame, index) => {
+            const selected = emittedStreamFrame.streamHead === selectedEmittedStream;
+
             return (
               <EmittedStream key={index}
+                pipeUniqKey={pipeUniqKey}
                 streamValueType="error"
                 emittedStreamFrame={emittedStreamFrame}
+                selected={selected}
                 onEmittedStreamSelection={onEmittedStreamSelection} />
             );
           })

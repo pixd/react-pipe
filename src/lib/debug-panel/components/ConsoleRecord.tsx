@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-import { DebugRecord } from '../types';
+import { HistoryRegularIcon } from '../icons/HistoryRegularIcon';
+import { DebugRecord, EventTargetType } from '../types';
 
 export enum ComplexData {
   FUNCTION = '[[FUNCTION]]',
@@ -11,14 +12,29 @@ const complexDataValues = Object.values(ComplexData);
 
 export type ConsoleRecordProps = {
   record: DebugRecord;
+  onEventSelect: (eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => void;
 };
 
 export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRecordProps) {
-  const { record } = props;
+  const { record, onEventSelect } = props;
 
   const [open, setOpen] = useState<boolean>(false);
 
   const handleToggle = () => setOpen((open) => ! open);
+
+  const handleEventSelect = () => onEventSelect(record.debugEvent.eventTargetType, record.debugEvent.eventTargetKey);
+
+  const handlePipeSelect = () => onEventSelect('pipe', [record.debugEvent.data.pipeState.dataPipe.uniqKey, record.debugEvent.data.pipeState.dataPipe.uniqKey]);
+
+  const eventMarkerClassName = [
+    'ReactPipeDebugPanel-LogMarker',
+    record.selected ? 'ReactPipeDebugPanel-LogMarker-Selected' : null,
+  ].filter(Boolean).join(' ');
+
+  const pilotMarkerClassName = [
+    'ReactPipeDebugPanel-LogMarker',
+    record.pilotSelected ? 'ReactPipeDebugPanel-LogMarker-Selected' : null,
+  ].filter(Boolean).join(' ');
 
   return (
     <>
@@ -27,25 +43,37 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
           <div className="ReactPipeDebugPanel-Pilot">
             <div className="ReactPipeDebugPanel-PilotTime">
               <span>
-                ###
+                Pipe
               </span>
             </div>
-            <div className="ReactPipeDebugPanel-PilotAddress">
-              {record.pilot}
+            <div className="ReactPipeDebugPanel-PilotMessage">
+              <span className={pilotMarkerClassName} />
+              <span className="ReactPipeDebugPanel-LogName"
+                onClick={handlePipeSelect}
+              >
+                {record.pilot}
+              </span>
             </div>
           </div>
         )
         : null}
       <div className="ReactPipeDebugPanel-ConsoleRecord">
         <div className="ReactPipeDebugPanel-Time">
-          {record.time}
+          <span className="ReactPipeDebugPanel-TimeIcon">
+            <HistoryRegularIcon />
+          </span>
+          <span>
+            {record.time}
+          </span>
         </div>
         <div className="ReactPipeDebugPanel-Message">
           <div>
-            <span className="ReactPipeDebugPanel-MessageMarker">
-              &nbsp;&nbsp;
+            <span className={eventMarkerClassName} />
+            <span className="ReactPipeDebugPanel-LogName"
+              onClick={handleEventSelect}
+            >
+              {record.debugEvent.name}
             </span>
-            {record.debugEvent.name}
             {' '}
             {objectKeys(record.debugEvent.data).length > 0
               ? open
@@ -149,20 +177,29 @@ function DataLine(props: DataLineProps) {
                   </span>
                 )
                 : (
-                  <span className="ReactPipeDebugPanel-Brackets"
-                    onClick={handleToggle}
-                  >
-                    {leftBrace}<span>..</span>{rightBrace}
-                  </span>
+                  <>
+                    <span className="ReactPipeDebugPanel-Brackets"
+                      onClick={handleToggle}
+                    >
+                      {leftBrace}<span>..</span>{rightBrace}
+                    </span>
+                    <span className="ReactPipeDebugPanel-Comma">,</span>
+                  </>
                 )
               : (
-                <span className="ReactPipeDebugPanel-Brackets ReactPipeDebugPanel-Brackets-Dead">
-                  {leftBrace}{rightBrace}
-                </span>
+                <>
+                  <span className="ReactPipeDebugPanel-Brackets ReactPipeDebugPanel-Brackets-Dead">
+                    {leftBrace}{rightBrace}
+                  </span>
+                  <span className="ReactPipeDebugPanel-Comma">,</span>
+                </>
               )
             : (
-              <ScalarData
-                data={data} />
+              <>
+                <ScalarData
+                  data={data} />
+                <span className="ReactPipeDebugPanel-Comma">,</span>
+              </>
             )}
         </div>
         {data && typeof data === 'object' && open
@@ -174,8 +211,9 @@ function DataLine(props: DataLineProps) {
                 <span className="ReactPipeDebugPanel-Brackets"
                   onClick={handleToggle}
                 >
-                  {rightBrace}&nbsp;
+                  {rightBrace}
                 </span>
+                <span className="ReactPipeDebugPanel-Comma">,</span>
               </div>
             </>
           )
@@ -258,8 +296,6 @@ function ScalarData(props: ScalarDataProps) {
 }
 
 function objectKeys(data: object): (symbol | string)[] {
-  return [
-    ...Object.getOwnPropertyNames(data),
-    ...Object.getOwnPropertySymbols(data),
-  ];
+  const keys = [...Object.getOwnPropertyNames(data), ...Object.getOwnPropertySymbols(data)];
+  return Array.isArray(data) ? keys.filter((key) => key !== 'length') : keys;
 }

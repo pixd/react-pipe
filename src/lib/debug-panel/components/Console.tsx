@@ -1,0 +1,90 @@
+import React, { useEffect, useRef, useState } from 'react';
+
+import { DebugRecord, EventTargetType } from '../types';
+import { ConsoleRecord } from './ConsoleRecord';
+
+type ScrollMarker = {
+  top: number;
+};
+
+export type ConsoleProps = {
+  records: DebugRecord[];
+  onEventSelect: (eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => void;
+};
+
+export const Console = React.memo(function Console(props: ConsoleProps) {
+  const { records, onEventSelect } = props;
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const [[realThumbHeight, scrollMarkers], setScrollMarkersState] = useState<[string, ScrollMarker[]]>(['0px', []]);
+
+  // Задается стилями - смотрите величину и единицу измерения в ваших стилях
+  const scrollThumbMinHeight = '1em';
+  const scrollShift = `max(0px, ${scrollThumbMinHeight} / 2 - ${realThumbHeight} / 2)`;
+  const markerPanelStyle = { top: scrollShift, bottom: scrollShift };
+
+  useEffect(() => {
+    const root = rootRef.current!;
+
+    const observer = new ResizeObserver(() => {
+      setScrollMarkersState(state => [...state]);
+    });
+
+    observer.observe(root);
+    return () => observer.unobserve(root);
+  }, []);
+
+  useEffect(() => {
+    const { realThumbHeight, scrollMarkers } = getScrollMarkers(rootRef.current!, listRef.current!);
+    setScrollMarkersState([realThumbHeight, scrollMarkers]);
+  }, [records, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
+
+  return (
+    <div ref={rootRef} className="ReactPipeDebugPanel-Console">
+      <div className="ReactPipeDebugPanel-ScrollMarkerPanel" style={markerPanelStyle}>
+        {scrollMarkers.map((marker, index) => {
+          const style = { top: marker.top + '%' };
+          return (
+            <div key={index} className="ReactPipeDebugPanel-ScrollMarker" style={style} />
+          );
+        })}
+      </div>
+      <div ref={listRef} className="ReactPipeDebugPanel-ConsoleRecords">
+        {records.length
+          ? records.map((record, index) => {
+            return (
+              <ConsoleRecord key={index}
+                record={record}
+                onEventSelect={onEventSelect} />
+            );
+          })
+          : (
+            <div className="ReactPipeDebugPanel-ConsoleRecord">
+              <div className="ReactPipeDebugPanel-Time" />
+              <div className="ReactPipeDebugPanel-Message" />
+            </div>
+          )}
+      </div>
+    </div>
+  );
+});
+
+function getScrollMarkers(rootElement: HTMLElement, listElement: HTMLElement) {
+  const consoleHeight = rootElement.clientHeight;
+  const listHeight = listElement.scrollHeight;
+  const listTop = listElement.getBoundingClientRect().top - listElement.scrollTop;
+
+  const realThumbHeight = Math.round((consoleHeight * consoleHeight / listHeight)) + 'px';
+
+  const scrollMarkers: ScrollMarker[] = [];
+  rootElement.querySelectorAll('.ReactPipeDebugPanel-LogMarker-Selected')
+    .forEach((element) => {
+      const elementTop = element.getBoundingClientRect().top;
+      const top = Math.round((elementTop - listTop) / listHeight * 100);
+      scrollMarkers.push({ top });
+    });
+
+  return { realThumbHeight, scrollMarkers };
+}

@@ -6,7 +6,10 @@ export type PanelState = {
   maxPipeLineIndex: number;
   maxDataLevel: number;
   maxErrorLevel: number;
-  selectedPipe: null | symbol;
+  selectedPipe: null | [symbol, symbol];
+  selectedStreamGroup: null | [symbol, symbol];
+  selectedEmittedStream: null | [symbol, symbol];
+  selectedDebugRecord: null | number;
 };
 
 export type PipeFrame = {
@@ -21,13 +24,11 @@ export type PipeFrame = {
   maxDataEntryLevel: number;
   maxErrorEntryLevel: number;
   emittedStreamFrames: EmittedStreamFrame[];
-  selected: boolean;
 };
 
 export type StreamGroupFrame = {
   data: StreamGroup;
   deleted: boolean;
-  selected: boolean;
 };
 
 export type StreamConnection = {
@@ -55,20 +56,26 @@ export type EmittedStreamFrame = {
   value: any;
   valueType: StreamValueType;
   released: boolean;
-  selected: boolean;
 };
 
 export type StreamValueType = 'data' | 'error';
 
+export type DebugRecord = {
+  time: string;
+  selected: boolean;
+  pilot?: null | string;
+  pilotSelected?: null | boolean;
+  debugEvent: DebugEvent;
+  timeTravel: PanelState;
+};
+
 export type DebugEvent = {
   [TKey in keyof Debugger]: {
+    eventTargetType: EventTargetType;
+    eventTargetKey: [symbol, symbol];
     name: TKey;
     data: Parameters<Debugger[TKey]>[0];
   };
 }[keyof Debugger];
 
-export type DebugRecord = {
-  pilot?: null | string;
-  time: string;
-  debugEvent: DebugEvent;
-};
+export type EventTargetType = 'pipe' | 'streamGroup' | 'stream';

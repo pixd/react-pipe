@@ -8,9 +8,7 @@ export const styles = css`
     font-family: "Source Code Pro", monospace;
   }
 
-  .${MAIM_CLASS_NAME}-ConsoleRecords {
-    height: 100%;
-  }
+  .${MAIM_CLASS_NAME}-ConsoleRecords {}
 
   .${MAIM_CLASS_NAME}-ConsoleRecord:last-child {
     min-height: 100%;
@@ -26,39 +24,30 @@ export const styles = css`
     background-color: #2f3541;
     border-right: 1px solid #454b56;
     box-sizing: content-box;
-    width: 7.6em;
+    display: flex;
+    justify-content: end;
+    padding: 0.1em 0.3em 0.1em 0.4em;
+    width: 8.2em;
   }
 
-  .${MAIM_CLASS_NAME}-PilotAddress,
-  .${MAIM_CLASS_NAME}-Message {}
+  .${MAIM_CLASS_NAME}-PilotMessage,
+  .${MAIM_CLASS_NAME}-Message {
+    padding: 0.1em 0.4em 0.1em 1.4em;
+    position: relative;
+  }
 
   .${MAIM_CLASS_NAME}-ConsoleRecord + .${MAIM_CLASS_NAME}-Pilot .${MAIM_CLASS_NAME}-PilotTime,
-  .${MAIM_CLASS_NAME}-ConsoleRecord + .${MAIM_CLASS_NAME}-Pilot .${MAIM_CLASS_NAME}-PilotAddress {
+  .${MAIM_CLASS_NAME}-ConsoleRecord + .${MAIM_CLASS_NAME}-Pilot .${MAIM_CLASS_NAME}-PilotMessage {
     padding-top: 0.6em;
-  }
-
-  .${MAIM_CLASS_NAME}-PilotTime,
-  .${MAIM_CLASS_NAME}-Time {
-    padding: 0.1em 0 0.1em 0.4em;
-  }
-
-  .${MAIM_CLASS_NAME}-PilotAddress,
-  .${MAIM_CLASS_NAME}-Message {
-    padding: 0.1em 0.4em 0.1em 0.6em;
   }
 
   .${MAIM_CLASS_NAME}-Pilot {}
 
   .${MAIM_CLASS_NAME}-PilotTime {
     color: #757c8c;
-    font-weight: 300;
   }
 
-  .${MAIM_CLASS_NAME}-PilotTime span {
-    cursor: pointer;
-  }
-
-  .${MAIM_CLASS_NAME}-PilotAddress {
+  .${MAIM_CLASS_NAME}-PilotMessage {
     color: #757c8c;
     cursor: pointer;
   }
@@ -73,17 +62,31 @@ export const styles = css`
     color: #537f7e;
   }
 
+  .${MAIM_CLASS_NAME}-Time > span:last-child {
+    cursor: pointer;
+  }
+
+  .${MAIM_CLASS_NAME}-TimeIcon {
+    display: none;
+    margin-right: 0.28em;
+  }
+
+  .${MAIM_CLASS_NAME}-TimeIcon svg {
+    display: block;
+    height: 0.64lh;
+  }
+
   .${MAIM_CLASS_NAME}-Message {
     align-items: center;
     color: #56afdb;
   }
 
-  .${MAIM_CLASS_NAME}-MessageMarker {
-    cursor: pointer;
-    position: relative;
+  .${MAIM_CLASS_NAME}-LogMarker {
+    left: 0.5em;
+    position: absolute;
   }
 
-  .${MAIM_CLASS_NAME}-MessageMarker:before {
+  .${MAIM_CLASS_NAME}-LogMarker:before {
     aspect-ratio: 1;
     background-color: #383d48;
     border-radius: 0.5em;
@@ -93,6 +96,14 @@ export const styles = css`
     left: -0.04em;
     position: absolute;
     top: 0.44em;
+  }
+
+  .${MAIM_CLASS_NAME}-LogMarker-Selected:before {
+    background-color: #cfe142;
+  }
+
+  .${MAIM_CLASS_NAME}-LogName {
+    cursor: pointer;
   }
 
   .${MAIM_CLASS_NAME}-Brackets {
@@ -143,5 +154,9 @@ export const styles = css`
 
   .${MAIM_CLASS_NAME}-LogValue-String {
     color: #34c46d;
+  }
+
+  .${MAIM_CLASS_NAME}-Comma {
+    opacity: 0;
   }
 `;
