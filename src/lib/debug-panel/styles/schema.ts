@@ -1,5 +1,5 @@
 import { ALT_BACKGROUND_COLOR, BACKGROUND_COLOR, IN_GAP, MAIM_CLASS_NAME, PIPE_BORDER_RADIUS,
-  PIPE_BORDER_WIDTH, PIPE_INNER_BORDER_RADIUS } from '../styles-constants';
+  PIPE_BORDER_WIDTH, PIPE_INNER_BORDER_RADIUS, PIPE_WIDTH } from '../styles-constants';
 import { css } from '../styles-tools';
 
 const PIPE_BORDER_COLOR = '#758596';
@@ -20,7 +20,7 @@ export const styles = css`
     border: ${PIPE_BORDER_WIDTH}em solid ${PIPE_BORDER_COLOR};
     border-radius: ${PIPE_BORDER_RADIUS}em;
     position: relative;
-    width: 35em;
+    width: ${PIPE_WIDTH}em;
     z-index: 1;
   }
 
@@ -80,7 +80,7 @@ export const styles = css`
   }
 
   .${MAIM_CLASS_NAME}-StreamGroup-SelectedMinor {
-    border-color: #cfe142;
+    border-color: #4e532b;
   }
 
   .${MAIM_CLASS_NAME}-StreamGroupMember {

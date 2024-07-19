@@ -12,11 +12,15 @@ const complexDataValues = Object.values(ComplexData);
 
 export type ConsoleRecordProps = {
   record: DebugRecord;
+  recordIndex: number;
+  active: boolean;
+  selected: boolean;
   onEventSelect: (eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => void;
+  onDebugRecordSelect: (index: number) => void;
 };
 
 export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRecordProps) {
-  const { record, onEventSelect } = props;
+  const { record, recordIndex, active, selected, onEventSelect, onDebugRecordSelect } = props;
 
   const [open, setOpen] = useState<boolean>(false);
 
@@ -26,9 +30,11 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
 
   const handlePipeSelect = () => onEventSelect('pipe', [record.debugEvent.data.pipeState.dataPipe.uniqKey, record.debugEvent.data.pipeState.dataPipe.uniqKey]);
 
-  const eventMarkerClassName = [
-    'ReactPipeDebugPanel-LogMarker',
-    record.selected ? 'ReactPipeDebugPanel-LogMarker-Selected' : null,
+  const handleDebugRecordSelect = () => onDebugRecordSelect(recordIndex);
+
+  const pilotClassName = [
+    'ReactPipeDebugPanel-Pilot',
+    active ? null : 'ReactPipeDebugPanel-Pilot-Inactive',
   ].filter(Boolean).join(' ');
 
   const pilotMarkerClassName = [
@@ -36,11 +42,22 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
     record.pilotSelected ? 'ReactPipeDebugPanel-LogMarker-Selected' : null,
   ].filter(Boolean).join(' ');
 
+  const recordClassName = [
+    'ReactPipeDebugPanel-ConsoleRecord',
+    active ? null : 'ReactPipeDebugPanel-ConsoleRecord-Inactive',
+    selected ? 'ReactPipeDebugPanel-ConsoleRecord-Selected': null,
+  ].filter(Boolean).join(' ');
+
+  const eventMarkerClassName = [
+    'ReactPipeDebugPanel-LogMarker',
+    record.selected ? 'ReactPipeDebugPanel-LogMarker-Selected' : null,
+  ].filter(Boolean).join(' ');
+
   return (
     <>
       {record.pilot
         ? (
-          <div className="ReactPipeDebugPanel-Pilot">
+          <div className={pilotClassName}>
             <div className="ReactPipeDebugPanel-PilotTime">
               <span>
                 Pipe
@@ -57,14 +74,11 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
           </div>
         )
         : null}
-      <div className="ReactPipeDebugPanel-ConsoleRecord">
-        <div className="ReactPipeDebugPanel-Time">
-          <span className="ReactPipeDebugPanel-TimeIcon">
-            <HistoryRegularIcon />
-          </span>
-          <span>
-            {record.time}
-          </span>
+      <div className={recordClassName}>
+        <div className="ReactPipeDebugPanel-Time"
+          onClick={handleDebugRecordSelect}
+        >
+          {record.time}
         </div>
         <div className="ReactPipeDebugPanel-Message">
           <div>

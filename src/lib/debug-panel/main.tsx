@@ -15,17 +15,7 @@ import { addPipeFrame, addEmittedStreamFrame, addStreamGroupFrame, updateEmitted
   updateStreamGroupFrames } from './tools';
 import { DebugEvent, DebugRecord, PanelState, PipeFrame, StreamValueType } from './types';
 
-const initialState: PanelState = {
-  debugRecords: [],
-  pipeFrames: [],
-  maxPipeLineIndex: 0,
-  maxDataLevel: 0,
-  maxErrorLevel: 0,
-  selectedPipe: null,
-  selectedStreamGroup: null,
-  selectedEmittedStream: null,
-  selectedDebugRecord: null,
-};
+let init = false;
 
 export function initDebugPanel() {
   const element = createElement();
@@ -39,14 +29,16 @@ export function initDebugPanel() {
   const root = ReactDOM.createRoot(element);
   root.render(
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet" />
-      <style dangerouslySetInnerHTML={{ __html: iconsStyle }}/>
-      <style dangerouslySetInnerHTML={{ __html: animationStyle }}/>
-      <style dangerouslySetInnerHTML={{ __html: mainStyle }}/>
-      <style dangerouslySetInnerHTML={{ __html: consoleStyle }}/>
-      <style dangerouslySetInnerHTML={{ __html: schemaStyle }}/>
-      <style dangerouslySetInnerHTML={{ __html: connectionsStyle }}/>
-      <Panel classNamePrefix={MAIM_CLASS_NAME} initialState={initialState} subscribe={subscribe} />
+      {init ? null : <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet" />}
+      {init ? null : <style dangerouslySetInnerHTML={{ __html: iconsStyle }} />}
+      {init ? null : <style dangerouslySetInnerHTML={{ __html: animationStyle }} />}
+      {init ? null : <style dangerouslySetInnerHTML={{ __html: mainStyle }} />}
+      {init ? null : <style dangerouslySetInnerHTML={{ __html: consoleStyle }} />}
+      {init ? null : <style dangerouslySetInnerHTML={{ __html: schemaStyle }} />}
+      {init ? null : <style dangerouslySetInnerHTML={{ __html: connectionsStyle }} />}
+      <Panel
+        classNamePrefix={MAIM_CLASS_NAME}
+        subscribe={subscribe} />
     </>
   );
 
@@ -230,6 +222,9 @@ export function initDebugPanel() {
     createDebugger,
   };
 
+
+  init = true;
+
   return { debugPanel };
 }
 
@@ -271,9 +266,12 @@ function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
     pilot,
     pilotSelected,
     debugEvent,
-    timeTravel: {
+    timeTravelPanelState: {
       ...panelState,
       debugRecords: [],
+      selectedPipe: null,
+      selectedStreamGroup: null,
+      selectedEmittedStream: null,
       selectedDebugRecord: null,
     },
   };

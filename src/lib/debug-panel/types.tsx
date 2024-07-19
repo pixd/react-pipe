@@ -66,7 +66,7 @@ export type DebugRecord = {
   pilot?: null | string;
   pilotSelected?: null | boolean;
   debugEvent: DebugEvent;
-  timeTravel: PanelState;
+  timeTravelPanelState: PanelState;
 };
 
 export type DebugEvent = {

@@ -25,9 +25,8 @@ export const styles = css`
     border-right: 1px solid #454b56;
     box-sizing: content-box;
     display: flex;
-    justify-content: end;
-    padding: 0.1em 0.3em 0.1em 0.4em;
-    width: 8.2em;
+    padding: 0.1em 0.4em;
+    width: 7.2em;
   }
 
   .${MAIM_CLASS_NAME}-PilotMessage,
@@ -42,6 +41,12 @@ export const styles = css`
   }
 
   .${MAIM_CLASS_NAME}-Pilot {}
+
+  .${MAIM_CLASS_NAME}-Pilot-Inactive {}
+
+  .${MAIM_CLASS_NAME}-Pilot-Inactive * {
+    color: #464d5c !important;
+  }
 
   .${MAIM_CLASS_NAME}-PilotTime {
     color: #757c8c;
@@ -58,22 +63,17 @@ export const styles = css`
     min-height: 100%;
   }
 
-  .${MAIM_CLASS_NAME}-Time {
-    color: #537f7e;
+  .${MAIM_CLASS_NAME}-ConsoleRecord-Inactive * {
+    color: #464d5c !important;
   }
 
-  .${MAIM_CLASS_NAME}-Time > span:last-child {
+  .${MAIM_CLASS_NAME}-Time {
+    color: #537f7e;
     cursor: pointer;
   }
 
-  .${MAIM_CLASS_NAME}-TimeIcon {
-    display: none;
-    margin-right: 0.28em;
-  }
-
-  .${MAIM_CLASS_NAME}-TimeIcon svg {
-    display: block;
-    height: 0.64lh;
+  .${MAIM_CLASS_NAME}-ConsoleRecord-Selected .${MAIM_CLASS_NAME}-Time {
+    color: #e18e42 !important;
   }
 
   .${MAIM_CLASS_NAME}-Message {

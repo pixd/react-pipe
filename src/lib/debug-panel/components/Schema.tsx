@@ -51,7 +51,7 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
   useEffect(() => {
     const { realThumbHeight, scrollMarkers } = getScrollMarkers(rootRef.current!, listRef.current!);
     setScrollMarkersState([realThumbHeight, scrollMarkers]);
-  }, [pipeFrames, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
+  }, [pipeFrames, selectedPipe, selectedStreamGroup, selectedEmittedStream, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
 
   const style = {
     paddingLeft: `${maxDataLevel * LINE_SPACE + OUT_GAP}em`,
@@ -64,7 +64,7 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
         {scrollMarkers.map((marker, index) => {
           const style = { top: marker.top + '%' };
           return (
-            <div key={index} className="ReactPipeDebugPanel-ScrollMarker" style={style} />
+            <div key={index} className="ReactPipeDebugPanel-ScrollMarker ReactPipeDebugPanel-ScrollMarker--Log" style={style} />
           );
         })}
       </div>

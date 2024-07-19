@@ -9,6 +9,7 @@ export const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Robo
 export const FONT_SIZE = '1rem';
 export const SCROLL_WIDTH = 0.5;
 
+export const PIPE_WIDTH = 35;
 export const PIPE_BORDER_WIDTH = 0.2;
 export const PIPE_BORDER_RADIUS = 0.4;
 export const PIPE_INNER_BORDER_RADIUS = round(PIPE_BORDER_RADIUS - PIPE_BORDER_WIDTH);

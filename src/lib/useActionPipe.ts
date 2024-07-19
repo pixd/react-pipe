@@ -36,6 +36,6 @@ function createFill(
     });
   };
 
-  fill.displayName = actionTypes.length > 1 ? `${actionTypes[0]} + ${actionTypes.length - 1}` : actionTypes[0];
+  fill.displayName = 'Action listener (' + (actionTypes.length > 1 ? `${actionTypes[0]} + ${actionTypes.length - 1}` : actionTypes[0]) + ')';
   return fill;
 }

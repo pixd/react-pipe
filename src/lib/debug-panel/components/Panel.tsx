@@ -5,16 +5,31 @@ import { EventTargetType, PanelState } from '../types';
 import { Console } from './Console';
 import { Schema } from './Schema';
 
+const initialState: PanelState = {
+  debugRecords: [],
+  pipeFrames: [],
+  maxPipeLineIndex: 0,
+  maxDataLevel: 0,
+  maxErrorLevel: 0,
+  selectedPipe: null,
+  selectedStreamGroup: null,
+  selectedEmittedStream: null,
+  selectedDebugRecord: null,
+};
+
 export type AppProps = {
   classNamePrefix: string;
-  initialState: PanelState;
   subscribe: (updatePanelInner: (cb: (state: PanelState) => PanelState) => void) => void;
 };
 
 export function Panel(props: AppProps) {
-  const { initialState, subscribe } = props;
+  const { subscribe } = props;
 
-  const [panelState, setPanelState] = useState<PanelState>({ ...initialState });
+  const [panelState, setPanelState] = useState<PanelState>(initialState);
+
+  const currentPanelState = panelState.selectedDebugRecord == null
+    ? panelState
+    : panelState.debugRecords[panelState.selectedDebugRecord].timeTravelPanelState;
 
   subscribe(setPanelState);
 
@@ -51,16 +66,28 @@ export function Panel(props: AppProps) {
     }
   }, []);
 
+  const handleDebugRecordSelect = useCallback((index: number) => {
+    setPanelState((state) => {
+      const selectedDebugRecord = state.selectedDebugRecord === index ? null : index;
+      return {
+        ...state,
+        selectedDebugRecord,
+      };
+    });
+  }, [])
+
   return (
     <div className="ReactPipeDebugPanel">
       <div className="ReactPipeDebugPanel-Inner">
         <Console
           records={panelState.debugRecords}
-          onEventSelect={handleEventSelect} />
+          selectedRecord={panelState.selectedDebugRecord}
+          onEventSelect={handleEventSelect}
+          onDebugRecordSelect={handleDebugRecordSelect} />
         <Schema
-          pipeFrames={panelState.pipeFrames}
-          maxDataLevel={panelState.maxDataLevel}
-          maxErrorLevel={panelState.maxErrorLevel}
+          pipeFrames={currentPanelState.pipeFrames}
+          maxDataLevel={currentPanelState.maxDataLevel}
+          maxErrorLevel={currentPanelState.maxErrorLevel}
           selectedPipe={panelState.selectedPipe}
           selectedStreamGroup={panelState.selectedStreamGroup}
           selectedEmittedStream={panelState.selectedEmittedStream}

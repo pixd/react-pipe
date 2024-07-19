@@ -18,6 +18,7 @@ export const styles = css`
 
   .${MAIM_CLASS_NAME}-Inner {
     height: 100%;
+    min-width: 46em;
   }
 
   .${MAIM_CLASS_NAME}-Schema {
@@ -69,9 +70,16 @@ export const styles = css`
   }
 
   .${MAIM_CLASS_NAME}-ScrollMarker {
-    box-shadow: 0 0 0 1px #cfe142;
     position: absolute;
     right: 1px;
     width: calc(${SCROLL_WIDTH}em - 2px);
+  }
+
+  .${MAIM_CLASS_NAME}-ScrollMarker--Time {
+    box-shadow: 0 0 0 1px #e18e42;
+  }
+
+  .${MAIM_CLASS_NAME}-ScrollMarker--Log {
+    box-shadow: 0 0 0 1px #cfe142;
   }
 `;

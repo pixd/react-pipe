@@ -1,6 +1,6 @@
 import { BACKGROUND_COLOR, HEEL_LENGTH, HEEL_RADIUS, HEEL_SHIFT, HEEL_WIDTH, HOLE_LENGTH,
-  HOLE_WIDTH, LINE_WIDTH, MAIM_CLASS_NAME, OUT_SHIFT, LINE_SHADOW_SHIFT, LINE_SHADOW_WIDTH }
-  from '../styles-constants';
+  HOLE_WIDTH, LINE_WIDTH, MAIM_CLASS_NAME, OUT_SHIFT, LINE_SHADOW_SHIFT, LINE_SHADOW_WIDTH,
+  PIPE_WIDTH } from '../styles-constants';
 import { css, round } from '../styles-tools';
 
 const LINE_COLOR = '#5d6e7e';
@@ -10,7 +10,7 @@ export const styles = css`
   .${MAIM_CLASS_NAME}-Connections {
     height: 100%;
     position: absolute;
-    width: 100%;
+    width: ${PIPE_WIDTH}em;
   }
 
   .${MAIM_CLASS_NAME}-DataOut,
