@@ -73,8 +73,8 @@ export type DebugEvent = {
   [TKey in keyof Debugger]: {
     eventTargetType: EventTargetType;
     eventTargetKey: [symbol, symbol];
-    name: TKey;
-    data: Parameters<Debugger[TKey]>[0];
+    message: string;
+    data: Parameters<Debugger[TKey]>[1];
   };
 }[keyof Debugger];
 

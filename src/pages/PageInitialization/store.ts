@@ -103,5 +103,5 @@ export const pageInitializationReducer = (state = initialState, { type, payload 
 
 export const pageInitializationSelectors = createSelectors<RootState, 'PageInitialization'>(
   initialState,
-  state => state.PageInitialization,
+  (state) => state.PageInitialization,
 );

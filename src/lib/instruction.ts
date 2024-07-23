@@ -1,5 +1,5 @@
-import { INSTRUCTION_ENTITY_TYPE, STREAM_INSTRUCTION_TYPE, Instruction, HandleStream, StreamInstruction }
-  from './types';
+import { INSTRUCTION_ENTITY_TYPE, STREAM_INSTRUCTION_TYPE, Instruction, HandleStream,
+  StreamInstruction } from './types';
 
 export function createInstruction<
   TInstructionType extends symbol = symbol,

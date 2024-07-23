@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import { HistoryRegularIcon } from '../icons/HistoryRegularIcon';
 import { DebugRecord, EventTargetType } from '../types';
 
 export enum ComplexData {
@@ -26,7 +25,7 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
 
   const handleToggle = () => setOpen((open) => ! open);
 
-  const handleEventSelect = () => onEventSelect(record.debugEvent.eventTargetType, record.debugEvent.eventTargetKey);
+  const handleEventSelect = () => (console.log(record.debugEvent), onEventSelect(record.debugEvent.eventTargetType, record.debugEvent.eventTargetKey));
 
   const handlePipeSelect = () => onEventSelect('pipe', [record.debugEvent.data.pipeState.dataPipe.uniqKey, record.debugEvent.data.pipeState.dataPipe.uniqKey]);
 
@@ -86,7 +85,7 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
             <span className="ReactPipeDebugPanel-LogName"
               onClick={handleEventSelect}
             >
-              {record.debugEvent.name}
+              {record.debugEvent.message}
             </span>
             {' '}
             {objectKeys(record.debugEvent.data).length > 0

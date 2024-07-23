@@ -44,172 +44,62 @@ export function initDebugPanel() {
 
   const createDebugger = (): Debugger => {
     return {
-      onPipeCreate: (data) => {
+      onPipeCreate: (message, data) => {
         updatePanel((state) => {
           return onLog(onPipeCreate(state, data), {
             eventTargetType: 'pipe',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
-            name: 'onPipeCreate',
+            message,
             data,
           });
         });
       },
-      onPipeResetStart: (data) => {
+      onPipeEvent: (message, data) => {
         updatePanel((state) => {
           return onLog(updatePipeState(state, data), {
             eventTargetType: 'pipe',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
-            name: 'onPipeResetStart',
+            message,
             data,
           });
         });
       },
-      onPipeResetComplete: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'pipe',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
-            name: 'onPipeResetComplete',
-            data,
-          });
-        });
-      },
-      onMountStream: (data) => {
-        updatePanel((state) => {
-          return onLog(onStreamGroupCreate(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
-            name: 'onMountStream',
-            data,
-          });
-        });
-      },
-      onParentPipeStreamEmit: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
-            name: 'onParentPipeStreamEmit',
-            data,
-          });
-        });
-      },
-      onParentPipeStreamTerminateStart: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
-            name: 'onParentPipeStreamTerminateStart',
-            data,
-          });
-        });
-      },
-      onParentPipeStreamTerminateComplete: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
-            name: 'onParentPipeStreamTerminateComplete',
-            data,
-          });
-        });
-      },
-      onStreamGroupCreate: (data) => {
+      onStreamGroupCreate: (message, data) => {
         updatePanel((state) => {
           return onLog(onStreamGroupCreate(state, data), {
             eventTargetType: 'streamGroup',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupCreate',
+            message,
             data,
           });
         });
       },
-      onStreamGroupUpdate: (data) => {
+      onStreamGroupEvent: (message, data) => {
         updatePanel((state) => {
           return onLog(updatePipeState(state, data), {
             eventTargetType: 'streamGroup',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupUpdate',
+            message,
             data,
           });
         });
       },
-      onStreamGroupFulfill: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'streamGroup',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupFulfill',
-            data,
-          });
-        });
-      },
-      onStreamRelease: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
-            name: 'onStreamRelease',
-            data,
-          });
-        });
-      },
-      onStreamGroupFinish: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'streamGroup',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupFinish',
-            data,
-          });
-        });
-      },
-      onStreamGroupReleaseStart: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'streamGroup',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupReleaseStart',
-            data,
-          });
-        });
-      },
-      onStreamGroupReleaseComplete: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'streamGroup',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupReleaseComplete',
-            data,
-          });
-        });
-      },
-      onStreamGroupTerminateStart: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'streamGroup',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupTerminateStart',
-            data,
-          });
-        });
-      },
-      onStreamGroupTerminateComplete: (data) => {
-        updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
-            eventTargetType: 'streamGroup',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
-            name: 'onStreamGroupTerminateComplete',
-            data,
-          });
-        });
-      },
-      onEmit: (data) => {
+      onEmit: (message, data) => {
         updatePanel((state) => {
           return onLog(onEmit(state, data), {
             eventTargetType: 'stream',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamHead],
-            name: 'onEmit',
+            message,
+            data,
+          });
+        });
+      },
+      onStreamEvent: (message, data) => {
+        updatePanel((state) => {
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'stream',
+            eventTargetKey: [data.parentPipeUniqKey ?? data.pipeState.dataPipe.uniqKey, data.streamHead],
+            message,
             data,
           });
         });
@@ -244,7 +134,7 @@ function getDefaultPipeFrame(): Omit<PipeFrame, 'displayName' | 'pipeState'> {
 }
 
 function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
-  console.log(debugEvent.name, debugEvent.data);
+  console.log(debugEvent.message, debugEvent.data);
 
   const time = prepareTime(Date.now());
 
@@ -300,6 +190,31 @@ function onPipeCreate(state: PanelState, data: { pipeState: PipeState }): PanelS
   };
 }
 
+function updatePipeState(state: PanelState, data: { pipeState: PipeState }): PanelState {
+  const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
+    return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
+  });
+
+  const pipeFrame = state.pipeFrames[pipeFrameIndex];
+
+  const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
+  const emittedStreamFrames = updateEmittedStreamFrames(pipeFrame.emittedStreamFrames, data.pipeState.streamGroups);
+
+  const pipeFrames = [...state.pipeFrames];
+
+  pipeFrames[pipeFrameIndex] = {
+    ...pipeFrame,
+    pipeState: data.pipeState,
+    streamGroupFrames,
+    emittedStreamFrames: emittedStreamFrames,
+  };
+
+  return {
+    ...state,
+    pipeFrames,
+  };
+}
+
 function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
@@ -340,31 +255,6 @@ function onEmit(state: PanelState, data: { streamHead: symbol, value: any, value
   const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
   let [emittedStreamFrames] = addEmittedStreamFrame(pipeFrame.emittedStreamFrames, emittedStreamFrame);
   emittedStreamFrames = updateEmittedStreamFrames(emittedStreamFrames, data.pipeState.streamGroups);
-
-  const pipeFrames = [...state.pipeFrames];
-
-  pipeFrames[pipeFrameIndex] = {
-    ...pipeFrame,
-    pipeState: data.pipeState,
-    streamGroupFrames,
-    emittedStreamFrames: emittedStreamFrames,
-  };
-
-  return {
-    ...state,
-    pipeFrames,
-  };
-}
-
-function updatePipeState(state: PanelState, data: { pipeState: PipeState }): PanelState {
-  const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
-    return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
-  });
-
-  const pipeFrame = state.pipeFrames[pipeFrameIndex];
-
-  const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
-  const emittedStreamFrames = updateEmittedStreamFrames(pipeFrame.emittedStreamFrames, data.pipeState.streamGroups);
 
   const pipeFrames = [...state.pipeFrames];
 

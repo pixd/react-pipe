@@ -15,7 +15,7 @@ export function getUpstreamPipeParams(upstreamPipe: BasePipe, pipeFrames: PipeFr
       .forEach((connection) => levels[connection.level - 1] = true);
 
     if (pipeFrame.pipeState[stateProp].uniqKey === upstreamPipe.uniqKey) {
-      level = levels.findIndex(level => ! level) + 1 || levels.length + 1;
+      level = levels.findIndex((level) => ! level) + 1 || levels.length + 1;
       return true;
     }
     else {
@@ -56,14 +56,14 @@ export function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): 
     let lastDataUpstreamPipeIndex = -1;
     let leftErrorUpstreamNumber = 0;
 
-    const dataUpstreamPipes = destination.pipeState.upstreamPipes
+    const dataUpstreamPipes = destination.pipeState.parentPipes
       .map((upstreamPipe, index) => {
         upstreamPipe.type === 'data' && (lastDataUpstreamPipeIndex = index);
         return [upstreamPipe, index] as const;
       })
       .filter((data) => data[0].type === 'data')
       .reverse();
-    const errorUpstreamPipes = destination.pipeState.upstreamPipes
+    const errorUpstreamPipes = destination.pipeState.parentPipes
       .map((upstreamPipe, index) => {
         upstreamPipe.type === 'error' && index < lastDataUpstreamPipeIndex && leftErrorUpstreamNumber ++;
         return [upstreamPipe, index] as const;

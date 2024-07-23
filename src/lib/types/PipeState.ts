@@ -1,7 +1,7 @@
 import { Adjunct } from './Adjunct';
 import { DownstreamConnection } from './DownstreamConnection';
 import { StreamGroups } from './StreamGroup';
-import { UpstreamPipes } from './UpstreamPipes';
+import { ParentPipes } from './ParentPipes';
 
 export type PipeState<
   TValue extends any = any,
@@ -9,7 +9,7 @@ export type PipeState<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
   displayName?: string;
-  upstreamPipes: UpstreamPipes<TAdjuncts>;
+  parentPipes: ParentPipes<TAdjuncts>;
   streamGroups: StreamGroups<TAdjuncts>;
   dataPipe: CommonPipeState<TValue>;
   errorPipe: CommonPipeState<TError>;

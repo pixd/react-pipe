@@ -32,7 +32,7 @@ export const Console = React.memo(function Console(props: ConsoleProps) {
     const root = rootRef.current!;
 
     const observer = new ResizeObserver(() => {
-      setScrollMarkersState(state => [...state]);
+      setScrollMarkersState((state) => [...state]);
     });
 
     observer.observe(root);

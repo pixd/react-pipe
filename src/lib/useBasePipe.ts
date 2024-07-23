@@ -1,12 +1,13 @@
 import { useMemo, useEffect } from 'react';
 
-import { isDebugInstruction, isPipe, isPipeWithDebugInstruction } from './check';
+import { isDebugInstruction, isInstructionWithDisplayName, isPipe, isPipeWithCreateDebugger }
+  from './check';
 import { deepCopy } from './deepCopy';
 import { isFinal, Final } from './FINAL';
 import { MOUNT_STREAM_HEAD } from './mountStreamHead';
-import { PIPE_ENTITY_TYPE, Adjunct, BasePipe, BasePipeWithDebugInstruction, CommonPipeState, DataPipe,
-  DownstreamConnection, Debugger, DebugInstruction, OnParentPipeStreamEmit, OnParentPipeStreamTerminate, PipeType,
-  PipeState, Stream, StreamGroup, StreamGroupMembers, StreamGroupValues } from './types';
+import { PIPE_ENTITY_TYPE, Adjunct, BasePipe, CommonPipeState, DataPipe, DownstreamConnection,
+  Debugger, OnParentPipeStreamEmit, OnParentPipeStreamTerminate, PipeType, PipeState, Stream,
+  StreamGroup, StreamGroupMembers, StreamGroupValues } from './types';
 
 export type Emit<
   TValue extends any = any,
@@ -22,7 +23,7 @@ export type Fill<
 > = {
   (
     streamGroupValues: TStreamGroupValues,
-    emitStream: Emit<TValue | Final<TValue>>,
+    emitValue: Emit<TValue | Final<TValue>>,
     emitError: Emit,
   ): null | (() => void);
   displayName?: string;
@@ -50,9 +51,9 @@ export function useBasePipe(createFill: () => Fill, adjuncts: Adjunct[]): DataPi
   return pipe;
 }
 
-function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
+export function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
   const pipeState: PipeState = {
-    upstreamPipes: adjuncts.filter(isPipe),
+    parentPipes: adjuncts.filter(isPipe),
     streamGroups: {},
     dataPipe: {
       uniqKey: Symbol(),
@@ -68,8 +69,6 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
   const fill = createFill();
 
-  let displayName = fill.displayName || null;
-  let debugInstruction: null | DebugInstruction = null;
   let debug: null | Debugger = null;
 
   const emitValue = (streamGroup: StreamGroup, value: any): void => {
@@ -82,14 +81,14 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
       if (isFinal(value)) {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit(deepCopy({ streamHead, value, valueType: 'data', finally: true, streamGroup, pipeState }));
+          debug?.onEmit('Pipe finally emitted a value', deepCopy({ streamHead, value, valueType: 'data', finally: true, streamGroup, pipeState }));
         }
 
         finishStreamGroup(streamGroup);
       }
       else {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit(deepCopy({ streamHead, value, valueType: 'data', finally: false, streamGroup, pipeState }));
+          debug?.onEmit('Pipe emitted a value', deepCopy({ streamHead, value, valueType: 'data', finally: false, streamGroup, pipeState }));
         }
       }
 
@@ -99,7 +98,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
             streamReleaseCounter[index] = true;
 
             if (process.env.NODE_ENV === 'development') {
-              debug?.onStreamRelease(deepCopy({ streamHead, stream, streamGroup, pipeState }));
+              debug?.onStreamEvent('Stream had been released', deepCopy({ streamHead, stream, streamGroup, pipeState }));
             }
 
             if (streamReleaseCounter.every(Boolean)) {
@@ -143,14 +142,14 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
 
       if (isFinal(error)) {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit(deepCopy({ streamHead, value: error, valueType: 'error', finally: true, streamGroup, pipeState }));
+          debug?.onEmit('Pipe finally emitted an error', deepCopy({ streamHead, value: error, valueType: 'error', finally: true, streamGroup, pipeState }));
         }
 
         finishStreamGroup(streamGroup);
       }
       else {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit(deepCopy({ streamHead, value: error, valueType: 'error', finally: false, streamGroup, pipeState }));
+          debug?.onEmit('Pipe emitted an error', deepCopy({ streamHead, value: error, valueType: 'error', finally: false, streamGroup, pipeState }));
         }
       }
 
@@ -160,7 +159,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
             streamReleaseCounter[index] = true;
 
             if (process.env.NODE_ENV === 'development') {
-              debug?.onStreamRelease(deepCopy({ streamHead, stream, streamGroup, pipeState }));
+              debug?.onStreamEvent('Stream had been released', deepCopy({ streamHead, stream, streamGroup, pipeState }));
             }
 
             if (streamReleaseCounter.every(Boolean)) {
@@ -194,10 +193,10 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     }
   };
 
-  const handleParentPipeStreamEmit = (parentPipeIndex: number, streamHead: symbol, stream: Stream): void => {
+  const handleParentPipeStreamEmit = (parentPipeIndex: number, parentPipeUniqKey: symbol, streamHead: symbol, stream: Stream): void => {
     if (pipeState.dataPipe.operative) {
       if (process.env.NODE_ENV === 'development') {
-        debug?.onParentPipeStreamEmit(deepCopy({ parentPipeIndex, streamHead, stream, pipeState }));
+        debug?.onStreamEvent('Pipe received a stream', deepCopy({ parentPipeIndex, parentPipeUniqKey, streamHead, stream, pipeState }));
       }
 
       if (pipeState.streamGroups[streamHead]?.members[parentPipeIndex]) {
@@ -207,19 +206,19 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
         stream.release();
       }
 
-      const streamGroup = pipeState.streamGroups[streamHead] ?? createStreamGroup(streamHead, pipeState.upstreamPipes.length);
+      const streamGroup = pipeState.streamGroups[streamHead] ?? createStreamGroup(streamHead, pipeState.parentPipes.length);
       streamGroup.members[parentPipeIndex] = stream;
 
       if (pipeState.streamGroups[streamHead]) {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onStreamGroupUpdate(deepCopy({ parentPipeIndex, streamHead, stream, streamGroup, pipeState }));
+          debug?.onStreamGroupEvent('Stream group updated', deepCopy({ streamGroup, pipeState }));
         }
       }
       else {
         pipeState.streamGroups[streamHead] = streamGroup;
 
         if (process.env.NODE_ENV === 'development') {
-          debug?.onStreamGroupCreate(deepCopy({ streamHead, streamGroup, pipeState }));
+          debug?.onStreamGroupCreate('Stream group created', deepCopy({ streamHead, streamGroup, pipeState }));
         }
       }
 
@@ -227,13 +226,13 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
         streamGroup.status = 'active';
 
         if (process.env.NODE_ENV === 'development') {
-          debug?.onStreamGroupFulfill(deepCopy({ streamGroup, pipeState }));
+          debug?.onStreamGroupEvent('Stream group had been fulfilled', deepCopy({ streamGroup, pipeState }));
         }
 
         streamGroup.finish = fill(
           getFulfilledStreamGroupValues(streamGroup),
-          (...args) => emitValue(streamGroup, ...args),
-          (...args) => emitError(streamGroup, ...args),
+          (value) => emitValue(streamGroup, value),
+          (error) => emitError(streamGroup, error),
         );
       }
     }
@@ -244,17 +243,15 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     }
   };
 
-  const handleParentPipeStreamTerminate = (parentPipeIndex: number, streamHead: symbol): void => {
-    let prevPipeState = pipeState;
+  const handleParentPipeStreamTerminate = (parentPipeIndex: number, parentPipeUniqKey: symbol, streamHead: symbol): void => {
     if (process.env.NODE_ENV === 'development') {
-      prevPipeState = deepCopy(pipeState);
-      debug?.onParentPipeStreamTerminateStart(deepCopy({ parentPipeIndex, streamHead, pipeState }));
+      debug?.onStreamEvent('Pipe is terminating a stream', deepCopy({ parentPipeIndex, parentPipeUniqKey, streamHead, pipeState }));
     }
 
     terminateStreamGroup(pipeState.streamGroups[streamHead]);
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onParentPipeStreamTerminateComplete(deepCopy({ parentPipeIndex, streamHead, prevPipeState, pipeState }));
+      debug?.onStreamEvent('Pipe terminated a stream', deepCopy({ parentPipeIndex, parentPipeUniqKey, streamHead, pipeState }));
     }
   };
 
@@ -267,10 +264,8 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
   };
 
   const handleReset = () => {
-    let prevPipeState = pipeState;
     if (process.env.NODE_ENV === 'development') {
-      prevPipeState = deepCopy(pipeState);
-      debug?.onPipeResetStart(deepCopy({ pipeState }));
+      debug?.onPipeEvent('Pipe is resetting', deepCopy({ pipeState }));
     }
 
     Object.getOwnPropertySymbols(pipeState.streamGroups).forEach((streamHead) => {
@@ -278,7 +273,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     });
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onPipeResetComplete(deepCopy({ prevPipeState, pipeState }));
+      debug?.onPipeEvent('Pipe resetted', deepCopy({ pipeState }));
     }
   };
 
@@ -287,7 +282,7 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     streamGroup.finish?.();
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamGroupFinish(deepCopy({ streamGroup, pipeState }));
+      debug?.onStreamGroupEvent('Pipe finished a stream group', deepCopy({ streamGroup, pipeState }));
     }
   };
 
@@ -300,23 +295,21 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
   };
 
   const releaseStreamGroup = (streamGroup: StreamGroup) => {
-    let prevPipeState = pipeState;
     if (process.env.NODE_ENV === 'development') {
-      prevPipeState = deepCopy(pipeState);
-      debug?.onStreamGroupReleaseStart(deepCopy({ streamGroup, pipeState }));
+      debug?.onStreamGroupEvent('Pipe is releasing a stream group', deepCopy({ streamGroup, pipeState }));
     }
 
     delete pipeState.streamGroups[streamGroup.streamHead];
     streamGroup.members.forEach((stream) => stream?.release());
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamGroupReleaseComplete(deepCopy({ streamGroup, prevPipeState, pipeState }));
+      debug?.onStreamGroupEvent('Pipe released a stream group', deepCopy({ streamGroup, pipeState }));
     }
   };
 
   const terminateStreamGroup = (streamGroup: StreamGroup) => {
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamGroupTerminateStart(deepCopy({ streamGroup, pipeState }));
+      debug?.onStreamGroupEvent('Pipe is terminating a stream group', deepCopy({ streamGroup, pipeState }));
     }
 
     if (isStreamGroupActive(streamGroup)) {
@@ -349,21 +342,23 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     else {
       releaseStreamGroup(streamGroup);
     }
+
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamGroupTerminateComplete(deepCopy({ streamGroup, pipeState }));
+      debug?.onStreamGroupEvent('Pipe terminated a stream group', deepCopy({ streamGroup, pipeState }));
     }
   };
 
-  if (pipeState.upstreamPipes.length) {
-    pipeState.upstreamPipes.forEach((upstreamPipe, index) => {
-      const { connectionIndex } = upstreamPipe.connect(
-        (...args) => handleParentPipeStreamEmit(index, ...args),
-        (...args) => handleParentPipeStreamTerminate(index, ...args)
+  let inheritedDisplayName;
+  if (pipeState.parentPipes.length) {
+    pipeState.parentPipes.forEach((parentPipe, index) => {
+      const { connectionIndex } = parentPipe.connect(
+        (streamHead, stream) => handleParentPipeStreamEmit(index, parentPipe.uniqKey, streamHead, stream),
+        (streamHead) => handleParentPipeStreamTerminate(index, parentPipe.uniqKey, streamHead)
       );
 
       if (process.env.NODE_ENV === 'development') {
-        if (index === 0 && ! displayName) {
-          displayName = `${upstreamPipe.displayName} / ${connectionIndex + 1}`;
+        if (index === 0) {
+          inheritedDisplayName = `${parentPipe.displayName} => Downstream pipe #${connectionIndex + 1}`;
         }
       }
     });
@@ -376,25 +371,28 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
   dataPipe.error = errorPipe;
 
   if (process.env.NODE_ENV === 'development') {
-    displayName && (pipeState.displayName = displayName);
-    displayName = displayName || 'unknown';
-    debugInstruction = getDebugInstruction(adjuncts);
-    debug = debugInstruction?.createDebugger(displayName) ?? null;
+    const instructionWithDisplayName = adjuncts.findLast(isInstructionWithDisplayName);
+    const debugInstruction = adjuncts.findLast(isDebugInstruction);
+    const createDebugger = debugInstruction?.createDebugger ?? adjuncts.findLast(isPipeWithCreateDebugger)?.createDebugger;
+
+    const displayName = pipeState.displayName = instructionWithDisplayName?.displayName || fill.displayName || inheritedDisplayName || 'unknown';
+
+    debug = createDebugger?.(displayName) ?? null;
 
     pipe.displayName = displayName;
-    pipe.debugInstruction = debugInstruction;
+    pipe.createDebugger = createDebugger;
     pipe.uniqKey = pipeState.dataPipe.uniqKey = Symbol(pipe.displayName);
 
-    errorPipe.displayName = `${displayName} (error)`;
-    errorPipe.debugInstruction = debugInstruction;
+    errorPipe.displayName = `${displayName} error pipe`;
+    errorPipe.createDebugger = createDebugger;
     errorPipe.uniqKey = pipeState.errorPipe.uniqKey = Symbol(errorPipe.displayName);
 
-    handleReset.displayName = `Reset ${displayName}`;
+    handleReset.displayName = `${displayName} reset`;
 
-    debug?.onPipeCreate(deepCopy({ pipeState }));
+    debug?.onPipeCreate('Pipe created', deepCopy({ pipeState }));
   }
 
-  if (pipeState.upstreamPipes.length === 0) {
+  if (pipeState.parentPipes.length === 0) {
     let prevPipeState = pipeState;
     if (process.env.NODE_ENV === 'development') {
       prevPipeState = deepCopy(pipeState);
@@ -403,20 +401,20 @@ function createPipeKit(createFill: () => Fill, adjuncts: Adjunct[]): PipeKit {
     const mountStreamGroup = pipeState.streamGroups[MOUNT_STREAM_HEAD] = createStreamGroup(MOUNT_STREAM_HEAD, 0);
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onMountStream(deepCopy({ streamHead: MOUNT_STREAM_HEAD, streamGroup: mountStreamGroup, prevPipeState, pipeState }));
+      debug?.onStreamGroupCreate('Stream group created', deepCopy({ streamHead: MOUNT_STREAM_HEAD, streamGroup: mountStreamGroup, prevPipeState, pipeState }));
       prevPipeState = deepCopy(pipeState);
     }
 
     mountStreamGroup.status = 'active';
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamGroupFulfill(deepCopy({ streamGroup: mountStreamGroup, prevPipeState, pipeState }));
+      debug?.onStreamGroupEvent('Stream group had been fulfilled', deepCopy({ streamGroup: mountStreamGroup, prevPipeState, pipeState }));
     }
 
     mountStreamGroup.finish = fill(
       [],
-      (...args) => emitValue(mountStreamGroup, ...args),
-      (...args) => emitError(mountStreamGroup, ...args),
+      (value) => emitValue(mountStreamGroup, value),
+      (error) => emitError(mountStreamGroup, error),
     );
   }
 
@@ -514,11 +512,4 @@ function getEmittedValue<
   else {
     return value;
   }
-}
-
-export function getDebugInstruction(adjuncts: Adjunct[]): null | DebugInstruction {
-  return null
-    ?? adjuncts.find<DebugInstruction>(isDebugInstruction)
-    ?? adjuncts.find<BasePipeWithDebugInstruction>(isPipeWithDebugInstruction)?.debugInstruction
-    ?? null;
 }

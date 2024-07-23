@@ -41,7 +41,7 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
     const root = rootRef.current!;
 
     const observer = new ResizeObserver(() => {
-      setScrollMarkersState(state => [...state]);
+      setScrollMarkersState((state) => [...state]);
     });
 
     observer.observe(root);

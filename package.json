@@ -75,7 +75,14 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "arrow-parens": [
+        "error",
+        "always"
+      ],
+      "no-sequences": "off"
+    }
   },
   "browserslist": {
     "production": [

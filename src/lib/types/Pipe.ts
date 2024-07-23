@@ -1,5 +1,5 @@
 import { Connect } from './Connect';
-import { DebugInstruction } from './Debug';
+import { CreateDebugger } from './Dev';
 
 export const PIPE_ENTITY_TYPE = Symbol('PIPE_ENTITY_TYPE');
 
@@ -11,13 +11,22 @@ export type BasePipe<
   entityType: typeof PIPE_ENTITY_TYPE;
   type: PipeType;
   uniqKey: symbol;
-  displayName?: null | string;
-  debugInstruction?: null | DebugInstruction;
+
   connect: Connect<TValue>;
   emit: (value: TValue) => void;
   throw: (error: any) => void;
   reset: () => void;
   terminate: () => void;
+
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
+  displayName?: null | string;
+
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
+  createDebugger?: null | CreateDebugger;
 };
 
 export type DataPipe<
@@ -32,10 +41,10 @@ export type UniversalDataPipe<
   ? DataPipe<Exclude<TValue, Promise<any>> | (Extract<TValue, Promise<any>> extends Promise<infer TPromiseValue> ? TPromiseValue : never)>
   : BasePipe<TValue>;
 
-export type BasePipeWithDebugInstruction<
+export type BasePipeWithCreateDebugger<
   TValue extends any = any,
 > = BasePipe<TValue> & {
-  debugInstruction: DebugInstruction;
+  createDebugger: CreateDebugger;
 };
 
 export type BasePipeWithDisplayName<
