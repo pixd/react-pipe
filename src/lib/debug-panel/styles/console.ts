@@ -24,9 +24,14 @@ export const styles = css`
     background-color: #2f3541;
     border-right: 1px solid #454b56;
     box-sizing: content-box;
-    display: flex;
     padding: 0.1em 0.4em;
     width: 7.2em;
+  }
+
+  .${MAIM_CLASS_NAME}-PilotTime > span,
+  .${MAIM_CLASS_NAME}-Time > span {
+    cursor: pointer;
+    outline: none;
   }
 
   .${MAIM_CLASS_NAME}-PilotMessage,
@@ -67,13 +72,25 @@ export const styles = css`
     color: #464d5c !important;
   }
 
-  .${MAIM_CLASS_NAME}-Time {
+  .${MAIM_CLASS_NAME}-Time > span {
     color: #537f7e;
-    cursor: pointer;
+    display: block;
   }
 
-  .${MAIM_CLASS_NAME}-ConsoleRecord-Selected .${MAIM_CLASS_NAME}-Time {
+  .${MAIM_CLASS_NAME}-Time > i {
+    color: #af7676;
+    display: block;
+    font-size: 0.8em;
+    font-style: italic;
+    text-align: center;
+  }
+
+  .${MAIM_CLASS_NAME}-ConsoleRecord-Selected .${MAIM_CLASS_NAME}-Time > span {
     color: #e18e42 !important;
+  }
+
+  .${MAIM_CLASS_NAME}-ConsoleRecord-Selected .${MAIM_CLASS_NAME}-Time > i {
+    color: #464d5c !important;
   }
 
   .${MAIM_CLASS_NAME}-Message {

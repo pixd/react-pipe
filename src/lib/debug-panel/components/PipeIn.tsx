@@ -7,12 +7,12 @@ import { StreamGroup } from './StreamGroup';
 export type PipeInProps = {
   pipeUniqKey: symbol;
   streamGroupFrames: StreamGroupFrame[];
-  selectedStreamGroup: null | symbol;
-  onStreamGroupSelection: (uniqKey: [symbol, symbol]) => void;
+  selectedStreamGroupFrame: null | symbol;
+  onStreamGroupFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const PipeIn = React.memo(function PipeIn(props: PipeInProps) {
-  const { pipeUniqKey, streamGroupFrames, selectedStreamGroup, onStreamGroupSelection } = props;
+  const { pipeUniqKey, streamGroupFrames, selectedStreamGroupFrame, onStreamGroupFrameSelection } = props;
 
   return (
     <div className="ReactPipeDebugPanel-PipeIn">
@@ -27,14 +27,14 @@ export const PipeIn = React.memo(function PipeIn(props: PipeInProps) {
           </div>
         )
         : streamGroupFrames.map((streamGroupFrame, index) => {
-          const selected = streamGroupFrame.data.uniqKey === selectedStreamGroup;
+          const selected = streamGroupFrame.data.uniqKey === selectedStreamGroupFrame;
 
           return (
             <StreamGroup key={index}
               pipeUniqKey={pipeUniqKey}
               streamGroupFrame={streamGroupFrame}
               selected={selected}
-              onStreamGroupSelection={onStreamGroupSelection} />
+              onStreamGroupFrameSelection={onStreamGroupFrameSelection} />
           );
         })}
     </div>

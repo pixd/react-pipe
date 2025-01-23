@@ -20,23 +20,23 @@ type Selectors<
   ) => TRootState[TStateName][TKey];
 } & {
   [TKey in keyof TRootState[TStateName] as TKey extends `${infer T}RequestState`
-    ? `select${Capitalize<T>}RequestIdle`
+    ? `selectIs${Capitalize<T>}RequestIdle`
     : never]: (rootState: TRootState) => boolean;
 } & {
   [TKey in keyof TRootState[TStateName] as TKey extends `${infer T}RequestState`
-    ? `select${Capitalize<T>}RequestActive`
+    ? `selectIs${Capitalize<T>}RequestActive`
     : never]: (rootState: TRootState) => boolean;
 } & {
   [TKey in keyof TRootState[TStateName] as TKey extends `${infer T}RequestState`
-    ? `select${Capitalize<T>}RequestResolved`
+    ? `selectIs${Capitalize<T>}RequestResolved`
     : never]: (rootState: TRootState) => boolean;
 } & {
   [TKey in keyof TRootState[TStateName] as TKey extends `${infer T}RequestState`
-    ? `select${Capitalize<T>}RequestRejected`
+    ? `selectIs${Capitalize<T>}RequestRejected`
     : never]: (rootState: TRootState) => boolean;
 } & {
   [TKey in keyof TRootState[TStateName] as TKey extends `${infer T}RequestState`
-    ? `select${Capitalize<T>}RequestPending`
+    ? `selectIs${Capitalize<T>}RequestPending`
     : never]: (rootState: TRootState) => boolean;
 };
 
@@ -48,7 +48,7 @@ type Enhancer<
 };
 
 function createStatusSelectorName(key: string, status: string): string {
-  return ('select' + key[0].toUpperCase() + key.slice(1)).replace(/State$/, status);
+  return ('selectIs' + key[0].toUpperCase() + key.slice(1)).replace(/State$/, status);
 }
 
 export function createSelectors<

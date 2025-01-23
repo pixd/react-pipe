@@ -16,15 +16,15 @@ export type SchemaProps = {
   maxErrorLevel: number;
   selectedPipe: null | [symbol, symbol];
   selectedStreamGroup: null | [symbol, symbol];
-  selectedEmittedStream: null | [symbol, symbol];
+  selectedEmittedValue: null | [symbol, symbol];
   onPipeSelection: (uniqKey: symbol) => void;
   onStreamGroupSelection: (uniqKey: [symbol, symbol]) => void;
-  onEmittedStreamSelection: (uniqKey: [symbol, symbol]) => void;
+  onEmittedValueSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const Schema = React.memo(function Schema(props: SchemaProps) {
   const { pipeFrames, maxDataLevel, maxErrorLevel, selectedPipe, selectedStreamGroup,
-    selectedEmittedStream, onPipeSelection, onStreamGroupSelection, onEmittedStreamSelection,
+    selectedEmittedValue, onPipeSelection, onStreamGroupSelection, onEmittedValueSelection,
   } = props;
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -51,7 +51,7 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
   useEffect(() => {
     const { realThumbHeight, scrollMarkers } = getScrollMarkers(rootRef.current!, listRef.current!);
     setScrollMarkersState([realThumbHeight, scrollMarkers]);
-  }, [pipeFrames, selectedPipe, selectedStreamGroup, selectedEmittedStream, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
+  }, [pipeFrames, selectedPipe, selectedStreamGroup, selectedEmittedValue, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
 
   const style = {
     paddingLeft: `${maxDataLevel * LINE_SPACE + OUT_GAP}em`,
@@ -74,19 +74,19 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
           const pipeSelectedStreamGroup = selectedStreamGroup && selectedStreamGroup[0] === pipe.pipeState.dataPipe.uniqKey
             ? selectedStreamGroup[1]
             : null;
-          const pipeSelectedEmittedStream = selectedEmittedStream && selectedEmittedStream[0] === pipe.pipeState.dataPipe.uniqKey
-            ? selectedEmittedStream[1]
+          const pipeSelectedEmittedValue = selectedEmittedValue && selectedEmittedValue[0] === pipe.pipeState.dataPipe.uniqKey
+            ? selectedEmittedValue[1]
             : null;
 
           return (
             <Pipe key={index}
               pipeFrame={pipe}
               selected={selected}
-              selectedStreamGroup={pipeSelectedStreamGroup}
-              selectedEmittedStream={pipeSelectedEmittedStream}
+              selectedStreamGroupFrame={pipeSelectedStreamGroup}
+              selectedEmittedValueFrame={pipeSelectedEmittedValue}
               onPipeSelection={onPipeSelection}
-              onStreamGroupSelection={onStreamGroupSelection}
-              onEmittedStreamSelection={onEmittedStreamSelection} />
+              onStreamGroupFrameSelection={onStreamGroupSelection}
+              onEmittedValueFrameSelection={onEmittedValueSelection} />
           );
         })}
       </div>

@@ -7,6 +7,8 @@ export { useMountPipe } from './useMountPipe';
 export { usePipe } from './usePipe';
 
 export type { BasePipe, DataPipe } from './types';
+export type { ActionPipe } from './useActionPipe';
+export type { MountPipe } from './useMountPipe';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {

@@ -11,7 +11,7 @@ export type StreamGroup<
   streamHead: symbol;
   status: StreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;
-  emitValueGroups: Record<symbol, boolean[]>;
+  emitDataGroups: Record<symbol, boolean[]>;
   emitErrorGroups: Record<symbol, boolean[]>;
   finish: null | (() => void);
 };

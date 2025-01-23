@@ -11,11 +11,11 @@ export type StreamGroupProps = {
   pipeUniqKey: symbol;
   streamGroupFrame: StreamGroupFrame;
   selected: boolean;
-  onStreamGroupSelection: (uniqKey: [symbol, symbol]) => void;
+  onStreamGroupFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupProps) {
-  const { pipeUniqKey, streamGroupFrame, selected, onStreamGroupSelection } = props;
+  const { pipeUniqKey, streamGroupFrame, selected, onStreamGroupFrameSelection } = props;
 
   const className = [
     'ReactPipeDebugPanel-StreamGroup',
@@ -33,21 +33,21 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
   ].filter(Boolean).join(' ');
 
   const handleStreamGroupClick = () => {
-    onStreamGroupSelection([pipeUniqKey, streamGroupFrame.data.uniqKey]);
+    onStreamGroupFrameSelection([pipeUniqKey, streamGroupFrame.data.uniqKey]);
 
-    const members = Array(streamGroupFrame.data.members.length);
-    streamGroupFrame.data.members.forEach((member, index) => {
-      if (member) {
-        members[index] = member.value;
-      }
-    });
+    // const members = Array(streamGroupFrame.data.members.length);
+    // streamGroupFrame.data.members.forEach((member, index) => {
+    //   if (member) {
+    //     members[index] = member.value;
+    //   }
+    // });
 
     console.log({
-      streamGroupUniqKey: streamGroupFrame.data.uniqKey,
-      streamGroupStatus: streamGroupFrame.data.status,
+      uniqKey: streamGroupFrame.data.uniqKey,
       streamHead: streamGroupFrame.data.streamHead,
+      members: streamGroupFrame.data.members,
+      status: streamGroupFrame.data.status,
       deleted: streamGroupFrame.deleted,
-      members,
     });
   };
 

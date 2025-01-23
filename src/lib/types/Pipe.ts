@@ -13,7 +13,6 @@ export type BasePipe<
   uniqKey: symbol;
 
   connect: Connect<TValue>;
-  emit: (value: TValue) => void;
   throw: (error: any) => void;
   reset: () => void;
   terminate: () => void;

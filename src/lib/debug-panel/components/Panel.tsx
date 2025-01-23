@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { selectEmittedStream, selectPipe, selectStreamGroup } from '../tools';
+import { selectEmittedValue, selectEvent, selectPipe, selectStreamGroup } from '../tools';
 import { EventTargetType, PanelState } from '../types';
 import { Console } from './Console';
 import { Schema } from './Schema';
@@ -13,7 +13,7 @@ const initialState: PanelState = {
   maxErrorLevel: 0,
   selectedPipe: null,
   selectedStreamGroup: null,
-  selectedEmittedStream: null,
+  selectedEmittedValue: null,
   selectedDebugRecord: null,
 };
 
@@ -41,40 +41,44 @@ export function Panel(props: AppProps) {
     setPanelState((state) => selectStreamGroup(uniqKey, state));
   }, []);
 
-  const handleEmittedStreamSelection = useCallback((uniqKey: [symbol, symbol]) => {
-    setPanelState((state) => selectEmittedStream(uniqKey, state));
+  const handleEmittedValueSelection = useCallback((uniqKey: [symbol, symbol]) => {
+    setPanelState((state) => selectEmittedValue(uniqKey, state));
   }, []);
 
   const handleEventSelect = useCallback((eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => {
-    switch (eventTargetType) {
-      case 'pipe': {
-        setPanelState((state) => selectPipe(eventTargetKey, state));
-        break;
-      }
-      case 'streamGroup': {
-        setPanelState((state) => selectStreamGroup(eventTargetKey, state));
-        break;
-      }
-      case 'stream': {
-        setPanelState((state) => selectEmittedStream(eventTargetKey, state));
-        break;
-      }
-      default: {
-        const badEventTargetType: never = eventTargetType;
-        throw new Error('Bad event target type: ' + badEventTargetType);
-      }
-    }
+    setPanelState((state) => selectEvent(eventTargetType, eventTargetKey, state));
+  }, []);
+
+  const selectDebugRecord = useCallback((index: number, selectedDebugRecord: null | number, state: PanelState) => {
+    const debugRecord = state.debugRecords[index];
+    return selectEvent(debugRecord.debugEvent.eventTargetType, debugRecord.debugEvent.eventTargetKey, { ...state, selectedDebugRecord }, true);
   }, []);
 
   const handleDebugRecordSelect = useCallback((index: number) => {
     setPanelState((state) => {
       const selectedDebugRecord = state.selectedDebugRecord === index ? null : index;
-      return {
-        ...state,
-        selectedDebugRecord,
-      };
+      return selectDebugRecord(index, selectedDebugRecord, state);
     });
-  }, [])
+  }, [selectDebugRecord]);
+
+  const handleDebugRecordNavigation = useCallback((event: Event) => {
+    setPanelState((state) => {
+      const selectedDebugRecord = (event as unknown as React.KeyboardEvent).key === ','
+        ? Math.max(0, (state.selectedDebugRecord ?? 1) - 1)
+        : (event as unknown as React.KeyboardEvent).key === '.'
+          ? Math.min(state.debugRecords.length, (state.selectedDebugRecord ?? -1) + 1)
+          : null;
+
+      return selectedDebugRecord == null
+        ? state
+        : selectDebugRecord(selectedDebugRecord, selectedDebugRecord, state);
+    });
+  }, [selectDebugRecord]);
+
+  useEffect(() => {
+    window.addEventListener('keyup', handleDebugRecordNavigation);
+    return () => window.removeEventListener('keyup', handleDebugRecordNavigation);
+  }, [handleDebugRecordNavigation]);
 
   return (
     <div className="ReactPipeDebugPanel">
@@ -90,10 +94,10 @@ export function Panel(props: AppProps) {
           maxErrorLevel={currentPanelState.maxErrorLevel}
           selectedPipe={panelState.selectedPipe}
           selectedStreamGroup={panelState.selectedStreamGroup}
-          selectedEmittedStream={panelState.selectedEmittedStream}
+          selectedEmittedValue={panelState.selectedEmittedValue}
           onPipeSelection={handlePipeSelection}
           onStreamGroupSelection={handleStreamGroupSelection}
-          onEmittedStreamSelection={handleEmittedStreamSelection} />
+          onEmittedValueSelection={handleEmittedValueSelection} />
       </div>
       <div className="ReactPipeDebugPanel-FakeSpace" />
     </div>

@@ -27,13 +27,22 @@ function createFill(
   const actionTypes = ([] as string[]).concat(actionType);
 
   const fill = (streamGroupValues: any, emitStream: Emit) => {
-    return store.subscribe(() => {
+    let active: boolean = true;
+
+    const unsubscribe = store.subscribe(() => {
       const action = actionSelector(store.getState());
 
       if (actionTypes.includes(action.type)) {
-        Promise.resolve().then(() => emitStream(action));
+        Promise.resolve().then(() => {
+          active && emitStream(action)
+        });
       }
     });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   };
 
   fill.displayName = 'Action listener (' + (actionTypes.length > 1 ? `${actionTypes[0]} + ${actionTypes.length - 1}` : actionTypes[0]) + ')';

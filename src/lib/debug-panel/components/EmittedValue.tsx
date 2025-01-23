@@ -2,18 +2,18 @@ import React from 'react';
 
 import { BugSolidIcon } from '../icons/BugSolidIcon';
 import { DatabaseSolidIcon } from '../icons/DatabaseSolidIcon';
-import { EmittedStreamFrame, StreamValueType } from '../types';
+import { EmittedValueFrame, EmittedValueType } from '../types';
 
-export type EmittedStreamProps = {
+export type EmittedValueProps = {
   pipeUniqKey: symbol;
-  streamValueType: StreamValueType;
-  emittedStreamFrame: EmittedStreamFrame;
+  streamValueType: EmittedValueType;
+  emittedValueFrame: EmittedValueFrame;
   selected: boolean;
-  onEmittedStreamSelection: (uniqKey: [symbol, symbol]) => void;
+  onEmittedValueFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const EmittedStream = React.memo(function EmittedStream(props: EmittedStreamProps) {
-  const { pipeUniqKey, streamValueType, emittedStreamFrame, selected, onEmittedStreamSelection }
+export const EmittedValue = React.memo(function EmittedValue(props: EmittedValueProps) {
+  const { pipeUniqKey, streamValueType, emittedValueFrame, selected, onEmittedValueFrameSelection }
     = props;
 
   const className = [
@@ -24,21 +24,21 @@ export const EmittedStream = React.memo(function EmittedStream(props: EmittedStr
   const iconClassName = [
     'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-IconStatus-Success',
     streamValueType === 'error' ? 'ReactPipeDebugPanel-BugSolidIcon' : 'ReactPipeDebugPanel-DatabaseSolidIcon',
-    emittedStreamFrame.released ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+    emittedValueFrame.released ? 'ReactPipeDebugPanel-InactiveIcon' : null,
   ].filter(Boolean).join(' ');
 
-  const handleEmittedStreamClick = () => {
-    onEmittedStreamSelection([pipeUniqKey, emittedStreamFrame.streamHead]);
+  const handleEmittedValueClick = () => {
+    onEmittedValueFrameSelection([pipeUniqKey, emittedValueFrame.streamHead]);
 
     console.log({
-      streamReleased: emittedStreamFrame.released,
-      value: emittedStreamFrame.value,
+      released: emittedValueFrame.released,
+      data: emittedValueFrame.data,
     });
   };
 
   return (
     <div className={className}
-      onClick={handleEmittedStreamClick}
+      onClick={handleEmittedValueClick}
     >
       <div className={iconClassName}>
         {streamValueType === 'error'

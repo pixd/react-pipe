@@ -58,7 +58,9 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
         ? (
           <div className={pilotClassName}>
             <div className="ReactPipeDebugPanel-PilotTime">
-              <span>
+              <span
+                onClick={handlePipeSelect}
+              >
                 Pipe
               </span>
             </div>
@@ -74,10 +76,17 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
         )
         : null}
       <div className={recordClassName}>
-        <div className="ReactPipeDebugPanel-Time"
-          onClick={handleDebugRecordSelect}
-        >
-          {record.time}
+        <div className="ReactPipeDebugPanel-Time">
+          <span
+            onClick={handleDebugRecordSelect}
+          >
+            {record.time}
+          </span>
+          {record.syncIdleTime
+            ? (
+              <i>~ {record.syncIdleTime} ~</i>
+            )
+            : null}
         </div>
         <div className="ReactPipeDebugPanel-Message">
           <div>

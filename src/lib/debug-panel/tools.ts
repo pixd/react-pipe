@@ -1,7 +1,8 @@
 // noinspection TypeScriptValidateTypes
 
 import { BasePipe, StreamGroups } from '../types';
-import { EmittedStreamFrame, PanelState, PipeFrame, StreamGroupFrame } from './types';
+import { EmittedValueFrame, EventTargetType, PanelState, PipeFrame, StreamGroupFrame }
+  from './types';
 
 export function getUpstreamPipeParams(upstreamPipe: BasePipe, pipeFrames: PipeFrame[]): [number, number] {
   const levels: boolean[] = [];
@@ -187,54 +188,55 @@ export function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], s
   return changed ? nextStreamGroupFrames : streamGroupFrames;
 }
 
-export function addEmittedStreamFrame(emittedStreamFrames: EmittedStreamFrame[], newEmittedStreamFrame: EmittedStreamFrame): [EmittedStreamFrame[]] {
-  const nextEmittedStreamFrames = [
-    ...emittedStreamFrames,
-    newEmittedStreamFrame,
+export function addEmittedValueFrame(emittedValueFrames: EmittedValueFrame[], newEmittedValueFrame: EmittedValueFrame): [EmittedValueFrame[]] {
+  const nextEmittedValueFrames = [
+    ...emittedValueFrames,
+    newEmittedValueFrame,
   ];
 
-  return [nextEmittedStreamFrames];
+  return [nextEmittedValueFrames];
 }
 
-export function updateEmittedStreamFrames(emittedStreamFrames: EmittedStreamFrame[], streamGroups: StreamGroups): EmittedStreamFrame[] {
+export function updateEmittedValueFrames(emittedValueFrames: EmittedValueFrame[], streamGroups: StreamGroups): EmittedValueFrame[] {
   let changed = false;
 
-  const nextEmittedStreamFrames = emittedStreamFrames.map((emittedStreamFrame) => {
+  const nextEmittedValueFrames = emittedValueFrames.map((emittedValueFrame) => {
     const released = Object.getOwnPropertySymbols(streamGroups).every((streamHead) => {
-      return null
-        ?? (Object.getOwnPropertySymbols(streamGroups[streamHead].emitValueGroups).find((emitGroupStreamHead) => {
-          return emitGroupStreamHead === emittedStreamFrame.streamHead && ! streamGroups[streamHead].emitValueGroups[emitGroupStreamHead].every(Boolean);
-        }) && false)
-        ?? (Object.getOwnPropertySymbols(streamGroups[streamHead].emitErrorGroups).find((emitGroupStreamHead) => {
-          return emitGroupStreamHead === emittedStreamFrame.streamHead && ! streamGroups[streamHead].emitErrorGroups[emitGroupStreamHead].every(Boolean);
-        }) && false)
-        ?? true;
+      const streamGroup = streamGroups[streamHead];
+      return ! (false
+        || Object.getOwnPropertySymbols(streamGroup.emitDataGroups).some((emitGroupStreamHead) => {
+          return emitGroupStreamHead === emittedValueFrame.streamHead && ! streamGroup.emitDataGroups[emitGroupStreamHead].every(Boolean);
+        })
+        || Object.getOwnPropertySymbols(streamGroup.emitErrorGroups).some((emitGroupStreamHead) => {
+          return emitGroupStreamHead === emittedValueFrame.streamHead && ! streamGroup.emitErrorGroups[emitGroupStreamHead].every(Boolean);
+        })
+      );
     });
 
-    if (emittedStreamFrame.released !== released) {
+    if (emittedValueFrame.released !== released) {
       changed = true;
 
       return {
-        ...emittedStreamFrame,
+        ...emittedValueFrame,
         released,
       };
     }
     else {
-      return emittedStreamFrame;
+      return emittedValueFrame;
     }
   });
 
-  return changed ? nextEmittedStreamFrames : emittedStreamFrames;
+  return changed ? nextEmittedValueFrames : emittedValueFrames;
 }
 
-export function selectPipe(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
-  const selected = ! (panelState.selectedPipe && panelState.selectedPipe[1] === uniqKey[1]);
+export function selectPipe(uniqKey: [symbol, symbol], panelState: PanelState, preserveSelection?: boolean): PanelState {
+  const selected = preserveSelection || ! (panelState.selectedPipe && panelState.selectedPipe[1] === uniqKey[1]);
 
   let nextState: PanelState = {
     ...panelState,
     selectedPipe: selected ? uniqKey : null,
     selectedStreamGroup: null,
-    selectedEmittedStream: null,
+    selectedEmittedValue: null,
   };
 
   nextState = selectDebugRecords(uniqKey, nextState);
@@ -242,14 +244,14 @@ export function selectPipe(uniqKey: [symbol, symbol], panelState: PanelState): P
   return nextState;
 }
 
-export function selectStreamGroup(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
-  const selected = ! (panelState.selectedStreamGroup && panelState.selectedStreamGroup[1] === uniqKey[1]);
+export function selectStreamGroup(uniqKey: [symbol, symbol], panelState: PanelState, preserveSelection?: boolean): PanelState {
+  const selected = preserveSelection || ! (panelState.selectedStreamGroup && panelState.selectedStreamGroup[1] === uniqKey[1]);
 
   let nextState: PanelState = {
     ...panelState,
     selectedPipe: null,
     selectedStreamGroup: selected ? uniqKey : null,
-    selectedEmittedStream: null,
+    selectedEmittedValue: null,
   };
 
   nextState = selectDebugRecords(uniqKey, nextState);
@@ -257,14 +259,14 @@ export function selectStreamGroup(uniqKey: [symbol, symbol], panelState: PanelSt
   return nextState;
 }
 
-export function selectEmittedStream(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
-  const selected = ! (panelState.selectedEmittedStream && panelState.selectedEmittedStream[1] === uniqKey[1]);
+export function selectEmittedValue(uniqKey: [symbol, symbol], panelState: PanelState, preserveSelection?: boolean): PanelState {
+  const selected = preserveSelection || ! (panelState.selectedEmittedValue && panelState.selectedEmittedValue[1] === uniqKey[1]);
 
   let nextState: PanelState = {
     ...panelState,
     selectedPipe: null,
     selectedStreamGroup: null,
-    selectedEmittedStream: selected ? uniqKey : null,
+    selectedEmittedValue: selected ? uniqKey : null,
   };
 
   nextState = selectDebugRecords(uniqKey, nextState);
@@ -272,8 +274,26 @@ export function selectEmittedStream(uniqKey: [symbol, symbol], panelState: Panel
   return nextState;
 }
 
+export function selectEvent(eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol], state: PanelState, preserveSelection?: boolean) {
+  switch (eventTargetType) {
+    case 'pipe': {
+      return selectPipe(eventTargetKey, state, preserveSelection);
+    }
+    case 'streamGroup': {
+      return selectStreamGroup(eventTargetKey, state, preserveSelection);
+    }
+    case 'stream': {
+      return selectEmittedValue(eventTargetKey, state, preserveSelection);
+    }
+    default: {
+      const badEventTargetType: never = eventTargetType;
+      throw new Error('Bad event target type: ' + badEventTargetType);
+    }
+  }
+}
+
 function selectDebugRecords(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
-  const selectedEventKey = panelState.selectedPipe?.[1] ?? panelState.selectedStreamGroup?.[1] ?? panelState.selectedEmittedStream?.[1] ?? null;
+  const selectedEventKey = panelState.selectedPipe?.[1] ?? panelState.selectedStreamGroup?.[1] ?? panelState.selectedEmittedValue?.[1] ?? null;
   const selected = selectedEventKey === uniqKey[1];
   let debugRecordsChanged = false;
 

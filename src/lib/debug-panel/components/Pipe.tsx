@@ -10,16 +10,16 @@ import { PipeOut } from './PipeOut';
 export type PipeProps = {
   pipeFrame: PipeFrame;
   selected: boolean;
-  selectedStreamGroup: null | symbol;
-  selectedEmittedStream: null | symbol;
+  selectedStreamGroupFrame: null | symbol;
+  selectedEmittedValueFrame: null | symbol;
   onPipeSelection: (uniqKey: symbol) => void;
-  onStreamGroupSelection: (uniqKey: [symbol, symbol]) => void;
-  onEmittedStreamSelection: (uniqKey: [symbol, symbol]) => void;
+  onStreamGroupFrameSelection: (uniqKey: [symbol, symbol]) => void;
+  onEmittedValueFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const Pipe = React.memo(function Pipe(props: PipeProps) {
-  const { pipeFrame, selected, selectedStreamGroup, selectedEmittedStream, onPipeSelection,
-    onStreamGroupSelection, onEmittedStreamSelection } = props;
+  const { pipeFrame, selected, selectedStreamGroupFrame, selectedEmittedValueFrame, onPipeSelection,
+    onStreamGroupFrameSelection, onEmittedValueFrameSelection } = props;
 
   const handlePipeClick = () => {
     onPipeSelection(pipeFrame.pipeState.dataPipe.uniqKey);
@@ -52,13 +52,13 @@ export const Pipe = React.memo(function Pipe(props: PipeProps) {
         <PipeIn
           pipeUniqKey={pipeFrame.pipeState.dataPipe.uniqKey}
           streamGroupFrames={pipeFrame.streamGroupFrames}
-          selectedStreamGroup={selectedStreamGroup}
-          onStreamGroupSelection={onStreamGroupSelection} />
+          selectedStreamGroupFrame={selectedStreamGroupFrame}
+          onStreamGroupFrameSelection={onStreamGroupFrameSelection} />
         <PipeOut
           pipeUniqKey={pipeFrame.pipeState.dataPipe.uniqKey}
-          emittedStreamFrames={pipeFrame.emittedStreamFrames}
-          selectedEmittedStream={selectedEmittedStream}
-          onEmittedStreamSelection={onEmittedStreamSelection} />
+          emittedValueFrames={pipeFrame.emittedValueFrames}
+          selectedEmittedValueFrame={selectedEmittedValueFrame}
+          onEmittedValueFrameSelection={onEmittedValueFrameSelection} />
       </div>
       <div className="ReactPipeDebugPanel-PipeName"
         onClick={handlePipeClick}

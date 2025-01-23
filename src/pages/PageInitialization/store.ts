@@ -1,20 +1,21 @@
 import { User } from '../../api/types';
 import { requestState, createSelectors, AnyAction, RequestState, RootState } from '../../store';
 
-const pageAction = (actionType: string) => 'PageInitialization/' + actionType;
+const pageActionType = (actionType: string) => 'PageInitialization/' + actionType;
 
-export const PAGE_INIT = pageAction('PAGE_INIT');
-export const PAGE_RESET = pageAction('PAGE_RESET');
-export const PAGE_REFRESH = pageAction('PAGE_REFRESH');
-export const ABORT_REQUEST = pageAction('ABORT_REQUEST');
+export const PAGE_INIT = pageActionType('PAGE_INIT');
+export const PAGE_RESET = pageActionType('PAGE_RESET');
+export const PAGE_REFRESH = pageActionType('PAGE_REFRESH');
 
-export const PAGE_DATA_REQUEST = pageAction('PAGE_DATA_REQUEST');
-export const PAGE_DATA_REQUEST_RESOLVE = pageAction('PAGE_DATA_REQUEST_RESOLVE');
-export const PAGE_DATA_REQUEST_REJECT = pageAction('PAGE_DATA_REQUEST_REJECT');
+export const ABORT_REQUEST = pageActionType('ABORT_REQUEST');
 
-export const FRIENDS_REQUEST = pageAction('FRIENDS_REQUEST');
-export const FRIENDS_REQUEST_RESOLVE = pageAction('FRIENDS_REQUEST_RESOLVE');
-export const FRIENDS_REQUEST_REJECT = pageAction('FRIENDS_REQUEST_REJECT');
+export const PAGE_DATA_REQUEST = pageActionType('PAGE_DATA_REQUEST');
+export const PAGE_DATA_REQUEST_RESOLVE = pageActionType('PAGE_DATA_REQUEST_RESOLVE');
+export const PAGE_DATA_REQUEST_REJECT = pageActionType('PAGE_DATA_REQUEST_REJECT');
+
+export const FRIENDS_REQUEST = pageActionType('FRIENDS_REQUEST');
+export const FRIENDS_REQUEST_RESOLVE = pageActionType('FRIENDS_REQUEST_RESOLVE');
+export const FRIENDS_REQUEST_REJECT = pageActionType('FRIENDS_REQUEST_REJECT');
 
 type State = {
   user: null | User;
@@ -35,15 +36,15 @@ export const initialState: State = {
 export const pageInitializationReducer = (state = initialState, { type, payload }: AnyAction): State => {
   switch (type) {
     case PAGE_INIT: {
-      return { ...state };
+      return {
+        ...state,
+      };
     }
-    case PAGE_RESET: {
-      return { ...state };
-    }
+    case PAGE_RESET:
     case PAGE_REFRESH: {
       return {
+        ...state,
         ...initialState,
-        pageDataRequestState: requestState.forceIdle(),
       };
     }
     case ABORT_REQUEST: {

@@ -8,13 +8,12 @@ export type PanelState = {
   maxErrorLevel: number;
   selectedPipe: null | [symbol, symbol];
   selectedStreamGroup: null | [symbol, symbol];
-  selectedEmittedStream: null | [symbol, symbol];
+  selectedEmittedValue: null | [symbol, symbol];
   selectedDebugRecord: null | number;
 };
 
 export type PipeFrame = {
   pipeState: PipeState;
-  streamGroupFrames: StreamGroupFrame[];
   streamConnections: StreamConnection[];
   streamEntries: StreamEntry[];
   maxDataLevel: number;
@@ -23,7 +22,8 @@ export type PipeFrame = {
   maxErrorConnectionLevel: number;
   maxDataEntryLevel: number;
   maxErrorEntryLevel: number;
-  emittedStreamFrames: EmittedStreamFrame[];
+  streamGroupFrames: StreamGroupFrame[];
+  emittedValueFrames: EmittedValueFrame[];
 };
 
 export type StreamGroupFrame = {
@@ -51,22 +51,24 @@ export type StreamLineType = 'data' | 'error';
 
 export type StreamConnectionDirectionType = 'pass-through' | 'connection';
 
-export type EmittedStreamFrame = {
+export type EmittedValueFrame = {
   streamHead: symbol;
-  value: any;
-  valueType: StreamValueType;
+  data: any;
+  dataType: EmittedValueType;
   released: boolean;
 };
 
-export type StreamValueType = 'data' | 'error';
+export type EmittedValueType = 'data' | 'error';
 
 export type DebugRecord = {
   time: string;
+  rawTime: number;
   selected: boolean;
   pilot?: null | string;
   pilotSelected?: null | boolean;
   debugEvent: DebugEvent;
   timeTravelPanelState: PanelState;
+  syncIdleTime?: string;
 };
 
 export type DebugEvent = {

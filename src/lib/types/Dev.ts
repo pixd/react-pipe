@@ -25,6 +25,6 @@ export type Debugger = {
   onPipeEvent: (message: string, data: { pipeState: PipeState }) => void;
   onStreamGroupCreate: (message: string, data: { streamHead: symbol, streamGroup: StreamGroup, pipeState: PipeState }) => void;
   onStreamGroupEvent: (message: string, data: { streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onEmit: (message: string, data: { streamHead: symbol, value: any, valueType: 'data' | 'error', finally: boolean, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onEmit: (message: string, data: { streamHead: symbol, data: any, dataType: 'data' | 'error', finally: boolean, streamGroup: StreamGroup, pipeState: PipeState }) => void;
   onStreamEvent: (message: string, data: { streamHead: symbol, stream?: Stream, parentPipeIndex?: number, parentPipeUniqKey?: symbol, pipeState: PipeState }) => void;
 };

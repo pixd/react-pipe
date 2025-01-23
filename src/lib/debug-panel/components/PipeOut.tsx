@@ -2,28 +2,28 @@ import React from 'react';
 
 import { ArrowAltLeftSolidIcon } from '../icons/ArrowAltLeftSolidIcon';
 import { ArrowAltRightSolidIcon } from '../icons/ArrowAltRightSolidIcon';
-import { EmittedStreamFrame } from '../types';
-import { EmittedStream } from './EmittedStream';
+import { EmittedValueFrame } from '../types';
+import { EmittedValue } from './EmittedValue';
 
 export type PipeOutProps = {
   pipeUniqKey: symbol;
-  emittedStreamFrames: EmittedStreamFrame[];
-  selectedEmittedStream: null | symbol;
-  onEmittedStreamSelection: (uniqKey: [symbol, symbol]) => void;
+  emittedValueFrames: EmittedValueFrame[];
+  selectedEmittedValueFrame: null | symbol;
+  onEmittedValueFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
-  const { pipeUniqKey, emittedStreamFrames, selectedEmittedStream, onEmittedStreamSelection }
+  const { pipeUniqKey, emittedValueFrames, selectedEmittedValueFrame, onEmittedValueFrameSelection }
     = props;
 
-  const dataEmittedStreamFrames: EmittedStreamFrame[] = [];
-  const errorEmittedStreamFrames: EmittedStreamFrame[] = [];
-  emittedStreamFrames.forEach((emittedStreamFrame) => {
-    if (emittedStreamFrame.valueType === 'error') {
-      errorEmittedStreamFrames.push(emittedStreamFrame);
+  const dataEmittedValueFrames: EmittedValueFrame[] = [];
+  const errorEmittedValueFrames: EmittedValueFrame[] = [];
+  emittedValueFrames.forEach((emittedValueFrame) => {
+    if (emittedValueFrame.dataType === 'error') {
+      errorEmittedValueFrames.push(emittedValueFrame);
     }
     else {
-      dataEmittedStreamFrames.push(emittedStreamFrame);
+      dataEmittedValueFrames.push(emittedValueFrame);
     }
   });
 
@@ -34,17 +34,17 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
           <ArrowAltLeftSolidIcon />
           <span>DATA OUT</span>
         </span>
-        {dataEmittedStreamFrames.length
-          ? dataEmittedStreamFrames.map((emittedStreamFrame, index) => {
-            const selected = emittedStreamFrame.streamHead === selectedEmittedStream;
+        {dataEmittedValueFrames.length
+          ? dataEmittedValueFrames.map((emittedValueFrame, index) => {
+            const selected = emittedValueFrame.streamHead === selectedEmittedValueFrame;
 
             return (
-              <EmittedStream key={index}
+              <EmittedValue key={index}
                 pipeUniqKey={pipeUniqKey}
                 streamValueType="data"
-                emittedStreamFrame={emittedStreamFrame}
+                emittedValueFrame={emittedValueFrame}
                 selected={selected}
-                onEmittedStreamSelection={onEmittedStreamSelection} />
+                onEmittedValueFrameSelection={onEmittedValueFrameSelection} />
             );
           })
           : fakeStreamGroup}
@@ -54,17 +54,17 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
           <span>ERROR OUT</span>
           <ArrowAltRightSolidIcon />
         </span>
-        {errorEmittedStreamFrames.length
-          ? errorEmittedStreamFrames.map((emittedStreamFrame, index) => {
-            const selected = emittedStreamFrame.streamHead === selectedEmittedStream;
+        {errorEmittedValueFrames.length
+          ? errorEmittedValueFrames.map((emittedValueFrame, index) => {
+            const selected = emittedValueFrame.streamHead === selectedEmittedValueFrame;
 
             return (
-              <EmittedStream key={index}
+              <EmittedValue key={index}
                 pipeUniqKey={pipeUniqKey}
                 streamValueType="error"
-                emittedStreamFrame={emittedStreamFrame}
+                emittedValueFrame={emittedValueFrame}
                 selected={selected}
-                onEmittedStreamSelection={onEmittedStreamSelection} />
+                onEmittedValueFrameSelection={onEmittedValueFrameSelection} />
             );
           })
           : fakeStreamGroup}

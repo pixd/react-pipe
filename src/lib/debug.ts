@@ -54,7 +54,9 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
     },
     onEmit: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      console.log('%c emitted value', 'font-weight: bold; color: #03A9F4;', data.value);
+      data.dataType === 'error'
+        ? console.log('%c emitted data', 'font-weight: bold; color: #03A9F4;', data.data)
+        : console.log('%c emitted error', 'font-weight: bold; color: #03A9F4;', data.data);
       console.log('%c stream head  ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
       console.log('%c stream group ', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
       console.log('%c pipe state   ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
