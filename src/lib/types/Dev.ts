@@ -23,8 +23,8 @@ export type DebugInstruction = Instruction<typeof DEBUG_INSTRUCTION_TYPE> & {
 export type Debugger = {
   onPipeCreate: (message: string, data: { pipeState: PipeState }) => void;
   onPipeEvent: (message: string, data: { pipeState: PipeState }) => void;
-  onStreamGroupCreate: (message: string, data: { streamHead: symbol, streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onStreamGroupEvent: (message: string, data: { streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onEmit: (message: string, data: { streamHead: symbol, data: any, dataType: 'data' | 'error', finally: boolean, streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onStreamEvent: (message: string, data: { streamHead: symbol, stream?: Stream, parentPipeIndex?: number, parentPipeUniqKey?: symbol, pipeState: PipeState }) => void;
+  onStreamGroupCreate: (message: string, data: { papa: symbol, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onStreamGroupEvent: (message: string, data: { papa?: symbol, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onEmit: (message: string, data: { papa: symbol, data: any, dataType: 'data' | 'error', finally: boolean, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onStreamEvent: (message: string, data: { papa: symbol, stream?: Stream, parentPipeIndex?: number, parentPipeUniqKey?: symbol, pipeState: PipeState }) => void;
 };

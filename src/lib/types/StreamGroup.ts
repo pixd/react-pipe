@@ -8,11 +8,11 @@ export type StreamGroup<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
   uniqKey: symbol;
-  streamHead: symbol;
+  papa: symbol;
   status: StreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;
-  emitDataGroups: Record<symbol, boolean[]>;
-  emitErrorGroups: Record<symbol, boolean[]>;
+  emittedDataRegistry: Record<symbol, boolean[]>;
+  emittedErrorRegistry: Record<symbol, boolean[]>;
   finish: null | (() => void);
 };
 

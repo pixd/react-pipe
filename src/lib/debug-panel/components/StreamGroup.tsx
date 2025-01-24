@@ -35,16 +35,9 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
   const handleStreamGroupClick = () => {
     onStreamGroupFrameSelection([pipeUniqKey, streamGroupFrame.data.uniqKey]);
 
-    // const members = Array(streamGroupFrame.data.members.length);
-    // streamGroupFrame.data.members.forEach((member, index) => {
-    //   if (member) {
-    //     members[index] = member.value;
-    //   }
-    // });
-
     console.log({
       uniqKey: streamGroupFrame.data.uniqKey,
-      streamHead: streamGroupFrame.data.streamHead,
+      papa: streamGroupFrame.data.papa,
       members: streamGroupFrame.data.members,
       status: streamGroupFrame.data.status,
       deleted: streamGroupFrame.deleted,
@@ -55,37 +48,42 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
     <div className={className}
       onClick={handleStreamGroupClick}
     >
-      {streamGroupFrame.data.streamHead === MOUNT_STREAM_HEAD
-        ? (
-          <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-IconStatus-Success">
-            <HomeAltSolidIcon />
-          </div>
-        )
-        : streamGroupFrame.data.members.map((member, index) => {
-          const className = [
-            'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-TintSolidIcon',
-            streamGroupFrame.data.status === 'finished' && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
-            member ? 'ReactPipeDebugPanel-IconStatus-Success' : 'ReactPipeDebugPanel-IconStatus-Muted',
-          ].join(' ');
-
-          return (
-            <div key={index} className={className}>
-              <TintSolidIcon key={className} />
+      <div className="ReactPipeDebugPanel-StreamGroupMembers">
+        {streamGroupFrame.data.papa === MOUNT_STREAM_HEAD
+          ? (
+            <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-IconStatus-Success">
+              <HomeAltSolidIcon />
             </div>
-          );
-        })}
+          )
+          : streamGroupFrame.data.members.map((member, index) => {
+            const className = [
+              'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-TintSolidIcon',
+              streamGroupFrame.data.status === 'finished' && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+              member ? 'ReactPipeDebugPanel-IconStatus-Success' : 'ReactPipeDebugPanel-IconStatus-Muted',
+            ].join(' ');
 
-      {streamGroupFrame.data.status === 'finished'
-        ? (
-          <div className={finishedStatusClassName}>
-            <LockSolidIcon key={finishedStatusClassName} />
-          </div>
-        )
-        : (
-          <div className={statusClassName}>
-            <HeartSolidIcon key={statusClassName} />
-          </div>
-        )}
+            return (
+              <div key={index} className={className}>
+                <TintSolidIcon key={className} />
+              </div>
+            );
+          })}
+
+        {streamGroupFrame.data.status === 'finished'
+          ? (
+            <div className={finishedStatusClassName}>
+              <LockSolidIcon key={finishedStatusClassName} />
+            </div>
+          )
+          : (
+            <div className={statusClassName}>
+              <HeartSolidIcon key={statusClassName} />
+            </div>
+          )}
+      </div>
+      <div className="ReactPipeDebugPanel-StreamGroupName">
+        {streamGroupFrame.data.papa.toString().replace(/Symbol\(papa-([a-z0-9]+)\)/, (...args) => args[1])}
+      </div>
     </div>
   );
 });

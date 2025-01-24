@@ -1,5 +1,5 @@
 export type OnParentPipeStreamTerminate = {
   (
-    streamHead: symbol,
+    papa: symbol,
   ): void;
 };

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 
 import { getFriends, getUser } from '../../api';
-import { useActionPipe, useMountPipe, usePipe } from '../../lib';
+import channel, { useActionPipe, useMountPipe, usePipe } from '../../lib';
 import { initDebugPanel } from '../../lib/debug-panel';
 import { useDispatch, useSelector } from '../../store';
 import { ABORT_REQUEST, FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT,
@@ -30,21 +30,13 @@ export function PageInitialization() {
     dispatch({ type: ABORT_REQUEST });
   }, [dispatch]);
 
-  const userText = pageDataRequestState.isPending
-    ? 'loading...'
-    : pageDataRequestState.isRejected
-      ? 'request error'
-      : pageDataRequestState.isAborted
-        ? 'request aborted'
-        : `${user!.name} [id: ${user!.id}]`;
+  const userText = user
+    ? `${user!.name} [id: ${user!.id}]`
+    : 'null';
 
-  const friendsText = friendsRequestState.isPending
-    ? 'loading...'
-    : friendsRequestState.isRejected
-      ? 'request error'
-      : friendsRequestState.isAborted
-        ? 'request aborted'
-        : friends!.map((friend) => `${friend.name} [id: ${friend.id}]`).join(', ');
+  const friendsText = friends
+    ? friends!.map((friend) => `${friend.name} [id: ${friend.id}]`).join(', ')
+    : 'null';
 
   return (
     <>
@@ -62,15 +54,17 @@ export function PageInitialization() {
         </button>
       </div>
       <div>
+        User request state: {pageDataRequestState.status}
+      </div>
+      <div>
         User: {userText}
       </div>
-      {user
-        ? (
-          <div>
-            Friends: {friendsText}
-          </div>
-        )
-        : null}
+      <div>
+        Friends request state: {friendsRequestState.status}
+      </div>
+      <div>
+        Friends: {friendsText}
+      </div>
     </>
   );
 }
@@ -93,16 +87,17 @@ function usePageDataRequest() {
 
   const mountPipe = useMountPipe([debugPanel]);
 
-  const requestActionsPipe = useActionPipe([PAGE_INIT, PAGE_REFRESH], [mountPipe]);
+  const pageInitPipe = useActionPipe([
+    PAGE_INIT,
+    PAGE_REFRESH,
+  ], [mountPipe, channel.latest]);
 
-  const abortRequestPipe = useActionPipe(ABORT_REQUEST, [mountPipe]);
-
-  usePipe(requestActionsPipe.reset, [abortRequestPipe]);
+  // const abortRequestPipe = useActionPipe(ABORT_REQUEST, [pageInitPipe]);
 
   const pageDataRequestPipe = usePipe(function pageDataRequestPipe() {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
-  }, [requestActionsPipe]);
+  }, [pageInitPipe]);
 
   usePipe(function pageDataRequestRejectPipe(error) {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});

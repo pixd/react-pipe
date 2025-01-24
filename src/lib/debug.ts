@@ -41,13 +41,14 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
     },
     onStreamGroupCreate: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      console.log('%c stream head', 'font-weight: bold; color: #03A9F4;', data.streamHead);
+      console.log('%c papa', 'font-weight: bold; color: #03A9F4;', data.papa);
       console.log('%c streamGroup', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
       console.log('%c pipe state ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
     },
     onStreamGroupEvent: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
+      data.papa && console.log('%c papa', 'font-weight: bold; color: #03A9F4;', data.papa);
       console.log('%c stream group', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
       console.log('%c pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
@@ -57,7 +58,7 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
       data.dataType === 'error'
         ? console.log('%c emitted data', 'font-weight: bold; color: #03A9F4;', data.data)
         : console.log('%c emitted error', 'font-weight: bold; color: #03A9F4;', data.data);
-      console.log('%c stream head  ', 'font-weight: bold; color: #03A9F4;', data.streamHead);
+      console.log('%c papa  ', 'font-weight: bold; color: #03A9F4;', data.papa);
       console.log('%c stream group ', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
       console.log('%c pipe state   ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
       console.groupEnd();
@@ -67,8 +68,8 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
 
       const logs: [string, ...any][] = [];
       data.parentPipeIndex != null && logs.push(['%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex]);
-      logs.push(['%c stream head', 'font-weight: bold; color: #03A9F4;', data.streamHead]);
-      data.stream != null && logs.push(['%c stream', 'font-weight: bold; color: #03A9F4;', data.stream]);
+      logs.push(['%c papa', 'font-weight: bold; color: #03A9F4;', data.papa]);
+      logs.push(['%c stream', 'font-weight: bold; color: #03A9F4;', data.stream]);
       logs.push(['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState]);
 
       const maxTitleLength = logs.reduce((maxTitleLength, log) => Math.max(maxTitleLength, log[0].length), 0);

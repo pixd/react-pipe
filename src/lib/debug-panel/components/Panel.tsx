@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { selectEmittedValue, selectEvent, selectPipe, selectStreamGroup } from '../tools';
+import { selectEmittedData, selectEvent, selectPipe, selectStreamGroup } from '../tools';
 import { EventTargetType, PanelState } from '../types';
 import { Console } from './Console';
 import { Schema } from './Schema';
@@ -13,7 +13,7 @@ const initialState: PanelState = {
   maxErrorLevel: 0,
   selectedPipe: null,
   selectedStreamGroup: null,
-  selectedEmittedValue: null,
+  selectedEmittedData: null,
   selectedDebugRecord: null,
 };
 
@@ -41,8 +41,8 @@ export function Panel(props: AppProps) {
     setPanelState((state) => selectStreamGroup(uniqKey, state));
   }, []);
 
-  const handleEmittedValueSelection = useCallback((uniqKey: [symbol, symbol]) => {
-    setPanelState((state) => selectEmittedValue(uniqKey, state));
+  const handleEmittedDataSelection = useCallback((uniqKey: [symbol, symbol]) => {
+    setPanelState((state) => selectEmittedData(uniqKey, state));
   }, []);
 
   const handleEventSelect = useCallback((eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => {
@@ -94,10 +94,10 @@ export function Panel(props: AppProps) {
           maxErrorLevel={currentPanelState.maxErrorLevel}
           selectedPipe={panelState.selectedPipe}
           selectedStreamGroup={panelState.selectedStreamGroup}
-          selectedEmittedValue={panelState.selectedEmittedValue}
+          selectedEmittedData={panelState.selectedEmittedData}
           onPipeSelection={handlePipeSelection}
           onStreamGroupSelection={handleStreamGroupSelection}
-          onEmittedValueSelection={handleEmittedValueSelection} />
+          onEmittedDataSelection={handleEmittedDataSelection} />
       </div>
       <div className="ReactPipeDebugPanel-FakeSpace" />
     </div>

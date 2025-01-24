@@ -8,6 +8,7 @@ export const COLOR = '#a9b2c4';
 export const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
 export const FONT_SIZE = '1rem';
 export const SCROLL_WIDTH = 0.5;
+export const SCROLL_TIGHT_WIDTH = 0.3;
 
 export const PIPE_WIDTH = 35;
 export const PIPE_BORDER_WIDTH = 0.2;
