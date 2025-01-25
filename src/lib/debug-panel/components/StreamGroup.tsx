@@ -1,11 +1,12 @@
 import React from 'react';
 
 import { MOUNT_STREAM_HEAD } from '../../mountStreamHead';
+import { EStreamGroupStatus } from '../../types';
 import { HeartSolidIcon } from '../icons/HeartSolidIcon';
 import { HomeAltSolidIcon } from '../icons/HomeAltSolidIcon';
 import { LockSolidIcon } from '../icons/LockSolidIcon';
 import { TintSolidIcon } from '../icons/TintSolidIcon';
-import { StreamGroupFrame } from '../types';
+import type { StreamGroupFrame } from '../types';
 
 export type StreamGroupProps = {
   pipeUniqKey: symbol;
@@ -24,7 +25,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
 
   const statusClassName = [
     'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HeartSolidIcon',
-    streamGroupFrame.streamGroup.status === 'active' ? 'ReactPipeDebugPanel-IconStatus-Active ReactPipeDebugPanel-IconStatus-Pulse' : 'ReactPipeDebugPanel-IconStatus-Muted',
+    streamGroupFrame.streamGroup.status === EStreamGroupStatus.closed ? 'ReactPipeDebugPanel-IconStatus-Active ReactPipeDebugPanel-IconStatus-Pulse' : 'ReactPipeDebugPanel-IconStatus-Muted',
   ].join(' ');
 
   const finishedStatusClassName = [
@@ -58,7 +59,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
           : streamGroupFrame.streamGroup.members.map((member, index) => {
             const className = [
               'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-TintSolidIcon',
-              streamGroupFrame.streamGroup.status === 'finished' && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+              streamGroupFrame.streamGroup.status === EStreamGroupStatus.retired && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
               member ? 'ReactPipeDebugPanel-IconStatus-Success' : 'ReactPipeDebugPanel-IconStatus-Muted',
             ].join(' ');
 
@@ -69,7 +70,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
             );
           })}
 
-        {streamGroupFrame.streamGroup.status === 'finished'
+        {streamGroupFrame.streamGroup.status === EStreamGroupStatus.retired
           ? (
             <div className={finishedStatusClassName}>
               <LockSolidIcon key={finishedStatusClassName} />

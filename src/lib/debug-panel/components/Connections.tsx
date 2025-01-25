@@ -1,11 +1,20 @@
 import React from 'react';
 
-import {
-  IN_END_GAP, HEEL_LENGTH, HEEL_SHIFT, HOLE_LENGTH, IN_GAP, IN_SHIFT, IN_TAP_LENGTH, LINE_SPACE,
-  LINE_WIDTH, OUT_GAP, OUT_SHIFT,
-} from '../styles-constants';
+import { EDataType } from '../../types';
+import { IN_END_GAP } from '../styles-constants';
+import { HEEL_LENGTH } from '../styles-constants';
+import { HEEL_SHIFT } from '../styles-constants';
+import { HOLE_LENGTH } from '../styles-constants';
+import { IN_GAP } from '../styles-constants';
+import { IN_SHIFT } from '../styles-constants';
+import { IN_TAP_LENGTH } from '../styles-constants';
+import { LINE_SPACE } from '../styles-constants';
+import { LINE_WIDTH } from '../styles-constants';
+import { OUT_GAP } from '../styles-constants';
+import { OUT_SHIFT } from '../styles-constants';
 import { round } from '../styles-tools';
-import { StreamConnection, StreamEntry } from '../types';
+import type { StreamConnection } from '../types';
+import type { StreamEntry } from '../types';
 
 export type ConnectionsProps = {
   maxDataEntryLevel: number;
@@ -44,11 +53,11 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
         )
         :  null}
       {streamConnections.map((connection, index) => {
-        const ConnectionTypeClassName = connection.type === 'error' ? 'ReactPipeDebugPanel-ErrorConnection' : 'ReactPipeDebugPanel-DataConnection';
-        const horizontalProp = connection.type === 'error' ? 'right' : 'left';
+        const ConnectionTypeClassName = connection.type === EDataType.error ? 'ReactPipeDebugPanel-ErrorConnection' : 'ReactPipeDebugPanel-DataConnection';
+        const horizontalProp = connection.type === EDataType.error ? 'right' : 'left';
 
         if (connection.directionType === 'connection') {
-          const maxConnectionLevelProp = connection.type === 'error' ? maxErrorConnectionLevel : maxDataConnectionLevel;
+          const maxConnectionLevelProp = connection.type === EDataType.error ? maxErrorConnectionLevel : maxDataConnectionLevel;
           const TConnectionClassName = maxConnectionLevelProp === connection.level ? 'ReactPipeDebugPanel-LConnection' : 'ReactPipeDebugPanel-TConnection';
 
           const className = [
@@ -85,7 +94,7 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
         }
       })}
       {streamEntries.map((streamEntry, index) => {
-        const className = streamEntry.type === 'error'
+        const className = streamEntry.type === EDataType.error
           ? 'ReactPipeDebugPanel-ErrorEntry'
           : 'ReactPipeDebugPanel-DataEntry'
 
@@ -103,11 +112,11 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
         };
 
         const centerStyle = {
-          left: streamEntry.type === 'error'
+          left: streamEntry.type === EDataType.error
             ? `${round(leftShift + LINE_WIDTH)}em`
             : `-${extraWidth}em`,
           top: `-${round(inHeight + LINE_WIDTH)}em`,
-          width: streamEntry.type === 'error'
+          width: streamEntry.type === EDataType.error
             ? `calc(100% - ${round(leftShift + LINE_WIDTH - extraWidth)}em)`
             : `${round(extraWidth + leftShift)}em`,
           zIndex,
@@ -115,7 +124,7 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
 
         const outStyle = {
           height: `${outHeight}em`,
-          left: streamEntry.type === 'error'
+          left: streamEntry.type === EDataType.error
             ? `calc(100% + ${extraWidth}em)`
             : `-${round(extraWidth + LINE_WIDTH)}em`,
           top: `-${round(inHeight + LINE_WIDTH + outHeight)}em`,
@@ -128,14 +137,14 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
 
         const inHeelStyle = {
           top: `-${round(inHeight + LINE_WIDTH + HEEL_SHIFT)}em`,
-          left: streamEntry.type === 'error'
+          left: streamEntry.type === EDataType.error
             ? `${round(leftShift - HEEL_SHIFT)}em`
             : `${round(leftShift + LINE_WIDTH - HEEL_LENGTH + HEEL_SHIFT)}em`,
         };
 
         const outHeelStyle = {
           top: `-${round(inHeight + HEEL_LENGTH - HEEL_SHIFT)}em`,
-          left: streamEntry.type === 'error'
+          left: streamEntry.type === EDataType.error
             ? `calc(100% + ${extraWidth - HEEL_LENGTH + LINE_WIDTH + HEEL_SHIFT}em)`
             : `-${round(extraWidth + LINE_WIDTH + HEEL_SHIFT)}em`,
         };

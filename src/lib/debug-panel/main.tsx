@@ -4,7 +4,6 @@ import { createInstruction } from '../instruction';
 import type { DataBarrel } from '../types';
 import type { Debugger } from '../types';
 import type { PipeState } from '../types';
-import type { PipeType } from '../types';
 import type { StreamGroup } from '../types';
 import { DEBUG_INSTRUCTION_TYPE } from '../types';
 import { Panel } from './components/Panel';
@@ -114,8 +113,7 @@ export function initDebugPanel() {
         updatePanel((state) => {
           return onLog(updatePipeState(state, data), {
             eventTargetType: 'dataBarrel',
-            // TODO Откуда эта альтернатива?
-            eventTargetKey: [data.parentPipeUniqKey ?? data.pipeState.dataPipe.uniqKey, data.stream.dataBarrel.uniqKey],
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.stream.dataBarrel.uniqKey],
             message,
             data,
           });
@@ -250,7 +248,7 @@ function updatePipeState(state: PanelState, data: { pipeState: PipeState }): Pan
   };
 }
 
-function onStreamGroupCreate(state: PanelState, data: { papa: symbol, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
+function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
   });

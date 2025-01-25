@@ -7,6 +7,5 @@ export type Stream<
   papa: symbol;
   dataBarrel: DataBarrel<TValue>;
   release: () => void;
-  // TODO Нужен ли?
   released: boolean;
 };

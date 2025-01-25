@@ -1,8 +1,8 @@
-import { DataBarrel } from '../types';
-import { Debugger } from '../types';
-import { PipeState } from '../types';
-import { PipeType } from '../types';
-import { StreamGroup } from '../types';
+import type { DataBarrel } from '../types';
+import type { Debugger } from '../types';
+import type { PipeState } from '../types';
+import type { StreamGroup } from '../types';
+import { EDataType } from '../types';
 
 export type PanelState = {
   debugRecords: DebugRecord[];
@@ -43,7 +43,7 @@ export type StreamGroupFrame = {
 };
 
 export type StreamConnection = {
-  type: PipeType;
+  type: EDataType;
   directionType: StreamConnectionDirectionType;
   lineGlobalIndex: number;
   level: number;
@@ -52,7 +52,7 @@ export type StreamConnection = {
 };
 
 export type StreamEntry = {
-  type: PipeType;
+  type: EDataType;
   lineGlobalIndex: number;
   level: number;
   entryLevel: number;

@@ -1,4 +1,3 @@
-import { PipeType } from './Pipe';
 import { Stream } from './Stream';
 
 export type DataBarrelRegistry = Record<symbol, DataBarrelRegistryMember>;
@@ -14,6 +13,11 @@ export type DataBarrel<
 > = {
   uniqKey: symbol;
   data: TData;
-  dataType: PipeType;
+  dataType: EDataType;
   final: boolean;
 };
+
+export enum EDataType {
+  data = 'data',
+  error = 'error',
+}

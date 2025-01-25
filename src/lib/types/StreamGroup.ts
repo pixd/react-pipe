@@ -3,17 +3,21 @@ import { DataBarrelRegistry } from './DataBarrel';
 import { BasePipe } from './Pipe';
 import { Stream } from './Stream';
 
-export type StreamGroupStatus = 'idle' | 'active' | 'finished';
+export enum EStreamGroupStatus {
+  open = 'open',
+  closed = 'closed',
+  retired = 'retired',
+}
 
 export type StreamGroup<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
   uniqKey: symbol;
   papa: symbol;
-  status: StreamGroupStatus;
+  status: EStreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;
   dataBarrelRegistry: DataBarrelRegistry;
-  finish: null | (() => void);
+  retire: null | (() => void);
 };
 
 export type StreamGroupMembers<
@@ -28,10 +32,6 @@ export type StreamGroupMembers<
       : []
     : [];
 
-export type StreamGroups<
-  TAdjuncts extends Adjunct[] = Adjunct[],
-> = Record<symbol, StreamGroup<TAdjuncts>>;
-
 export type StreamGroupValues<
   TAdjuncts extends any[] = any[],
 > = TAdjuncts extends [infer TAdjunct, ...(infer TRestAdjuncts)]
@@ -43,3 +43,7 @@ export type StreamGroupValues<
       ? TValue[]
       : []
     : [];
+
+export type StreamGroups<
+  TAdjuncts extends Adjunct[] = Adjunct[],
+> = Record<symbol, StreamGroup<TAdjuncts>>;

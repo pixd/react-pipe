@@ -1,8 +1,9 @@
 import React from 'react';
 
+import { EDataType } from '../../types';
 import { BugSolidIcon } from '../icons/BugSolidIcon';
 import { DatabaseSolidIcon } from '../icons/DatabaseSolidIcon';
-import { DataBarrelFrame } from '../types';
+import type { DataBarrelFrame } from '../types';
 
 export type DataBarrelProps = {
   pipeUniqKey: symbol;
@@ -21,7 +22,7 @@ export const DataBarrel = React.memo(function DataBarrel(props: DataBarrelProps)
 
   const iconClassName = [
     'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-IconStatus-Success',
-    dataBarrelFrame.dataBarrel.dataType === 'error' ? 'ReactPipeDebugPanel-BugSolidIcon' : 'ReactPipeDebugPanel-DatabaseSolidIcon',
+    dataBarrelFrame.dataBarrel.dataType === EDataType.error ? 'ReactPipeDebugPanel-BugSolidIcon' : 'ReactPipeDebugPanel-DatabaseSolidIcon',
     dataBarrelFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
   ].filter(Boolean).join(' ');
 
@@ -41,7 +42,7 @@ export const DataBarrel = React.memo(function DataBarrel(props: DataBarrelProps)
     >
       <div className="ReactPipeDebugPanel-StreamGroupMembers">
         <div className={iconClassName}>
-          {dataBarrelFrame.dataBarrel.dataType === 'error'
+          {dataBarrelFrame.dataBarrel.dataType === EDataType.error
             ? (
               <BugSolidIcon key={iconClassName}/>
             )

@@ -1,17 +1,18 @@
-import { BasePipe } from '../types';
-import { DataBarrel } from '../types';
-import { PipeState } from '../types';
-import { DataBarrelFrame } from './types';
-import { EventTargetType } from './types';
-import { PanelState } from './types';
-import { PipeFrame } from './types';
-import { StreamGroupFrame } from './types';
+import type { BasePipe } from '../types';
+import type { DataBarrel } from '../types';
+import type { PipeState } from '../types';
+import { EDataType } from '../types';
+import type { DataBarrelFrame } from './types';
+import type { EventTargetType } from './types';
+import type { PanelState } from './types';
+import type { PipeFrame } from './types';
+import type { StreamGroupFrame } from './types';
 
 export function getUpstreamPipeParams(upstreamPipe: BasePipe, pipeFrames: PipeFrame[]): [number, number] {
   const levels: boolean[] = [];
   let level: number = 0;
 
-  const stateProp = upstreamPipe.type === 'error' ? 'errorPipe' : 'dataPipe';
+  const stateProp = upstreamPipe.type === EDataType.error ? 'errorPipe' : 'dataPipe';
 
   const index = [...pipeFrames].reverse().findIndex((pipeFrame) => {
     pipeFrame.streamConnections
@@ -62,17 +63,17 @@ export function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): 
 
     const dataUpstreamPipes = destination.pipeState.parentPipes
       .map((upstreamPipe, index) => {
-        upstreamPipe.type === 'data' && (lastDataUpstreamPipeIndex = index);
+        upstreamPipe.type === EDataType.data && (lastDataUpstreamPipeIndex = index);
         return [upstreamPipe, index] as const;
       })
-      .filter((data) => data[0].type === 'data')
+      .filter((data) => data[0].type === EDataType.data)
       .reverse();
     const errorUpstreamPipes = destination.pipeState.parentPipes
       .map((upstreamPipe, index) => {
-        upstreamPipe.type === 'error' && index < lastDataUpstreamPipeIndex && leftErrorUpstreamNumber ++;
+        upstreamPipe.type === EDataType.error && index < lastDataUpstreamPipeIndex && leftErrorUpstreamNumber ++;
         return [upstreamPipe, index] as const;
       })
-      .filter((data) => data[0].type === 'error');
+      .filter((data) => data[0].type === EDataType.error);
 
     let dataEntryLevel = dataUpstreamPipes.length;
     let errorEntryLevel = Math.max(leftErrorUpstreamNumber + errorUpstreamPipes.length, errorUpstreamPipes.length);
@@ -84,17 +85,17 @@ export function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): 
       if (level) {
         lineGlobalIndex ++;
 
-        if (upstreamPipe.type === 'error') {
+        if (upstreamPipe.type === EDataType.error) {
           maxErrorLevel = Math.max(maxErrorLevel, level);
         }
         else {
           maxDataLevel = Math.max(maxDataLevel, level);
         }
 
-        const maxLevelProp = upstreamPipe.type === 'error' ? 'maxErrorLevel': 'maxDataLevel';
-        const maxLevelConnectionProp = upstreamPipe.type === 'error' ? 'maxErrorConnectionLevel': 'maxDataConnectionLevel';
-        const maxEntryLevelProp = upstreamPipe.type === 'error' ? 'maxErrorEntryLevel' : 'maxDataEntryLevel';
-        const entryLevel = upstreamPipe.type === 'error' ? errorEntryLevel -- : dataEntryLevel -- ;
+        const maxLevelProp = upstreamPipe.type === EDataType.error ? 'maxErrorLevel': 'maxDataLevel';
+        const maxLevelConnectionProp = upstreamPipe.type === EDataType.error ? 'maxErrorConnectionLevel': 'maxDataConnectionLevel';
+        const maxEntryLevelProp = upstreamPipe.type === EDataType.error ? 'maxErrorEntryLevel' : 'maxDataEntryLevel';
+        const entryLevel = upstreamPipe.type === EDataType.error ? errorEntryLevel -- : dataEntryLevel -- ;
         const sourceUniqKey = destination.pipeState.dataPipe.uniqKey;
         const destinationUniqKey = source.pipeState.errorPipe.uniqKey;
 

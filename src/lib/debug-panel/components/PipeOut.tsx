@@ -1,8 +1,9 @@
 import React from 'react';
 
+import { EDataType } from '../../types';
 import { ArrowAltLeftSolidIcon } from '../icons/ArrowAltLeftSolidIcon';
 import { ArrowAltRightSolidIcon } from '../icons/ArrowAltRightSolidIcon';
-import { DataBarrelFrame } from '../types';
+import type { DataBarrelFrame } from '../types';
 import { DataBarrel } from './DataBarrel';
 import { FakeStreamGroup } from './FakeStreamGroup';
 
@@ -20,7 +21,7 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
   const dataDataBarrelFrames: DataBarrelFrame[] = [];
   const errorDataBarrelFrames: DataBarrelFrame[] = [];
   dataBarrelFrames.forEach((dataBarrelFrame) => {
-    if (dataBarrelFrame.dataBarrel.dataType === 'error') {
+    if (dataBarrelFrame.dataBarrel.dataType === EDataType.error) {
       errorDataBarrelFrames.push(dataBarrelFrame);
     }
     else {

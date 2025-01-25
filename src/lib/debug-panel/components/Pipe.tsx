@@ -23,8 +23,6 @@ export const Pipe = React.memo(function Pipe(props: PipeProps) {
 
   const handlePipeClick = () => {
     onPipeSelection(pipeFrame.pipeState.dataPipe.uniqKey);
-
-    // TODO Should display another data in production
     console.log(pipeFrame);
   };
 
