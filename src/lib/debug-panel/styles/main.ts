@@ -18,7 +18,7 @@ export const styles = css`
 
   .${MAIM_CLASS_NAME}-Inner {
     height: 100%;
-    min-width: 46em;
+    width: 52em;
   }
 
   .${MAIM_CLASS_NAME}-Schema {
@@ -30,6 +30,14 @@ export const styles = css`
     height: 35%;
     position: relative;
   }
+
+  .${MAIM_CLASS_NAME}-SchemaPipes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .${MAIM_CLASS_NAME}-ConsoleRecords {}
 
   .${MAIM_CLASS_NAME}-SchemaPipes,
   .${MAIM_CLASS_NAME}-ConsoleRecords {

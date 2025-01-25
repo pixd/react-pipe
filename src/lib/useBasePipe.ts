@@ -5,8 +5,6 @@ import { isDebugInstruction } from './check';
 import { isInstructionWithDisplayName } from './check';
 import { isPipe } from './check';
 import { isPipeWithCreateDebugger } from './check';
-import { deepCopy } from './deepCopy';
-import { isFinal, Final } from './FINAL';
 import { MOUNT_STREAM_HEAD } from './mountStreamHead';
 import type { Adjunct } from './types';
 import type { BasePipe } from './types';
@@ -14,6 +12,8 @@ import type { CommonPipeState } from './types';
 import type { DataPipe } from './types';
 import type { Debugger } from './types';
 import type { DownstreamConnection } from './types';
+import type { DataBarrel } from './types';
+import type { Final } from './types';
 import type { OnParentPipeStreamEmit } from './types';
 import type { OnParentPipeStreamTerminate } from './types';
 import type { PipeState } from './types';
@@ -22,13 +22,14 @@ import type { Stream } from './types';
 import type { StreamGroup } from './types';
 import type { StreamGroupMembers } from './types';
 import type { StreamGroupValues } from './types';
+import { FINAL_TYPE } from './types';
 import { PIPE_ENTITY_TYPE } from './types';
 
 export type Emit<
-  TData extends any = any,
+  TValue extends any = any,
 > = {
   (
-    data: TData,
+    value: TValue,
   ): void;
 };
 
@@ -75,128 +76,67 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     parentPipes: adjuncts.filter(isPipe),
     streamGroups: {},
     dataPipe: {
-      uniqKey: Symbol(getId()),
+      uniqKey: Symbol(getId('data-pipe')),
       downstreamConnections: [],
-      operative: true,
     },
     errorPipe: {
-      uniqKey: Symbol(getId()),
+      uniqKey: Symbol(getId('error-pipe')),
       downstreamConnections: [],
-      operative: true,
     },
   };
 
-  const emitData = (streamGroup: StreamGroup, data: any): void => {
-    if (pipeState.dataPipe.operative && isStreamGroupActive(streamGroup)) {
-      const papa = isFinal(data) ? streamGroup.papa : Symbol(getId('papa'));
+  const emitData = (streamGroup: StreamGroup, dataBarrel: DataBarrel): void => {
+    if (isStreamGroupActive(streamGroup)) {
+      // The place where Papa is born
+      const papa = dataBarrel.final ? streamGroup.papa : Symbol(getId('papa'));
 
-      streamGroup.emittedDataRegistry[papa] = Array(pipeState.dataPipe.downstreamConnections.length).fill(false);
+      const pipe = dataBarrel.dataType === 'error' ? pipeState.errorPipe : pipeState.dataPipe;
+      streamGroup.dataBarrelRegistry[papa] = { papa, dataBarrel, emittedStreams: [] };
 
-      if (isFinal(data)) {
+      if (dataBarrel.final) {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit('Pipe finally emitted a data', deepCopy({ papa, data, dataType: 'data', finally: true, streamGroup, pipeState }));
+          const { deepCopy } = require('./deepCopy');
+          debug?.onEmit('Pipe finally emitted a ' + dataBarrel.dataType, deepCopy({ papa, dataBarrel, streamGroup, pipeState }));
         }
 
+        // TODO At this point, the method may not exist yet
         finishStreamGroup(streamGroup);
       }
       else {
         if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit('Pipe emitted a data', deepCopy({ papa, data, dataType: 'data', finally: false, streamGroup, pipeState }));
+          const { deepCopy } = require('./deepCopy');
+          debug?.onEmit('Pipe emitted a ' + dataBarrel.dataType, deepCopy({ papa, dataBarrel, streamGroup, pipeState }));
         }
       }
 
-      if (pipeState.dataPipe.downstreamConnections.length) {
-        pipeState.dataPipe.downstreamConnections.forEach((downstreamConnection, index) => {
-          const stream = createStream(papa, getEmittedData(data), () => {
-            streamGroup.emittedDataRegistry[papa][index] = true;
+      if (pipe.downstreamConnections.length) {
+        pipe.downstreamConnections.forEach((downstreamConnection, index) => {
+          const stream = createStream(papa, dataBarrel, () => {
             stream.released = true;
 
-            if (process.env.NODE_ENV === 'development') {
-              debug?.onStreamEvent('Stream has been released', deepCopy({ papa, stream, streamGroup, pipeState }));
+            if (streamGroup.dataBarrelRegistry[papa].emittedStreams.every((stream) => stream.released)) {
+              delete streamGroup.dataBarrelRegistry[papa];
             }
 
-            if (streamGroup.emittedDataRegistry[papa].every(Boolean)) {
-              delete streamGroup.emittedDataRegistry[papa];
-              tryReleaseStreamGroup(streamGroup);
+            if (process.env.NODE_ENV === 'development') {
+              const { deepCopy } = require('./deepCopy');
+              debug?.onStreamEvent('Stream has been released', deepCopy({ stream, streamGroup, pipeState }));
             }
+
+            tryReleaseStreamGroup(streamGroup);
           });
 
+          streamGroup.dataBarrelRegistry[papa].emittedStreams.push(stream);
           downstreamConnection.onStreamEmit(stream);
         });
       }
       else {
-        delete streamGroup.emittedDataRegistry[papa];
+        delete streamGroup.dataBarrelRegistry[papa];
         tryReleaseStreamGroup(streamGroup);
       }
     }
     else {
       if (process.env.NODE_ENV === 'development') {
-        if ( ! pipeState.dataPipe.operative) {
-          // TODO Log this
-          // Is it normal case?
-          return;
-        }
-
-        if (isStreamGroupFinished(streamGroup)) {
-          // TODO Log this
-          // Warn, cause it's not normal case. User pipe fill method still active after FINAL.
-          return;
-        }
-      }
-    }
-  };
-
-  const emitError = (streamGroup: StreamGroup, error: any): void => {
-    if (pipeState.errorPipe.operative && isStreamGroupActive(streamGroup)) {
-      const papa = isFinal(error) ? streamGroup.papa : Symbol(getId('papa'));
-
-      streamGroup.emittedErrorRegistry[papa] = Array(pipeState.errorPipe.downstreamConnections.length).fill(false);
-
-      if (isFinal(error)) {
-        if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit('Pipe finally emitted an error', deepCopy({ papa, data: error, dataType: 'error', finally: true, streamGroup, pipeState }));
-        }
-
-        finishStreamGroup(streamGroup);
-      }
-      else {
-        if (process.env.NODE_ENV === 'development') {
-          debug?.onEmit('Pipe emitted an error', deepCopy({ papa, data: error, dataType: 'error', finally: false, streamGroup, pipeState }));
-        }
-      }
-
-      if (pipeState.errorPipe.downstreamConnections.length) {
-        pipeState.errorPipe.downstreamConnections.forEach((downstreamConnection, index) => {
-          const stream = createStream(papa, getEmittedData(error), () => {
-            streamGroup.emittedErrorRegistry[papa][index] = true;
-            stream.released = true;
-
-            if (process.env.NODE_ENV === 'development') {
-              debug?.onStreamEvent('Stream has been released', deepCopy({ papa, stream, streamGroup, pipeState }));
-            }
-
-            if (streamGroup.emittedErrorRegistry[papa].every(Boolean)) {
-              delete streamGroup.emittedErrorRegistry[papa];
-              tryReleaseStreamGroup(streamGroup);
-            }
-          });
-
-          downstreamConnection.onStreamEmit(stream);
-        });
-      }
-      else {
-        delete streamGroup.emittedErrorRegistry[papa];
-        tryReleaseStreamGroup(streamGroup);
-      }
-    }
-    else {
-      if (process.env.NODE_ENV === 'development') {
-        if ( ! pipeState.errorPipe.operative) {
-          // TODO Log this
-          // Is it normal case?
-          return;
-        }
-
         if (isStreamGroupFinished(streamGroup)) {
           // TODO Log this
           // Warn, cause it's not normal case. User pipe fill method still active after FINAL.
@@ -207,66 +147,67 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
   };
 
   const handleParentPipeStreamEmit = (parentPipeIndex: number, parentPipeUniqKey: symbol, stream: Stream): void => {
-    if (pipeState.dataPipe.operative) {
+    if (pipeState.streamGroups[stream.papa]?.members[parentPipeIndex]) {
+      // TODO Log this
+      // Warn, cause it's not normal case. Some upstream pipe emit a stream with previously used
+      // papa.
+      stream.release();
+    }
 
-      if (pipeState.streamGroups[stream.papa]?.members[parentPipeIndex]) {
-        // TODO Log this
-        // Warn, cause it's not normal case. Some upstream pipe emit a stream with previously used
-        // stream head which has not released.
-        stream.release();
-      }
+    const streamGroup = pipeState.streamGroups[stream.papa] ?? createStreamGroup(stream.papa, pipeState.parentPipes.length);
+    streamGroup.members[parentPipeIndex] = stream;
 
-      const streamGroup = pipeState.streamGroups[stream.papa] ?? createStreamGroup(stream.papa, pipeState.parentPipes.length);
-      streamGroup.members[parentPipeIndex] = stream;
-
-      if (pipeState.streamGroups[stream.papa]) {
-        if (process.env.NODE_ENV === 'development') {
-          debug?.onStreamGroupEvent('Stream group updated as a result of receiving a stream', deepCopy({ papa: stream.papa, streamGroup, pipeState }));
-        }
-      }
-      else {
-        pipeState.streamGroups[stream.papa] = streamGroup;
-
-        if (process.env.NODE_ENV === 'development') {
-          debug?.onStreamGroupCreate('Stream group created as a result of receiving a stream', deepCopy({ papa: stream.papa, streamGroup, pipeState }));
-        }
-      }
-
-      if (isStreamGroupFulfilled(streamGroup)) {
-        streamGroup.status = 'active';
-
-        if (process.env.NODE_ENV === 'development') {
-          debug?.onStreamGroupEvent('Stream group has been fulfilled and can now emit a value', deepCopy({ streamGroup, pipeState }));
-        }
-
-        streamGroup.finish = fill(
-          getFulfilledStreamGroupValues(streamGroup),
-          (value) => emitData(streamGroup, value),
-          (error) => emitError(streamGroup, error),
-        );
+    if (pipeState.streamGroups[stream.papa]) {
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onStreamGroupEvent('Stream group updated as a result of receiving a stream', deepCopy({ papa: stream.papa, streamGroup, pipeState }));
       }
     }
     else {
-      // TODO Log this
-      // Is it normal case?
-      stream.release();
+      pipeState.streamGroups[stream.papa] = streamGroup;
+
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onStreamGroupCreate('Stream group created as a result of receiving a stream', deepCopy({ papa: stream.papa, streamGroup, pipeState }));
+      }
+    }
+
+    if (isStreamGroupFulfilled(streamGroup)) {
+      streamGroup.status = 'active';
+
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onStreamGroupEvent('Stream group has been fulfilled and can now emit a value', deepCopy({ streamGroup, pipeState }));
+      }
+
+      streamGroup.finish = fill(
+        getStreamGroupValues(streamGroup),
+        (data) => emitData(streamGroup, createDataBarrel(data, 'data')),
+        (error) => emitData(streamGroup, createDataBarrel(error, 'error')),
+      );
     }
   };
 
-  const handleParentPipeStreamTerminate = (parentPipeIndex: number, parentPipeUniqKey: symbol, papa: symbol): void => {
+  // TODO Можно ли как-то обойтись без parentPipeUniqKey?
+  const handleParentPipeStreamTerminate = (parentPipeIndex: number, parentPipeUniqKey: symbol, stream: Stream): void => {
+    const streamGroup = pipeState.streamGroups[stream.papa];
+
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamEvent('Pipe is terminating a stream', deepCopy({ parentPipeIndex, parentPipeUniqKey, papa, pipeState }));
+      const { deepCopy } = require('./deepCopy');
+      debug?.onStreamEvent('Pipe is terminating a stream', deepCopy({ stream, streamGroup, parentPipeIndex, parentPipeUniqKey, pipeState }));
     }
 
-    terminateStreamGroup(pipeState.streamGroups[papa]);
+    terminateStreamGroup(streamGroup);
 
     if (process.env.NODE_ENV === 'development') {
-      debug?.onStreamEvent('Pipe terminated a stream', deepCopy({ parentPipeIndex, parentPipeUniqKey, papa, pipeState }));
+      const { deepCopy } = require('./deepCopy');
+      debug?.onStreamEvent('Pipe terminated a stream', deepCopy({ stream, streamGroup, parentPipeIndex, parentPipeUniqKey, pipeState }));
     }
   };
 
   const handleReset = () => {
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onPipeEvent('Pipe is resetting', deepCopy({ pipeState }));
     }
 
@@ -275,6 +216,7 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     });
 
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onPipeEvent('Pipe resetted', deepCopy({ pipeState }));
     }
   };
@@ -284,13 +226,14 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     streamGroup.finish?.();
 
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupEvent('Stream group finished and can no longer emit a value', deepCopy({ streamGroup, pipeState }));
     }
   };
 
   const tryReleaseStreamGroup = (streamGroup: StreamGroup) => {
     if (isStreamGroupFinished(streamGroup)) {
-      if ( ! Object.values(streamGroup.emittedDataRegistry).length && ! Object.values(streamGroup.emittedErrorRegistry).length) {
+      if ( ! Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry).length) {
         releaseStreamGroup(streamGroup);
       }
     }
@@ -300,6 +243,7 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     delete pipeState.streamGroups[streamGroup.papa];
 
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupEvent('Stream group has been released', deepCopy({ streamGroup, pipeState }));
     }
 
@@ -308,27 +252,30 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
 
   const terminateStreamGroup = (streamGroup: StreamGroup) => {
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupEvent('Pipe is terminating a stream group', deepCopy({ streamGroup, pipeState }));
     }
 
     if (isStreamGroupActive(streamGroup)) {
       finishStreamGroup(streamGroup);
 
+      // TODO It needs to be simplified because `errorBarrelRegistry` no longer exists
       if (pipeState.dataPipe.downstreamConnections.length) {
-        Object.getOwnPropertySymbols(streamGroup.emittedDataRegistry).forEach((streamHead) => {
-          streamGroup.emittedDataRegistry[streamHead].forEach((released, index) => {
-            if ( ! released) {
-              pipeState.dataPipe.downstreamConnections[index].onStreamTerminate(streamHead);
+        Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry).forEach((dataBarrelRegistryKey) => {
+          streamGroup.dataBarrelRegistry[dataBarrelRegistryKey].emittedStreams.forEach((stream, index) => {
+            if ( ! stream.released) {
+              pipeState.dataPipe.downstreamConnections[index].onStreamTerminate(stream);
             }
           });
         });
       }
 
+      // TODO It needs to be simplified because `errorBarrelRegistry` no longer exists
       if (pipeState.errorPipe.downstreamConnections.length) {
-        Object.getOwnPropertySymbols(streamGroup.emittedErrorRegistry).forEach((streamHead) => {
-          streamGroup.emittedErrorRegistry[streamHead].forEach((released, index) => {
-            if ( ! released) {
-              pipeState.errorPipe.downstreamConnections[index].onStreamTerminate(streamHead);
+        Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry).forEach((dataBarrelRegistryKey) => {
+          streamGroup.dataBarrelRegistry[dataBarrelRegistryKey].emittedStreams.forEach((stream, index) => {
+            if ( ! stream.released) {
+              pipeState.errorPipe.downstreamConnections[index].onStreamTerminate(stream);
             }
           });
         });
@@ -343,6 +290,7 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     }
 
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupEvent('Pipe terminated a stream group', deepCopy({ streamGroup, pipeState }));
     }
   };
@@ -356,7 +304,7 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     pipeState.parentPipes.forEach((parentPipe, index) => {
       const { connectionIndex } = parentPipe.connect(
         (stream) => handleParentPipeStreamEmit(index, parentPipe.uniqKey, stream),
-        (papa) => handleParentPipeStreamTerminate(index, parentPipe.uniqKey, papa)
+        (stream) => handleParentPipeStreamTerminate(index, parentPipe.uniqKey, stream)
       );
 
       if (process.env.NODE_ENV === 'development') {
@@ -374,6 +322,8 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
   dataPipe.error = errorPipe;
 
   if (process.env.NODE_ENV === 'development') {
+    const { deepCopy } = require('./deepCopy');
+
     const instructionWithDisplayName = adjuncts.findLast(isInstructionWithDisplayName);
     const debugInstruction = adjuncts.findLast(isDebugInstruction);
     const createDebugger = debugInstruction?.createDebugger ?? adjuncts.findLast(isPipeWithCreateDebugger)?.createDebugger;
@@ -384,11 +334,11 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
 
     pipe.displayName = displayName;
     pipe.createDebugger = createDebugger;
-    pipe.uniqKey = pipeState.dataPipe.uniqKey = Symbol(pipe.displayName);
+    pipe.uniqKey = pipeState.dataPipe.uniqKey = Symbol(pipe.displayName + ' data pipe');
 
     errorPipe.displayName = `${displayName} error pipe`;
     errorPipe.createDebugger = createDebugger;
-    errorPipe.uniqKey = pipeState.errorPipe.uniqKey = Symbol(errorPipe.displayName);
+    errorPipe.uniqKey = pipeState.errorPipe.uniqKey = Symbol(errorPipe.displayName + ' error pipe');
 
     handleReset.displayName = `Reset: ${displayName}`;
 
@@ -399,19 +349,21 @@ export function createPipeKit(createFill: (reset: () => void) => Fill, adjuncts:
     const mountStreamGroup = pipeState.streamGroups[MOUNT_STREAM_HEAD] = createStreamGroup(MOUNT_STREAM_HEAD, 0);
 
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupCreate('Mount stream group created', deepCopy({ papa: MOUNT_STREAM_HEAD, streamGroup: mountStreamGroup, pipeState }));
     }
 
     mountStreamGroup.status = 'active';
 
     if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupEvent('Mount stream group has been fulfilled and can now emit a value', deepCopy({ streamGroup: mountStreamGroup, pipeState }));
     }
 
     mountStreamGroup.finish = fill(
       [],
-      (value) => emitData(mountStreamGroup, value),
-      (error) => emitError(mountStreamGroup, error),
+      (data) => emitData(mountStreamGroup, createDataBarrel(data, 'data')),
+      (error) => emitData(mountStreamGroup, createDataBarrel(error, 'error')),
     );
   }
 
@@ -448,12 +400,29 @@ function createDownstreamConnection<
   };
 }
 
+function createDataBarrel<
+  TValue extends any = any,
+>(value: TValue, dataType: PipeType): DataBarrel<TValue> {
+  const uniqKey = Symbol(getId('data-barrel'));
+  const [data, final] = unpack(value);
+
+  return {
+    uniqKey,
+    data,
+    dataType,
+    final,
+  };
+}
+
 function createStream<
   TValue extends any = any,
->(papa: symbol, value: TValue, release: () => void): Stream<TValue> {
+>(papa: symbol, dataBarrel: DataBarrel<TValue>, release: () => void): Stream<TValue> {
+  const uniqKey = Symbol(getId('pipe'));
+
   return {
+    uniqKey,
     papa,
-    value,
+    dataBarrel,
     release,
     released: false,
   };
@@ -469,8 +438,7 @@ function createStreamGroup<
     papa,
     status: 'idle',
     members: createStreamGroupMembers(length),
-    emittedDataRegistry: {},
-    emittedErrorRegistry: {},
+    dataBarrelRegistry: {},
     finish: null,
   };
 }
@@ -495,21 +463,23 @@ function isStreamGroupFinished(streamGroup: StreamGroup): boolean {
   return streamGroup.status === 'finished';
 }
 
-function getFulfilledStreamGroupValues<
+function getStreamGroupValues<
   TAdjuncts extends Adjunct[] = Adjunct[],
 >(streamGroup: StreamGroup<TAdjuncts>): StreamGroupValues<TAdjuncts> {
-  return streamGroup.members.map((stream) => stream?.value) as StreamGroupValues<TAdjuncts>;
+  return streamGroup.members.map((stream) => stream?.dataBarrel.data) as StreamGroupValues<TAdjuncts>;
 }
 
-function getEmittedData<
+export function isFinal<
   TValue extends any = any,
->(value: TValue | Final<TValue>): TValue {
-  if (isFinal(value)) {
-    return value.value;
-  }
-  else {
-    return value;
-  }
+>(value: any): value is Final<TValue> {
+  return (value as any)?.type === FINAL_TYPE;
+}
+
+function unpack<
+  TValue extends any = any,
+>(value: any): [TValue, boolean] {
+  const final = isFinal(value);
+  return [isFinal(value) ? value.value : value, final]
 }
 
 function getId(concat: string = '') {

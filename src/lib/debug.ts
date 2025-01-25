@@ -1,6 +1,9 @@
 import { createInstruction } from './instruction';
-import { DEBUG_INSTRUCTION_TYPE, DISPLAY_NAME_INSTRUCTION_TYPE, Debugger, DebugInstruction,
-  DisplayNameInstruction } from './types';
+import type { Debugger } from './types';
+import type { DebugInstruction } from './types';
+import type { DisplayNameInstruction } from './types';
+import { DEBUG_INSTRUCTION_TYPE } from './types';
+import { DISPLAY_NAME_INSTRUCTION_TYPE } from './types';
 
 export function displayName(displayName: string): DisplayNameInstruction {
   return {
@@ -31,54 +34,65 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
   return {
     onPipeCreate: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      console.log('%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      log(
+        ['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState],
+      );
       console.groupEnd();
     },
     onPipeEvent: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      console.log('%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      log(
+        ['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState],
+      );
       console.groupEnd();
     },
     onStreamGroupCreate: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      console.log('%c papa', 'font-weight: bold; color: #03A9F4;', data.papa);
-      console.log('%c streamGroup', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
-      console.log('%c pipe state ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      log(
+        ['%c papa', 'font-weight: bold; color: #03A9F4;', data.papa],
+        ['%c streamGroup', 'font-weight: bold; color: #03A9F4;', data.streamGroup],
+        ['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState],
+      );
       console.groupEnd();
     },
     onStreamGroupEvent: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      data.papa && console.log('%c papa', 'font-weight: bold; color: #03A9F4;', data.papa);
-      console.log('%c stream group', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
-      console.log('%c pipe state  ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      log(
+        data.papa ? ['%c papa', 'font-weight: bold; color: #03A9F4;', data.papa] : null,
+        ['%c stream group', 'font-weight: bold; color: #03A9F4;', data.streamGroup],
+        ['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState],
+      );
       console.groupEnd();
     },
     onEmit: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-      data.dataType === 'error'
-        ? console.log('%c emitted data', 'font-weight: bold; color: #03A9F4;', data.data)
-        : console.log('%c emitted error', 'font-weight: bold; color: #03A9F4;', data.data);
-      console.log('%c papa  ', 'font-weight: bold; color: #03A9F4;', data.papa);
-      console.log('%c stream group ', 'font-weight: bold; color: #03A9F4;', data.streamGroup);
-      console.log('%c pipe state   ', 'font-weight: bold; color: #4CAF50;', data.pipeState);
+      log(
+        ['%c papa', 'font-weight: bold; color: #03A9F4;', data.papa],
+        ['%c data barrel', 'font-weight: bold; color: #03A9F4;', data.dataBarrel],
+        ['%c stream group', 'font-weight: bold; color: #03A9F4;', data.streamGroup],
+        ['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState],
+      );
       console.groupEnd();
     },
     onStreamEvent: (message, data) => {
       console.groupCollapsed(`%c ${displayName}:%c ${message}`, 'font-weight: bold; color: inherit;', 'font-weight: lighter; color: gray;');
-
-      const logs: [string, ...any][] = [];
-      data.parentPipeIndex != null && logs.push(['%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex]);
-      logs.push(['%c papa', 'font-weight: bold; color: #03A9F4;', data.papa]);
-      logs.push(['%c stream', 'font-weight: bold; color: #03A9F4;', data.stream]);
-      logs.push(['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState]);
-
-      const maxTitleLength = logs.reduce((maxTitleLength, log) => Math.max(maxTitleLength, log[0].length), 0);
-      logs.forEach((log) => {
-        const [title, ...restLog] = log;
-        console.log(title.padEnd(maxTitleLength), ...restLog);
-      });
-
+      log(
+        data.parentPipeIndex != null ? ['%c parent pipe index', 'font-weight: bold; color: #03A9F4;', data.parentPipeIndex] : null,
+        ['%c stream', 'font-weight: bold; color: #03A9F4;', data.stream],
+        ['%c stream group', 'font-weight: bold; color: #03A9F4;', data.streamGroup],
+        ['%c pipe state', 'font-weight: bold; color: #4CAF50;', data.pipeState],
+      );
       console.groupEnd();
     },
   }
+}
+
+function log(...logs: (null | [string, ...any])[]) {
+  const maxTitleLength = logs.reduce((maxTitleLength, log) => Math.max(maxTitleLength, (log?.[0] ?? '').length), 0);
+  logs.forEach((log) => {
+    if (log) {
+      const [title, ...restLog] = log;
+      console.log(title.padEnd(maxTitleLength), ...restLog);
+    }
+  });
 }

@@ -1,5 +1,5 @@
-import { OnParentPipeStreamEmit } from './OnParentPipeStreamEmit';
-import { OnParentPipeStreamTerminate } from './OnParentPipeStreamTerminate';
+import { OnParentPipeStreamEmit } from './ParentPipe';
+import { OnParentPipeStreamTerminate } from './ParentPipe';
 
 export type Connect<
   TValue extends any = any,

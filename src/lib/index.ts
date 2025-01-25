@@ -1,6 +1,5 @@
 import { debug } from './debug';
 import { displayName } from './debug';
-import { destruct } from './destruct';
 import { latest } from './instruction';
 
 export { PIPE_STORE_KEY } from './store';
@@ -17,7 +16,6 @@ export type { MountPipe } from './useMountPipe';
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
   debug,
-  destruct,
-  displayName,
+  dn: displayName,
   latest,
 };

@@ -1,8 +1,11 @@
-// noinspection TypeScriptValidateTypes
-
-import { BasePipe, StreamGroups } from '../types';
-import { EmittedDataFrame, EventTargetType, PanelState, PipeFrame, StreamGroupFrame }
-  from './types';
+import { BasePipe } from '../types';
+import { DataBarrel } from '../types';
+import { PipeState } from '../types';
+import { DataBarrelFrame } from './types';
+import { EventTargetType } from './types';
+import { PanelState } from './types';
+import { PipeFrame } from './types';
+import { StreamGroupFrame } from './types';
 
 export function getUpstreamPipeParams(upstreamPipe: BasePipe, pipeFrames: PipeFrame[]): [number, number] {
   const levels: boolean[] = [];
@@ -135,7 +138,7 @@ export function addPipeFrame(pipeFrames: PipeFrame[], newPipeFrame: PipeFrame): 
 
 export function addStreamGroupFrame(streamGroupFrames: StreamGroupFrame[], newStreamGroupFrame: StreamGroupFrame): [StreamGroupFrame[]] {
   const streamGroupFrameIndex = streamGroupFrames.findIndex((streamGroupFrame) => {
-    return streamGroupFrame.data.uniqKey === newStreamGroupFrame.data.uniqKey;
+    return streamGroupFrame.streamGroup.uniqKey === newStreamGroupFrame.streamGroup.uniqKey;
   })
 
   const nextStreamGroupFrames = [...streamGroupFrames];
@@ -143,37 +146,39 @@ export function addStreamGroupFrame(streamGroupFrames: StreamGroupFrame[], newSt
   if (streamGroupFrameIndex > -1) {
     nextStreamGroupFrames[streamGroupFrameIndex] = {
       ...nextStreamGroupFrames[streamGroupFrameIndex],
-      data: newStreamGroupFrame.data,
+      streamGroup: newStreamGroupFrame.streamGroup,
     };
   }
   else {
     nextStreamGroupFrames.push(newStreamGroupFrame);
   }
 
-  return [nextStreamGroupFrames]
+  return [nextStreamGroupFrames];
 }
 
-export function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], streamGroups: StreamGroups): StreamGroupFrame[] {
+export function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], pipeState: PipeState): StreamGroupFrame[] {
   let changed = false;
 
-  const nextStreamGroupFrames = streamGroupFrames.map((streamGroupFrame: StreamGroupFrame) => {
-    const streamHead = Object.getOwnPropertySymbols(streamGroups).find((streamHead) => {
-      return streamGroups[streamHead].uniqKey === streamGroupFrame.data.uniqKey;
-    });
+  const nextStreamGroupFrames: StreamGroupFrame[] = streamGroupFrames.map((streamGroupFrame) => {
+    const streamGroup = Object.getOwnPropertySymbols(pipeState.streamGroups)
+      .map((papa) => {
+        return pipeState.streamGroups[papa];
+      })
+      .find((streamGroup) => {
+        return streamGroup.uniqKey === streamGroupFrame.streamGroup.uniqKey;
+      });
 
-    if (streamHead) {
+    if (streamGroup) {
       changed = true;
-
       return {
         ...streamGroupFrame,
-        data: streamGroups[streamHead],
+        streamGroup,
         deleted: false,
       };
     }
     else {
       if ( ! streamGroupFrame.deleted) {
         changed = true;
-
         return {
           ...streamGroupFrame,
           deleted: true,
@@ -188,45 +193,67 @@ export function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], s
   return changed ? nextStreamGroupFrames : streamGroupFrames;
 }
 
-export function addEmittedDataFrame(emittedDataFrames: EmittedDataFrame[], newEmittedDataFrame: EmittedDataFrame): [EmittedDataFrame[]] {
-  const nextEmittedDataFrames = [
-    ...emittedDataFrames,
-    newEmittedDataFrame,
-  ];
+export function addDataBarrelFrame(dataBarrelFrames: DataBarrelFrame[], newDataBarrelFrame: DataBarrelFrame): [DataBarrelFrame[]] {
+  const dataBarrelFrameIndex = dataBarrelFrames.findIndex((dataBarrelFrame) => {
+    return dataBarrelFrame.dataBarrel.uniqKey === newDataBarrelFrame.dataBarrel.uniqKey;
+  })
 
-  return [nextEmittedDataFrames];
+  const nextDataBarrelFrames = [...dataBarrelFrames];
+
+  if (dataBarrelFrameIndex > -1) {
+    nextDataBarrelFrames[dataBarrelFrameIndex] = {
+      ...nextDataBarrelFrames[dataBarrelFrameIndex],
+      dataBarrel: newDataBarrelFrame.dataBarrel,
+    };
+  }
+  else {
+    nextDataBarrelFrames.push(newDataBarrelFrame);
+  }
+
+  return [nextDataBarrelFrames];
 }
 
-export function updateEmittedDataFrames(emittedDataFrames: EmittedDataFrame[], streamGroups: StreamGroups): EmittedDataFrame[] {
+export function updateDataBarrelFrames(dataBarrelFrames: DataBarrelFrame[], pipeState: PipeState): DataBarrelFrame[] {
   let changed = false;
 
-  const nextEmittedDataFrames = emittedDataFrames.map((emittedDataFrame) => {
-    const released = Object.getOwnPropertySymbols(streamGroups).every((papa) => {
-      const streamGroup = streamGroups[papa];
-      return ! (false
-        || Object.getOwnPropertySymbols(streamGroup.emittedDataRegistry).some((emittedDataRegistryKey) => {
-          return emittedDataRegistryKey === emittedDataFrame.papa && ! streamGroup.emittedDataRegistry[emittedDataRegistryKey].every(Boolean);
-        })
-        || Object.getOwnPropertySymbols(streamGroup.emittedErrorRegistry).some((emittedErrorRegistryKey) => {
-          return emittedErrorRegistryKey === emittedDataFrame.papa && ! streamGroup.emittedErrorRegistry[emittedErrorRegistryKey].every(Boolean);
-        })
-      );
-    });
+  const nextDataBarrelFrames: DataBarrelFrame[] = dataBarrelFrames.map((dataBarrelFrame) => {
+    const dataBarrel = Object.getOwnPropertySymbols(pipeState.streamGroups)
+      .reduce((dataBarrels, papa) => {
+        return [
+          ...dataBarrels,
+          ...Object.getOwnPropertySymbols(pipeState.streamGroups[papa].dataBarrelRegistry)
+            .map((dataBarrelRegistryKey) => {
+              return pipeState.streamGroups[papa].dataBarrelRegistry[dataBarrelRegistryKey].dataBarrel;
+            }),
+        ];
+      }, [] as DataBarrel[])
+      .find((dataBarrel) => {
+        return dataBarrel.uniqKey === dataBarrelFrame.dataBarrel.uniqKey;
+      });
 
-    if (emittedDataFrame.released !== released) {
+    if (dataBarrel) {
       changed = true;
-
       return {
-        ...emittedDataFrame,
-        released,
+        ...dataBarrelFrame,
+        dataBarrel,
+        deleted: false,
       };
     }
     else {
-      return emittedDataFrame;
+      if ( ! dataBarrelFrame.deleted) {
+        changed = true;
+        return {
+          ...dataBarrelFrame,
+          deleted: true,
+        };
+      }
+      else {
+        return dataBarrelFrame;
+      }
     }
   });
 
-  return changed ? nextEmittedDataFrames : emittedDataFrames;
+  return changed ? nextDataBarrelFrames : dataBarrelFrames;
 }
 
 export function selectPipe(uniqKey: [symbol, symbol], panelState: PanelState, preserveSelection?: boolean): PanelState {
@@ -236,7 +263,7 @@ export function selectPipe(uniqKey: [symbol, symbol], panelState: PanelState, pr
     ...panelState,
     selectedPipe: selected ? uniqKey : null,
     selectedStreamGroup: null,
-    selectedEmittedData: null,
+    selectedDataBarrel: null,
   };
 
   nextState = selectDebugRecords(uniqKey, nextState);
@@ -251,7 +278,7 @@ export function selectStreamGroup(uniqKey: [symbol, symbol], panelState: PanelSt
     ...panelState,
     selectedPipe: null,
     selectedStreamGroup: selected ? uniqKey : null,
-    selectedEmittedData: null,
+    selectedDataBarrel: null,
   };
 
   nextState = selectDebugRecords(uniqKey, nextState);
@@ -259,14 +286,14 @@ export function selectStreamGroup(uniqKey: [symbol, symbol], panelState: PanelSt
   return nextState;
 }
 
-export function selectEmittedData(uniqKey: [symbol, symbol], panelState: PanelState, preserveSelection?: boolean): PanelState {
-  const selected = preserveSelection || ! (panelState.selectedEmittedData && panelState.selectedEmittedData[1] === uniqKey[1]);
+export function selectDataBarrel(uniqKey: [symbol, symbol], panelState: PanelState, preserveSelection?: boolean): PanelState {
+  const selected = preserveSelection || ! (panelState.selectedDataBarrel && panelState.selectedDataBarrel[1] === uniqKey[1]);
 
   let nextState: PanelState = {
     ...panelState,
     selectedPipe: null,
     selectedStreamGroup: null,
-    selectedEmittedData: selected ? uniqKey : null,
+    selectedDataBarrel: selected ? uniqKey : null,
   };
 
   nextState = selectDebugRecords(uniqKey, nextState);
@@ -282,8 +309,8 @@ export function selectEvent(eventTargetType: EventTargetType, eventTargetKey: [s
     case 'streamGroup': {
       return selectStreamGroup(eventTargetKey, state, preserveSelection);
     }
-    case 'stream': {
-      return selectEmittedData(eventTargetKey, state, preserveSelection);
+    case 'dataBarrel': {
+      return selectDataBarrel(eventTargetKey, state, preserveSelection);
     }
     default: {
       const badEventTargetType: never = eventTargetType;
@@ -293,7 +320,7 @@ export function selectEvent(eventTargetType: EventTargetType, eventTargetKey: [s
 }
 
 function selectDebugRecords(uniqKey: [symbol, symbol], panelState: PanelState): PanelState {
-  const selectedEventKey = panelState.selectedPipe?.[1] ?? panelState.selectedStreamGroup?.[1] ?? panelState.selectedEmittedData?.[1] ?? null;
+  const selectedEventKey = panelState.selectedPipe?.[1] ?? panelState.selectedStreamGroup?.[1] ?? panelState.selectedDataBarrel?.[1] ?? null;
   const selected = selectedEventKey === uniqKey[1];
   let debugRecordsChanged = false;
 

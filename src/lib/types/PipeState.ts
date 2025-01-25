@@ -1,7 +1,7 @@
 import { Adjunct } from './Adjunct';
 import { DownstreamConnection } from './DownstreamConnection';
+import { ParentPipes } from './ParentPipe';
 import { StreamGroups } from './StreamGroup';
-import { ParentPipes } from './ParentPipes';
 
 export type PipeState<
   TValue extends any = any,
@@ -20,5 +20,4 @@ export type CommonPipeState<
 > = {
   uniqKey: symbol;
   downstreamConnections: DownstreamConnection<TValue>[];
-  operative: boolean;
 };

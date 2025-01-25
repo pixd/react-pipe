@@ -1,7 +1,12 @@
 import ReactDOM from 'react-dom/client';
 
 import { createInstruction } from '../instruction';
-import { DEBUG_INSTRUCTION_TYPE, Debugger, PipeState, StreamGroup } from '../types';
+import type { DataBarrel } from '../types';
+import type { Debugger } from '../types';
+import type { PipeState } from '../types';
+import type { PipeType } from '../types';
+import type { StreamGroup } from '../types';
+import { DEBUG_INSTRUCTION_TYPE } from '../types';
 import { Panel } from './components/Panel';
 import { styles as animationStyle } from './styles/animation';
 import { styles as connectionsStyle } from './styles/connections';
@@ -9,11 +14,22 @@ import { styles as consoleStyle } from './styles/console';
 import { styles as iconsStyle } from './styles/icons';
 import { styles as mainStyle } from './styles/main';
 import { styles as schemaStyle } from './styles/schema';
-import { BACKGROUND_COLOR, COLOR, FONT_FAMILY, FONT_SIZE, MAIM_CLASS_NAME }
-  from './styles-constants';
-import { addPipeFrame, addEmittedDataFrame, addStreamGroupFrame, updateEmittedDataFrames,
-  updateStreamGroupFrames } from './tools';
-import { DebugEvent, DebugRecord, PanelState, PipeFrame, EmittedDataType } from './types';
+import { BACKGROUND_COLOR }  from './styles-constants';
+import { COLOR }  from './styles-constants';
+import { FONT_FAMILY }  from './styles-constants';
+import { FONT_SIZE }  from './styles-constants';
+import { MAIM_CLASS_NAME }  from './styles-constants';
+import { addPipeFrame } from './tools';
+import { addDataBarrelFrame } from './tools';
+import { addStreamGroupFrame } from './tools';
+import { updateDataBarrelFrames } from './tools';
+import { updateStreamGroupFrames } from './tools';
+import type { DataBarrelFrame } from './types';
+import type { DebugEvent } from './types';
+import type { DebugRecord } from './types';
+import type { PanelState } from './types';
+import type { PipeFrame } from './types';
+import type { StreamGroupFrame } from './types';
 
 let init = false;
 
@@ -87,8 +103,8 @@ export function initDebugPanel() {
       onEmit: (message, data) => {
         updatePanel((state) => {
           return onLog(onEmit(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.papa],
+            eventTargetType: 'dataBarrel',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.dataBarrel.uniqKey],
             message,
             data,
           });
@@ -97,8 +113,9 @@ export function initDebugPanel() {
       onStreamEvent: (message, data) => {
         updatePanel((state) => {
           return onLog(updatePipeState(state, data), {
-            eventTargetType: 'stream',
-            eventTargetKey: [data.parentPipeUniqKey ?? data.pipeState.dataPipe.uniqKey, data.papa],
+            eventTargetType: 'dataBarrel',
+            // TODO Откуда эта альтернатива?
+            eventTargetKey: [data.parentPipeUniqKey ?? data.pipeState.dataPipe.uniqKey, data.stream.dataBarrel.uniqKey],
             message,
             data,
           });
@@ -128,7 +145,7 @@ function getDefaultPipeFrame(): Omit<PipeFrame, 'displayName' | 'pipeState'> {
     maxDataEntryLevel: 0,
     maxErrorEntryLevel: 0,
     streamGroupFrames: [],
-    emittedDataFrames: [],
+    dataBarrelFrames: [],
   };
 }
 
@@ -158,10 +175,10 @@ function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
     pilot = debugEvent.data.pipeState.displayName;
   }
 
-  const selectedEventKey = panelState.selectedPipe ?? panelState.selectedStreamGroup ?? panelState.selectedEmittedData;
+  const selectedObjectKey = panelState.selectedPipe ?? panelState.selectedStreamGroup ?? panelState.selectedDataBarrel;
 
-  const selected = !! selectedEventKey && debugEvent.eventTargetKey[1] === selectedEventKey[1];
-  const pilotSelected = !! selectedEventKey && debugEvent.data.pipeState.dataPipe.uniqKey === selectedEventKey[1];
+  const selected = !! selectedObjectKey && debugEvent.eventTargetKey[1] === selectedObjectKey[1];
+  const pilotSelected = !! selectedObjectKey && debugEvent.data.pipeState.dataPipe.uniqKey === selectedObjectKey[1];
 
   const record: DebugRecord = {
     time,
@@ -171,12 +188,10 @@ function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
     pilotSelected,
     debugEvent,
     timeTravelPanelState: {
-      ...panelState,
-      debugRecords: [],
-      selectedPipe: null,
-      selectedStreamGroup: null,
-      selectedEmittedData: null,
-      selectedDebugRecord: null,
+      pipeFrames: panelState.pipeFrames,
+      maxPipeLineIndex: panelState.maxPipeLineIndex,
+      maxDataLevel: panelState.maxDataLevel,
+      maxErrorLevel: panelState.maxErrorLevel,
     },
   };
 
@@ -194,8 +209,7 @@ function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
 }
 
 function onPipeCreate(state: PanelState, data: { pipeState: PipeState }): PanelState {
-  const pipeFrame = {
-    displayName: data.pipeState.displayName,
+  const pipeFrame: PipeFrame = {
     pipeState: data.pipeState,
     ...getDefaultPipeFrame(),
   };
@@ -218,8 +232,8 @@ function updatePipeState(state: PanelState, data: { pipeState: PipeState }): Pan
 
   const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
-  const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
-  const emittedDataFrames = updateEmittedDataFrames(pipeFrame.emittedDataFrames, data.pipeState.streamGroups);
+  const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState);
+  const dataBarrelFrames = updateDataBarrelFrames(pipeFrame.dataBarrelFrames, data.pipeState);
 
   const pipeFrames = [...state.pipeFrames];
 
@@ -227,7 +241,7 @@ function updatePipeState(state: PanelState, data: { pipeState: PipeState }): Pan
     ...pipeFrame,
     pipeState: data.pipeState,
     streamGroupFrames,
-    emittedDataFrames,
+    dataBarrelFrames,
   };
 
   return {
@@ -236,18 +250,21 @@ function updatePipeState(state: PanelState, data: { pipeState: PipeState }): Pan
   };
 }
 
-function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
+function onStreamGroupCreate(state: PanelState, data: { papa: symbol, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
   });
 
   const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
-  const streamGroupFrame = { data: data.streamGroup, deleted: false };
+  const streamGroupFrame: StreamGroupFrame = {
+    streamGroup: data.streamGroup,
+    deleted: false,
+  };
 
   let [streamGroupFrames] = addStreamGroupFrame(pipeFrame.streamGroupFrames, streamGroupFrame);
-  streamGroupFrames = updateStreamGroupFrames(streamGroupFrames, data.pipeState.streamGroups);
-  const emittedDataFrames = updateEmittedDataFrames(pipeFrame.emittedDataFrames, data.pipeState.streamGroups);
+  streamGroupFrames = updateStreamGroupFrames(streamGroupFrames, data.pipeState);
+  const dataBarrelFrames = updateDataBarrelFrames(pipeFrame.dataBarrelFrames, data.pipeState);
 
   const pipeFrames = [...state.pipeFrames];
 
@@ -255,7 +272,7 @@ function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup
     ...pipeFrame,
     pipeState: data.pipeState,
     streamGroupFrames,
-    emittedDataFrames,
+    dataBarrelFrames,
   };
 
   return {
@@ -264,18 +281,22 @@ function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup
   };
 }
 
-function onEmit(state: PanelState, data: { papa: symbol, data: any, dataType: EmittedDataType, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
+function onEmit(state: PanelState, data: { papa: symbol, dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
   });
 
   const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
-  const emittedDataFrame = { papa: data.papa, data: data.data, dataType: data.dataType, released: false };
+  const dataBarrelFrame: DataBarrelFrame = {
+    papa: data.papa,
+    dataBarrel: data.dataBarrel,
+    deleted: false,
+  };
 
-  const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState.streamGroups);
-  let [emittedDataFrames] = addEmittedDataFrame(pipeFrame.emittedDataFrames, emittedDataFrame);
-  emittedDataFrames = updateEmittedDataFrames(emittedDataFrames, data.pipeState.streamGroups);
+  const streamGroupFrames = updateStreamGroupFrames(pipeFrame.streamGroupFrames, data.pipeState);
+  let [dataBarrelFrames] = addDataBarrelFrame(pipeFrame.dataBarrelFrames, dataBarrelFrame);
+  dataBarrelFrames = updateDataBarrelFrames(dataBarrelFrames, data.pipeState);
 
   const pipeFrames = [...state.pipeFrames];
 
@@ -283,7 +304,7 @@ function onEmit(state: PanelState, data: { papa: symbol, data: any, dataType: Em
     ...pipeFrame,
     pipeState: data.pipeState,
     streamGroupFrames,
-    emittedDataFrames,
+    dataBarrelFrames,
   };
 
   return {

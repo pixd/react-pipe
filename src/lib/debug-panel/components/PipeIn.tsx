@@ -2,6 +2,7 @@ import React from 'react';
 
 import { ArrowAltDownSolidIcon } from '../icons/ArrowAltDownSolidIcon';
 import { StreamGroupFrame } from '../types';
+import { FakeStreamGroup } from './FakeStreamGroup';
 import { StreamGroup } from './StreamGroup';
 
 export type PipeInProps = {
@@ -22,12 +23,10 @@ export const PipeIn = React.memo(function PipeIn(props: PipeInProps) {
       </span>
       {streamGroupFrames.length === 0
         ? (
-          <div className="ReactPipeDebugPanel-StreamGroup" style={{ visibility: 'hidden' }}>
-            <div className="ReactPipeDebugPanel-StreamGroupMember" />
-          </div>
+          <FakeStreamGroup />
         )
         : streamGroupFrames.map((streamGroupFrame, index) => {
-          const selected = streamGroupFrame.data.uniqKey === selectedStreamGroupFrame;
+          const selected = streamGroupFrame.streamGroup.uniqKey === selectedStreamGroupFrame;
 
           return (
             <StreamGroup key={index}

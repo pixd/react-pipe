@@ -2,28 +2,29 @@ import React from 'react';
 
 import { ArrowAltLeftSolidIcon } from '../icons/ArrowAltLeftSolidIcon';
 import { ArrowAltRightSolidIcon } from '../icons/ArrowAltRightSolidIcon';
-import { EmittedDataFrame } from '../types';
-import { EmittedData } from './EmittedData';
+import { DataBarrelFrame } from '../types';
+import { DataBarrel } from './DataBarrel';
+import { FakeStreamGroup } from './FakeStreamGroup';
 
 export type PipeOutProps = {
   pipeUniqKey: symbol;
-  emittedDataFrames: EmittedDataFrame[];
-  selectedEmittedDataFrame: null | symbol;
-  onEmittedDataFrameSelection: (uniqKey: [symbol, symbol]) => void;
+  dataBarrelFrames: DataBarrelFrame[];
+  selectedDataBarrelFrame: null | symbol;
+  onDataBarrelFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
-  const { pipeUniqKey, emittedDataFrames, selectedEmittedDataFrame, onEmittedDataFrameSelection }
+  const { pipeUniqKey, dataBarrelFrames, selectedDataBarrelFrame, onDataBarrelFrameSelection }
     = props;
 
-  const dataEmittedDataFrames: EmittedDataFrame[] = [];
-  const errorEmittedDataFrames: EmittedDataFrame[] = [];
-  emittedDataFrames.forEach((emittedDataFrame) => {
-    if (emittedDataFrame.dataType === 'error') {
-      errorEmittedDataFrames.push(emittedDataFrame);
+  const dataDataBarrelFrames: DataBarrelFrame[] = [];
+  const errorDataBarrelFrames: DataBarrelFrame[] = [];
+  dataBarrelFrames.forEach((dataBarrelFrame) => {
+    if (dataBarrelFrame.dataBarrel.dataType === 'error') {
+      errorDataBarrelFrames.push(dataBarrelFrame);
     }
     else {
-      dataEmittedDataFrames.push(emittedDataFrame);
+      dataDataBarrelFrames.push(dataBarrelFrame);
     }
   });
 
@@ -34,47 +35,43 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
           <ArrowAltLeftSolidIcon />
           <span>DATA OUT</span>
         </span>
-        {dataEmittedDataFrames.length
-          ? dataEmittedDataFrames.map((emittedDataFrame, index) => {
-            const selected = emittedDataFrame.papa === selectedEmittedDataFrame;
+        {dataDataBarrelFrames.length
+          ? dataDataBarrelFrames.map((dataBarrelFrame, index) => {
+            const selected = dataBarrelFrame.dataBarrel.uniqKey === selectedDataBarrelFrame;
 
             return (
-              <EmittedData key={index}
+              <DataBarrel key={index}
                 pipeUniqKey={pipeUniqKey}
-                streamValueType="data"
-                emittedDataFrame={emittedDataFrame}
+                dataBarrelFrame={dataBarrelFrame}
                 selected={selected}
-                onEmittedDataFrameSelection={onEmittedDataFrameSelection} />
+                onDataBarrelFrameSelection={onDataBarrelFrameSelection} />
             );
           })
-          : fakeStreamGroup}
+          : (
+            <FakeStreamGroup />
+          )}
       </div>
       <div className="ReactPipeDebugPanel-EmitErrorOut">
         <span className="ReactPipeDebugPanel-SectionName">
           <span>ERROR OUT</span>
           <ArrowAltRightSolidIcon />
         </span>
-        {errorEmittedDataFrames.length
-          ? errorEmittedDataFrames.map((emittedDataFrame, index) => {
-            const selected = emittedDataFrame.papa === selectedEmittedDataFrame;
+        {errorDataBarrelFrames.length
+          ? errorDataBarrelFrames.map((dataBarrelFrame, index) => {
+            const selected = dataBarrelFrame.papa === selectedDataBarrelFrame;
 
             return (
-              <EmittedData key={index}
+              <DataBarrel key={index}
                 pipeUniqKey={pipeUniqKey}
-                streamValueType="error"
-                emittedDataFrame={emittedDataFrame}
+                dataBarrelFrame={dataBarrelFrame}
                 selected={selected}
-                onEmittedDataFrameSelection={onEmittedDataFrameSelection} />
+                onDataBarrelFrameSelection={onDataBarrelFrameSelection} />
             );
           })
-          : fakeStreamGroup}
+          : (
+            <FakeStreamGroup />
+          )}
       </div>
     </div>
   );
 });
-
-const fakeStreamGroup = (
-  <div className="ReactPipeDebugPanel-StreamGroup" style={{ visibility: 'hidden' }}>
-    <div className="ReactPipeDebugPanel-StreamGroupMember" />
-  </div>
-);

@@ -3,6 +3,7 @@ import { CreateDebugger } from './Dev';
 
 export const PIPE_ENTITY_TYPE = Symbol('PIPE_ENTITY_TYPE');
 
+// TODO Should be enum and should be called `DataType`
 export type PipeType = 'data' | 'error';
 
 export type BasePipe<
@@ -11,7 +12,6 @@ export type BasePipe<
   entityType: typeof PIPE_ENTITY_TYPE;
   type: PipeType;
   uniqKey: symbol;
-
   connect: Connect<TValue>;
   throw: (error: any) => void;
   reset: () => void;

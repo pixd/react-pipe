@@ -12,20 +12,19 @@ type ScrollMarker = {
 
 export type SchemaProps = {
   pipeFrames: PipeFrame[];
+  maxPipeLineIndex: number;
   maxDataLevel: number;
   maxErrorLevel: number;
   selectedPipe: null | [symbol, symbol];
   selectedStreamGroup: null | [symbol, symbol];
-  selectedEmittedData: null | [symbol, symbol];
+  selectedDataBarrel: null | [symbol, symbol];
   onPipeSelection: (uniqKey: symbol) => void;
   onStreamGroupSelection: (uniqKey: [symbol, symbol]) => void;
-  onEmittedDataSelection: (uniqKey: [symbol, symbol]) => void;
+  onDataBarrelSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const Schema = React.memo(function Schema(props: SchemaProps) {
-  const { pipeFrames, maxDataLevel, maxErrorLevel, selectedPipe, selectedStreamGroup,
-    selectedEmittedData, onPipeSelection, onStreamGroupSelection, onEmittedDataSelection,
-  } = props;
+  const { pipeFrames, maxDataLevel, maxErrorLevel, selectedPipe, selectedStreamGroup, selectedDataBarrel, onPipeSelection, onStreamGroupSelection, onDataBarrelSelection } = props;
 
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -51,7 +50,7 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
   useEffect(() => {
     const { realThumbHeight, scrollMarkers } = getScrollMarkers(rootRef.current!, listRef.current!);
     setScrollMarkersState([realThumbHeight, scrollMarkers]);
-  }, [pipeFrames, selectedPipe, selectedStreamGroup, selectedEmittedData, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
+  }, [pipeFrames, selectedPipe, selectedStreamGroup, selectedDataBarrel, rootRef.current?.clientHeight, listRef.current?.scrollHeight]);
 
   const style = {
     paddingLeft: `${maxDataLevel * LINE_SPACE + OUT_GAP}em`,
@@ -71,22 +70,22 @@ export const Schema = React.memo(function Schema(props: SchemaProps) {
       <div ref={listRef} className="ReactPipeDebugPanel-SchemaPipes" style={style}>
         {pipeFrames.map((pipe, index) => {
           const selected = !! selectedPipe && pipe.pipeState.dataPipe.uniqKey === selectedPipe[1];
-          const pipeSelectedStreamGroup = selectedStreamGroup && selectedStreamGroup[0] === pipe.pipeState.dataPipe.uniqKey
+          const selectedStreamGroupFrame = selectedStreamGroup && selectedStreamGroup[0] === pipe.pipeState.dataPipe.uniqKey
             ? selectedStreamGroup[1]
             : null;
-          const pipeSelectedEmittedData = selectedEmittedData && selectedEmittedData[0] === pipe.pipeState.dataPipe.uniqKey
-            ? selectedEmittedData[1]
+          const selectedDataBarrelFrame = selectedDataBarrel && selectedDataBarrel[0] === pipe.pipeState.dataPipe.uniqKey
+            ? selectedDataBarrel[1]
             : null;
 
           return (
             <Pipe key={index}
               pipeFrame={pipe}
               selected={selected}
-              selectedStreamGroupFrame={pipeSelectedStreamGroup}
-              selectedEmittedDataFrame={pipeSelectedEmittedData}
+              selectedStreamGroupFrame={selectedStreamGroupFrame}
+              selectedDataBarrelFrame={selectedDataBarrelFrame}
               onPipeSelection={onPipeSelection}
               onStreamGroupFrameSelection={onStreamGroupSelection}
-              onEmittedDataFrameSelection={onEmittedDataSelection} />
+              onDataBarrelFrameSelection={onDataBarrelSelection} />
           );
         })}
       </div>

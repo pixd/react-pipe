@@ -119,8 +119,12 @@ function usePageDataRequest() {
     return error;
   }, [friendsRequestPipe.error]);
 
-  usePipe(function friendsRequestResolvePipe(data) {
+  const friendsRequestResolvePipe = usePipe(function friendsRequestResolvePipe(data) {
     dispatch({ type: FRIENDS_REQUEST_RESOLVE, payload: data });
     return data;
   }, [friendsRequestPipe]);
+
+  usePipe(function completedPipe() {
+    return 'Done!';
+  }, [pageDataRequestResolvePipe, friendsRequestResolvePipe]);
 }

@@ -1,4 +1,4 @@
-const FINAL_TYPE = Symbol('FINAL');
+export const FINAL_TYPE = Symbol('FINAL');
 
 export type Final<
   TValue extends any = any,
@@ -14,8 +14,4 @@ export function FINAL<
     type: FINAL_TYPE,
     value: value as TValue,
   };
-}
-
-export function isFinal(value: any): value is Final {
-  return !! value && value.type === FINAL_TYPE && 'value' in value;
 }

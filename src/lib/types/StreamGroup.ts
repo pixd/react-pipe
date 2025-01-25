@@ -1,4 +1,5 @@
 import { Adjunct } from './Adjunct';
+import { DataBarrelRegistry } from './DataBarrel';
 import { BasePipe } from './Pipe';
 import { Stream } from './Stream';
 
@@ -11,8 +12,7 @@ export type StreamGroup<
   papa: symbol;
   status: StreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;
-  emittedDataRegistry: Record<symbol, boolean[]>;
-  emittedErrorRegistry: Record<symbol, boolean[]>;
+  dataBarrelRegistry: DataBarrelRegistry;
   finish: null | (() => void);
 };
 

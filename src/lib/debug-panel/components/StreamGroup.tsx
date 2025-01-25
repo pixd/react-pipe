@@ -24,7 +24,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
 
   const statusClassName = [
     'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HeartSolidIcon',
-    streamGroupFrame.data.status === 'active' ? 'ReactPipeDebugPanel-IconStatus-Active ReactPipeDebugPanel-IconStatus-Pulse' : 'ReactPipeDebugPanel-IconStatus-Muted',
+    streamGroupFrame.streamGroup.status === 'active' ? 'ReactPipeDebugPanel-IconStatus-Active ReactPipeDebugPanel-IconStatus-Pulse' : 'ReactPipeDebugPanel-IconStatus-Muted',
   ].join(' ');
 
   const finishedStatusClassName = [
@@ -33,13 +33,13 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
   ].filter(Boolean).join(' ');
 
   const handleStreamGroupClick = () => {
-    onStreamGroupFrameSelection([pipeUniqKey, streamGroupFrame.data.uniqKey]);
+    onStreamGroupFrameSelection([pipeUniqKey, streamGroupFrame.streamGroup.uniqKey]);
 
     console.log({
-      uniqKey: streamGroupFrame.data.uniqKey,
-      papa: streamGroupFrame.data.papa,
-      members: streamGroupFrame.data.members,
-      status: streamGroupFrame.data.status,
+      uniqKey: streamGroupFrame.streamGroup.uniqKey,
+      papa: streamGroupFrame.streamGroup.papa,
+      members: streamGroupFrame.streamGroup.members,
+      status: streamGroupFrame.streamGroup.status,
       deleted: streamGroupFrame.deleted,
     });
   };
@@ -49,16 +49,16 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
       onClick={handleStreamGroupClick}
     >
       <div className="ReactPipeDebugPanel-StreamGroupMembers">
-        {streamGroupFrame.data.papa === MOUNT_STREAM_HEAD
+        {streamGroupFrame.streamGroup.papa === MOUNT_STREAM_HEAD
           ? (
             <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-IconStatus-Success">
               <HomeAltSolidIcon />
             </div>
           )
-          : streamGroupFrame.data.members.map((member, index) => {
+          : streamGroupFrame.streamGroup.members.map((member, index) => {
             const className = [
               'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-TintSolidIcon',
-              streamGroupFrame.data.status === 'finished' && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+              streamGroupFrame.streamGroup.status === 'finished' && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
               member ? 'ReactPipeDebugPanel-IconStatus-Success' : 'ReactPipeDebugPanel-IconStatus-Muted',
             ].join(' ');
 
@@ -69,7 +69,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
             );
           })}
 
-        {streamGroupFrame.data.status === 'finished'
+        {streamGroupFrame.streamGroup.status === 'finished'
           ? (
             <div className={finishedStatusClassName}>
               <LockSolidIcon key={finishedStatusClassName} />
@@ -82,7 +82,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
           )}
       </div>
       <div className="ReactPipeDebugPanel-StreamGroupName">
-        {streamGroupFrame.data.papa.toString().replace(/Symbol\(papa-([a-z0-9]+)\)/, (...args) => args[1])}
+        {streamGroupFrame.streamGroup.papa.toString().replace(/Symbol\(papa-([a-z0-9]+)\)/, (...args) => args[1])}
       </div>
     </div>
   );

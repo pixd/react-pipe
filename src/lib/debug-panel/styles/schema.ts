@@ -66,7 +66,7 @@ export const styles = css`
     position: relative;
     width: 10.4em;
   }
-  
+
   .${MAIM_CLASS_NAME}-PipeIn,
   .${MAIM_CLASS_NAME}-EmitDataOut,
   .${MAIM_CLASS_NAME}-EmitErrorOut {
@@ -79,7 +79,7 @@ export const styles = css`
     width: ${SCROLL_TIGHT_WIDTH}em;
     height: ${SCROLL_TIGHT_WIDTH}em;
   }
-  
+
   .${MAIM_CLASS_NAME}-PipeIn::-webkit-scrollbar-track,
   .${MAIM_CLASS_NAME}-EmitDataOut::-webkit-scrollbar-track,
   .${MAIM_CLASS_NAME}-EmitErrorOut::-webkit-scrollbar-track {
@@ -172,6 +172,7 @@ export const styles = css`
     opacity: 0.04;
     position: absolute;
     text-align: center;
+    top: 0.64em;
     user-select: none;
     width: 100%;
     z-index: 0;

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { selectEmittedData, selectEvent, selectPipe, selectStreamGroup } from '../tools';
+import { selectDataBarrel, selectEvent, selectPipe, selectStreamGroup } from '../tools';
 import { EventTargetType, PanelState } from '../types';
 import { Console } from './Console';
 import { Schema } from './Schema';
@@ -13,8 +13,8 @@ const initialState: PanelState = {
   maxErrorLevel: 0,
   selectedPipe: null,
   selectedStreamGroup: null,
-  selectedEmittedData: null,
-  selectedDebugRecord: null,
+  selectedDataBarrel: null,
+  selectedTimeTravelPointIndex: null,
 };
 
 export type AppProps = {
@@ -25,11 +25,14 @@ export type AppProps = {
 export function Panel(props: AppProps) {
   const { subscribe } = props;
 
-  const [panelState, setPanelState] = useState<PanelState>(initialState);
-
-  const currentPanelState = panelState.selectedDebugRecord == null
-    ? panelState
-    : panelState.debugRecords[panelState.selectedDebugRecord].timeTravelPanelState;
+  const [panelState, _setPanelState] = useState<PanelState>(initialState);
+  const setPanelState: typeof _setPanelState = (setPanelArg) => {
+    _setPanelState((state) => {
+      const nextState = typeof setPanelArg === 'function' ? setPanelArg(state) : setPanelArg;
+      console.log(state, nextState);
+      return nextState;
+    });
+  };
 
   subscribe(setPanelState);
 
@@ -41,38 +44,41 @@ export function Panel(props: AppProps) {
     setPanelState((state) => selectStreamGroup(uniqKey, state));
   }, []);
 
-  const handleEmittedDataSelection = useCallback((uniqKey: [symbol, symbol]) => {
-    setPanelState((state) => selectEmittedData(uniqKey, state));
+  const handleDataBarrelSelection = useCallback((uniqKey: [symbol, symbol]) => {
+    setPanelState((state) => selectDataBarrel(uniqKey, state));
   }, []);
 
   const handleEventSelect = useCallback((eventTargetType: EventTargetType, eventTargetKey: [symbol, symbol]) => {
     setPanelState((state) => selectEvent(eventTargetType, eventTargetKey, state));
   }, []);
 
-  const selectDebugRecord = useCallback((index: number, selectedDebugRecord: null | number, state: PanelState) => {
+  const selectDebugRecord = useCallback((index: number, selectedTimeTravelPointIndex: null | number, state: PanelState) => {
     const debugRecord = state.debugRecords[index];
-    return selectEvent(debugRecord.debugEvent.eventTargetType, debugRecord.debugEvent.eventTargetKey, { ...state, selectedDebugRecord }, true);
+    return selectEvent(debugRecord.debugEvent.eventTargetType, debugRecord.debugEvent.eventTargetKey, { ...state, selectedTimeTravelPointIndex }, true);
   }, []);
 
   const handleDebugRecordSelect = useCallback((index: number) => {
     setPanelState((state) => {
-      const selectedDebugRecord = state.selectedDebugRecord === index ? null : index;
+      const selectedDebugRecord = state.selectedTimeTravelPointIndex === index ? null : index;
       return selectDebugRecord(index, selectedDebugRecord, state);
     });
   }, [selectDebugRecord]);
 
   const handleDebugRecordNavigation = useCallback((event: Event) => {
-    setPanelState((state) => {
-      const selectedDebugRecord = (event as unknown as React.KeyboardEvent).key === ','
-        ? Math.max(0, (state.selectedDebugRecord ?? 1) - 1)
-        : (event as unknown as React.KeyboardEvent).key === '.'
-          ? Math.min(state.debugRecords.length, (state.selectedDebugRecord ?? -1) + 1)
-          : null;
+    const key = (event as unknown as React.KeyboardEvent).key;
+    if (key === ',' || key === '.') {
+      setPanelState((state) => {
+        const selectedDebugRecord = key === ','
+          ? Math.max(0, (state.selectedTimeTravelPointIndex ?? 1) - 1)
+          : key === '.'
+            ? Math.min(state.debugRecords.length, (state.selectedTimeTravelPointIndex ?? -1) + 1)
+            : null;
 
-      return selectedDebugRecord == null
-        ? state
-        : selectDebugRecord(selectedDebugRecord, selectedDebugRecord, state);
-    });
+        return selectedDebugRecord == null
+          ? state
+          : selectDebugRecord(selectedDebugRecord, selectedDebugRecord, state);
+      });
+    }
   }, [selectDebugRecord]);
 
   useEffect(() => {
@@ -80,24 +86,29 @@ export function Panel(props: AppProps) {
     return () => window.removeEventListener('keyup', handleDebugRecordNavigation);
   }, [handleDebugRecordNavigation]);
 
+  const currentPanelState = panelState.selectedTimeTravelPointIndex == null
+    ? panelState
+    : panelState.debugRecords[panelState.selectedTimeTravelPointIndex].timeTravelPanelState;
+
   return (
     <div className="ReactPipeDebugPanel">
       <div className="ReactPipeDebugPanel-Inner">
         <Console
           records={panelState.debugRecords}
-          selectedRecord={panelState.selectedDebugRecord}
+          selectedRecord={panelState.selectedTimeTravelPointIndex}
           onEventSelect={handleEventSelect}
           onDebugRecordSelect={handleDebugRecordSelect} />
         <Schema
           pipeFrames={currentPanelState.pipeFrames}
+          maxPipeLineIndex={currentPanelState.maxPipeLineIndex}
           maxDataLevel={currentPanelState.maxDataLevel}
           maxErrorLevel={currentPanelState.maxErrorLevel}
           selectedPipe={panelState.selectedPipe}
           selectedStreamGroup={panelState.selectedStreamGroup}
-          selectedEmittedData={panelState.selectedEmittedData}
+          selectedDataBarrel={panelState.selectedDataBarrel}
           onPipeSelection={handlePipeSelection}
           onStreamGroupSelection={handleStreamGroupSelection}
-          onEmittedDataSelection={handleEmittedDataSelection} />
+          onDataBarrelSelection={handleDataBarrelSelection} />
       </div>
       <div className="ReactPipeDebugPanel-FakeSpace" />
     </div>

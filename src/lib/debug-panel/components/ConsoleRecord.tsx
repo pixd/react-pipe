@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useState } from 'react';
 
 import { DebugRecord, EventTargetType } from '../types';
 
@@ -25,7 +26,7 @@ export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRec
 
   const handleToggle = () => setOpen((open) => ! open);
 
-  const handleEventSelect = () => (console.log(record.debugEvent), onEventSelect(record.debugEvent.eventTargetType, record.debugEvent.eventTargetKey));
+  const handleEventSelect = () => onEventSelect(record.debugEvent.eventTargetType, record.debugEvent.eventTargetKey);
 
   const handlePipeSelect = () => onEventSelect('pipe', [record.debugEvent.data.pipeState.dataPipe.uniqKey, record.debugEvent.data.pipeState.dataPipe.uniqKey]);
 

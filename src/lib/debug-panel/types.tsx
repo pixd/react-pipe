@@ -1,4 +1,8 @@
-import { Debugger, PipeState, StreamGroup } from '../types';
+import { DataBarrel } from '../types';
+import { Debugger } from '../types';
+import { PipeState } from '../types';
+import { PipeType } from '../types';
+import { StreamGroup } from '../types';
 
 export type PanelState = {
   debugRecords: DebugRecord[];
@@ -8,12 +12,21 @@ export type PanelState = {
   maxErrorLevel: number;
   selectedPipe: null | [symbol, symbol];
   selectedStreamGroup: null | [symbol, symbol];
-  selectedEmittedData: null | [symbol, symbol];
-  selectedDebugRecord: null | number;
+  selectedDataBarrel: null | [symbol, symbol];
+  selectedTimeTravelPointIndex: null | number;
+};
+
+export type TimeTravelPanelState = {
+  pipeFrames: PipeFrame[];
+  maxPipeLineIndex: number;
+  maxDataLevel: number;
+  maxErrorLevel: number;
 };
 
 export type PipeFrame = {
   pipeState: PipeState;
+  streamGroupFrames: StreamGroupFrame[];
+  dataBarrelFrames: DataBarrelFrame[];
   streamConnections: StreamConnection[];
   streamEntries: StreamEntry[];
   maxDataLevel: number;
@@ -22,17 +35,15 @@ export type PipeFrame = {
   maxErrorConnectionLevel: number;
   maxDataEntryLevel: number;
   maxErrorEntryLevel: number;
-  streamGroupFrames: StreamGroupFrame[];
-  emittedDataFrames: EmittedDataFrame[];
 };
 
 export type StreamGroupFrame = {
-  data: StreamGroup;
+  streamGroup: StreamGroup;
   deleted: boolean;
 };
 
 export type StreamConnection = {
-  type: StreamLineType;
+  type: PipeType;
   directionType: StreamConnectionDirectionType;
   lineGlobalIndex: number;
   level: number;
@@ -41,24 +52,19 @@ export type StreamConnection = {
 };
 
 export type StreamEntry = {
-  type: StreamLineType;
+  type: PipeType;
   lineGlobalIndex: number;
   level: number;
   entryLevel: number;
 };
 
-export type StreamLineType = 'data' | 'error';
-
 export type StreamConnectionDirectionType = 'pass-through' | 'connection';
 
-export type EmittedDataFrame = {
+export type DataBarrelFrame = {
   papa: symbol;
-  data: any;
-  dataType: EmittedDataType;
-  released: boolean;
+  dataBarrel: DataBarrel;
+  deleted: boolean;
 };
-
-export type EmittedDataType = 'data' | 'error';
 
 export type DebugRecord = {
   time: string;
@@ -67,7 +73,7 @@ export type DebugRecord = {
   pilot?: null | string;
   pilotSelected?: null | boolean;
   debugEvent: DebugEvent;
-  timeTravelPanelState: PanelState;
+  timeTravelPanelState: TimeTravelPanelState;
   syncIdleTime?: string;
 };
 
@@ -80,4 +86,4 @@ export type DebugEvent = {
   };
 }[keyof Debugger];
 
-export type EventTargetType = 'pipe' | 'streamGroup' | 'stream';
+export type EventTargetType = 'pipe' | 'streamGroup' | 'dataBarrel';

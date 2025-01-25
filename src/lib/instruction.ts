@@ -25,4 +25,6 @@ export function createStreamInstruction<
   };
 }
 
-export const latest: LatestInstruction = createStreamInstruction(LATEST_STREAM_INSTRUCTION_TYPE, () => null);
+export const latest: LatestInstruction = createStreamInstruction(LATEST_STREAM_INSTRUCTION_TYPE, () => {
+  return null;
+});

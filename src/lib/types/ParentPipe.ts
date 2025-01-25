@@ -1,4 +1,5 @@
 import { BasePipe } from './Pipe';
+import { Stream } from './Stream';
 
 export type ParentPipes<
   TAdjuncts extends any = any,
@@ -9,3 +10,19 @@ export type ParentPipes<
   : TAdjuncts extends (infer TAdjunct)[]
     ? Extract<TAdjunct, BasePipe>[]
     : [];
+
+export type OnParentPipeStreamEmit<
+  TValue extends any = any,
+> = {
+  (
+    stream: Stream<TValue>,
+  ): void;
+};
+
+export type OnParentPipeStreamTerminate<
+  TValue extends any = any,
+> = {
+  (
+    stream: Stream<TValue>,
+  ): void;
+};

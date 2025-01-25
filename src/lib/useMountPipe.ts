@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { FINAL } from './FINAL';
+import { FINAL } from './types/Final';
 import { Adjunct, BasePipe } from './types';
 import { useBasePipe, Emit, Reset } from './useBasePipe';
 

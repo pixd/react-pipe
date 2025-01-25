@@ -11,15 +11,15 @@ export type PipeProps = {
   pipeFrame: PipeFrame;
   selected: boolean;
   selectedStreamGroupFrame: null | symbol;
-  selectedEmittedDataFrame: null | symbol;
+  selectedDataBarrelFrame: null | symbol;
   onPipeSelection: (uniqKey: symbol) => void;
   onStreamGroupFrameSelection: (uniqKey: [symbol, symbol]) => void;
-  onEmittedDataFrameSelection: (uniqKey: [symbol, symbol]) => void;
+  onDataBarrelFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
 export const Pipe = React.memo(function Pipe(props: PipeProps) {
-  const { pipeFrame, selected, selectedStreamGroupFrame, selectedEmittedDataFrame, onPipeSelection,
-    onStreamGroupFrameSelection, onEmittedDataFrameSelection } = props;
+  const { pipeFrame, selected, selectedStreamGroupFrame, selectedDataBarrelFrame, onPipeSelection,
+    onStreamGroupFrameSelection, onDataBarrelFrameSelection } = props;
 
   const handlePipeClick = () => {
     onPipeSelection(pipeFrame.pipeState.dataPipe.uniqKey);
@@ -56,9 +56,9 @@ export const Pipe = React.memo(function Pipe(props: PipeProps) {
           onStreamGroupFrameSelection={onStreamGroupFrameSelection} />
         <PipeOut
           pipeUniqKey={pipeFrame.pipeState.dataPipe.uniqKey}
-          emittedDataFrames={pipeFrame.emittedDataFrames}
-          selectedEmittedDataFrame={selectedEmittedDataFrame}
-          onEmittedDataFrameSelection={onEmittedDataFrameSelection} />
+          dataBarrelFrames={pipeFrame.dataBarrelFrames}
+          selectedDataBarrelFrame={selectedDataBarrelFrame}
+          onDataBarrelFrameSelection={onDataBarrelFrameSelection} />
       </div>
       <div className="ReactPipeDebugPanel-PipeName"
         onClick={handlePipeClick}
