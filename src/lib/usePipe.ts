@@ -1,8 +1,9 @@
-// noinspection JSAnnotator,TypeScriptValidateTypes
-
-import { FINAL, Final } from './types/Final';
-import { Adjunct, StreamGroupValues, UniversalDataPipe } from './types';
-import { useBasePipe, Emit } from './useBasePipe';
+import type { Adjunct } from './types';
+import type { Emit } from './types';
+import type { StreamGroupValues } from './types';
+import type { UniversalDataPipe } from './types';
+import { FINAL } from './types';
+import { useBasePipe } from './useBasePipe';
 
 export function usePipe<
   TAdjuncts extends [] | [Adjunct] | [Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | [Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct, Adjunct] | Adjunct[] = Adjunct[],
@@ -12,16 +13,13 @@ export function usePipe<
   return useBasePipe(() => createFill(pipeBody), adjuncts);
 }
 
-function createFill<
-  TValue extends any = any,
-  TArgs extends any[] = any[],
->(
-  pipeBody: { (...args: TArgs): TValue | Promise<TValue>, displayName?: string },
+function createFill(
+  pipeBody: { (...args: any[]): any, displayName?: string },
 ) {
-  const fill = (streamGroupValues: TArgs, emitStream: Emit<TValue | Final<TValue>>, emitError: Emit) => {
+  const fill = (args: any[], emitStream: Emit, emitError: Emit) => {
     let result;
     try {
-      result = pipeBody(...streamGroupValues);
+      result = pipeBody(...args);
     }
     catch (error: any) {
       emitError(FINAL(error));
@@ -51,5 +49,6 @@ function createFill<
   };
 
   fill.displayName = pipeBody.displayName || pipeBody.name;
+
   return fill;
 }

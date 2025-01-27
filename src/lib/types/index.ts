@@ -4,7 +4,7 @@ export * from './Dev';
 export * from './DownstreamConnection';
 export * from './Instruction';
 export * from './DataBarrel';
-export * from './Final';
+export * from './Fill';
 export * from './ParentPipe';
 export * from './Pipe';
 export * from './PipeState';

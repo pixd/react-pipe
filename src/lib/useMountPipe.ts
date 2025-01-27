@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-import { FINAL } from './types/Final';
-import { Adjunct, BasePipe } from './types';
-import { useBasePipe, Emit, Reset } from './useBasePipe';
+import type { Adjunct } from './types';
+import type { BasePipe } from './types';
+import type { Emit } from './types';
+import type { TerminateAll } from './types';
+import { FINAL } from './types';
+import { useBasePipe } from './useBasePipe';
 
 export type MountPipe = BasePipe<null>;
 
@@ -11,28 +14,27 @@ export function useMountPipe<
 >(
   adjuncts?: TAdjunct[],
 ): MountPipe {
-  const emitBankRef = useRef<{ emits: Emit[] }>({ emits: [] });
-  const resetRef = useRef<{ reset: null | Reset }>({ reset: null });
-
-  const pipe = useBasePipe((reset: Reset) => {
-    resetRef.current.reset = reset;
-    return createFill(emitBankRef.current.emits);
-  }, adjuncts ?? []);
+  const refs = useRef<{ emits: Emit[], terminateAll: null | TerminateAll }>({ emits: [], terminateAll: null });
 
   useEffect(() => {
-    emitBankRef.current.emits.forEach((emit) => emit(FINAL(null)));
-    const reset = resetRef.current.reset;
-    return () => reset?.();
-  }, [pipe]);
+    refs.current.emits.forEach((emit) => emit(FINAL(null)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => refs.current.terminateAll?.();
+  }, []);
 
-  return pipe;
+  return useBasePipe((terminateAll: TerminateAll) => {
+    refs.current.terminateAll = terminateAll;
+    return createFill(refs.current.emits);
+  }, adjuncts ?? []);
 }
 
 function createFill(emits: Emit[]) {
-  const fill = (streamGroupValues: any, emitStream: Emit) => {
-    emits.push(emitStream);
+  const fill = (args: any[], emit: Emit) => {
+    emits.push(emit);
     return null;
   };
+
   fill.displayName = 'Mount pipe';
+
   return fill;
 }

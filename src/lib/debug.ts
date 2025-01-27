@@ -67,6 +67,14 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
       ['%c data barrel', neutralColor, data.dataBarrel],
       ['%c stream group', neutralColor, data.streamGroup],
     ),
+    onDataBarrelEvent: (message, data) => log(
+      displayName,
+      message,
+      data.pipeState,
+      ['%c papa', neutralColor, data.papa],
+      ['%c data barrel', neutralColor, data.dataBarrel],
+      ['%c stream group', neutralColor, data.streamGroup],
+    ),
     onStreamEvent: (message, data) => log(
       displayName,
       message,

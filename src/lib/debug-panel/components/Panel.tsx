@@ -29,7 +29,7 @@ export function Panel(props: AppProps) {
   const setPanelState: typeof _setPanelState = (setPanelArg) => {
     _setPanelState((state) => {
       const nextState = typeof setPanelArg === 'function' ? setPanelArg(state) : setPanelArg;
-      console.log(state, nextState);
+      // console.log(state, nextState);
       return nextState;
     });
   };
@@ -65,6 +65,7 @@ export function Panel(props: AppProps) {
   }, [selectDebugRecord]);
 
   const handleDebugRecordNavigation = useCallback((event: Event) => {
+    // It seems like there is a bug here...
     const key = (event as unknown as React.KeyboardEvent).key;
     if (key === ',' || key === '.') {
       setPanelState((state) => {

@@ -1,6 +1,6 @@
-import { Connect } from './Connect';
+import type { Connect } from './Connect';
+import type { CreateDebugger } from './Dev';
 import { EDataType } from './DataBarrel';
-import { CreateDebugger } from './Dev';
 
 export const PIPE_ENTITY_TYPE = Symbol('PIPE_ENTITY_TYPE');
 
@@ -9,11 +9,13 @@ export type BasePipe<
 > = {
   entityType: typeof PIPE_ENTITY_TYPE;
   type: EDataType;
+
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
   uniqKey: symbol;
+
   connect: Connect<TValue>;
-  throw: (error: any) => void;
-  reset: () => void;
-  terminate: () => void;
 
   /**
    * Available if process.env.NODE_ENV === 'development'
@@ -41,11 +43,22 @@ export type UniversalDataPipe<
 export type BasePipeWithCreateDebugger<
   TValue extends any = any,
 > = BasePipe<TValue> & {
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
   createDebugger: CreateDebugger;
 };
 
 export type BasePipeWithDisplayName<
   TValue extends any = any,
 > = BasePipe<TValue> & {
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
   displayName: string;
 };
+
+// TODO Check returned array second member. Is it normal?
+export type PipeKit<
+  TValue extends any = any,
+> = [pipe: DataPipe<TValue>, HZ: undefined | (() => void)];

@@ -7,12 +7,17 @@ export enum EStreamGroupStatus {
   open = 'open',
   closed = 'closed',
   retired = 'retired',
+  deleted = 'deleted',
 }
 
 export type StreamGroup<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
   uniqKey: symbol;
+
   papa: symbol;
   status: EStreamGroupStatus;
   members: StreamGroupMembers<TAdjuncts>;

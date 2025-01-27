@@ -4,7 +4,7 @@ import { css } from '../styles-tools';
 const MUTED_STATUS_COLOR = '#4b515f';
 const ACTIVE_STATUS_COLOR = '#3d94ba';
 const SUCCESS_STATUS_COLOR = '#3dba67';
-const WARNING_STATUS_COLOR = '#ba7f3d';
+const WARNING_STATUS_COLOR = '#c25d25';
 const ERROR_STATUS_COLOR = '#cd5656';
 
 export const styles = css`
@@ -44,8 +44,9 @@ export const styles = css`
     width: 0.96em;
   }
 
-  .${MAIM_CLASS_NAME}-LockSolidIcon svg {
-    width: 0.8em;
+  .${MAIM_CLASS_NAME}-GhostSolidIcon svg {
+    fill: #8c96a9;
+    width: 0.75em;
   }
 
   .${MAIM_CLASS_NAME}-TrashSolidIcon svg {

@@ -1,10 +1,9 @@
 import React from 'react';
 
-import { MOUNT_STREAM_HEAD } from '../../mountStreamHead';
 import { EStreamGroupStatus } from '../../types';
+import { GhostSolidIcon } from '../icons/GhostSolidIcon';
 import { HeartSolidIcon } from '../icons/HeartSolidIcon';
 import { HomeAltSolidIcon } from '../icons/HomeAltSolidIcon';
-import { LockSolidIcon } from '../icons/LockSolidIcon';
 import { TintSolidIcon } from '../icons/TintSolidIcon';
 import type { StreamGroupFrame } from '../types';
 
@@ -23,34 +22,30 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
     selected ? 'ReactPipeDebugPanel-StreamGroup-Selected' : null,
   ].filter(Boolean).join(' ');
 
-  const statusClassName = [
+  const openClosedStatusClassName = [
     'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HeartSolidIcon',
     streamGroupFrame.streamGroup.status === EStreamGroupStatus.closed ? 'ReactPipeDebugPanel-IconStatus-Active ReactPipeDebugPanel-IconStatus-Pulse' : 'ReactPipeDebugPanel-IconStatus-Muted',
-  ].join(' ');
+  ].filter(Boolean).join(' ');
 
-  const finishedStatusClassName = [
-    'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-IconStatus-Warning ReactPipeDebugPanel-LockSolidIcon',
+  const retiredStatusClassName = [
+    'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-GhostSolidIcon',
     streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
   ].filter(Boolean).join(' ');
 
   const handleStreamGroupClick = () => {
     onStreamGroupFrameSelection([pipeUniqKey, streamGroupFrame.streamGroup.uniqKey]);
-
-    console.log({
-      uniqKey: streamGroupFrame.streamGroup.uniqKey,
-      papa: streamGroupFrame.streamGroup.papa,
-      members: streamGroupFrame.streamGroup.members,
-      status: streamGroupFrame.streamGroup.status,
-      deleted: streamGroupFrame.deleted,
-    });
+    console.log(streamGroupFrame);
   };
+
+  const isPapa = streamGroupFrame.streamGroup.members.length === 0
+    && streamGroupFrame.streamGroup.papa.toString() === 'Symbol(papa-mount)';
 
   return (
     <div className={className}
       onClick={handleStreamGroupClick}
     >
       <div className="ReactPipeDebugPanel-StreamGroupMembers">
-        {streamGroupFrame.streamGroup.papa === MOUNT_STREAM_HEAD
+        {isPapa
           ? (
             <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-IconStatus-Success">
               <HomeAltSolidIcon />
@@ -61,7 +56,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
               'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-TintSolidIcon',
               streamGroupFrame.streamGroup.status === EStreamGroupStatus.retired && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
               member ? 'ReactPipeDebugPanel-IconStatus-Success' : 'ReactPipeDebugPanel-IconStatus-Muted',
-            ].join(' ');
+            ].filter(Boolean).join(' ');
 
             return (
               <div key={index} className={className}>
@@ -70,17 +65,23 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
             );
           })}
 
-        {streamGroupFrame.streamGroup.status === EStreamGroupStatus.retired
+        {streamGroupFrame.streamGroup.status === EStreamGroupStatus.open
           ? (
-            <div className={finishedStatusClassName}>
-              <LockSolidIcon key={finishedStatusClassName} />
+            <div className={openClosedStatusClassName}>
+              <HeartSolidIcon key={openClosedStatusClassName} />
             </div>
           )
-          : (
-            <div className={statusClassName}>
-              <HeartSolidIcon key={statusClassName} />
-            </div>
-          )}
+          : streamGroupFrame.streamGroup.status === EStreamGroupStatus.closed
+            ? (
+              <div className={openClosedStatusClassName}>
+                <HeartSolidIcon key={openClosedStatusClassName} />
+              </div>
+            )
+            : (
+              <div className={retiredStatusClassName}>
+                <GhostSolidIcon key={retiredStatusClassName} />
+              </div>
+            )}
       </div>
       <div className="ReactPipeDebugPanel-StreamGroupName">
         {streamGroupFrame.streamGroup.papa.toString().replace(/Symbol\(papa-([a-z0-9]+)\)/, (...args) => args[1])}

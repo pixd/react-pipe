@@ -64,7 +64,7 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
             'ReactPipeDebugPanel-Connection',
             ConnectionTypeClassName,
             TConnectionClassName,
-          ].join(' ');
+          ].filter(Boolean).join(' ');
 
           const style = {
             [horizontalProp]: `-${round((connection.level - 1) * LINE_SPACE + OUT_GAP + LINE_WIDTH + HEEL_SHIFT)}em`,
@@ -78,7 +78,7 @@ export const Connections = React.memo(function Connections(props: ConnectionsPro
           const className = [
             'ReactPipeDebugPanel-PathThrough',
             ConnectionTypeClassName,
-          ].join(' ');
+          ].filter(Boolean).join(' ');
 
           const style = {
             height: `calc(100% + ${round((maxEntryLevel - 1) * LINE_SPACE + IN_GAP + IN_END_GAP)}em)`,

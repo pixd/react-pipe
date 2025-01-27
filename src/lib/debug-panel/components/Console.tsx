@@ -52,7 +52,7 @@ export const Console = React.memo(function Console(props: ConsoleProps) {
           const className = [
             'ReactPipeDebugPanel-ScrollMarker',
             marker.type === 'time' ? 'ReactPipeDebugPanel-ScrollMarker--Time' : 'ReactPipeDebugPanel-ScrollMarker--Log',
-          ].join(' ');
+          ].filter(Boolean).join(' ');
 
           return (
             <div key={index} className={className} style={style} />

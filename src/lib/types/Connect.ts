@@ -7,9 +7,5 @@ export type Connect<
   (
     onStreamEmit: OnParentPipeStreamEmit<TValue>,
     onStreamTerminate: OnParentPipeStreamTerminate,
-  ): ConnectionResult;
+  ): number;
 }
-
-export type ConnectionResult = {
-  connectionIndex: number;
-};

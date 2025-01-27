@@ -8,7 +8,11 @@ export type PipeState<
   TError extends any = any,
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
   displayName?: string;
+
   parentPipes: ParentPipes<TAdjuncts>;
   streamGroups: StreamGroups<TAdjuncts>;
   dataPipe: CommonPipeState<TValue>;

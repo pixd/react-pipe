@@ -28,12 +28,7 @@ export const DataBarrel = React.memo(function DataBarrel(props: DataBarrelProps)
 
   const handleDataBarrelClick = () => {
     onDataBarrelFrameSelection([pipeUniqKey, dataBarrelFrame.dataBarrel.uniqKey]);
-
-    console.log({
-      papa: dataBarrelFrame.papa,
-      data: dataBarrelFrame.dataBarrel.data,
-      released: dataBarrelFrame.deleted,
-    });
+    console.log(dataBarrelFrame);
   };
 
   return (

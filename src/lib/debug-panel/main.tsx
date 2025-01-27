@@ -109,6 +109,16 @@ export function initDebugPanel() {
           });
         });
       },
+      onDataBarrelEvent: (message, data) => {
+        updatePanel((state) => {
+          return onLog(updatePipeState(state, data), {
+            eventTargetType: 'dataBarrel',
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.dataBarrel.uniqKey],
+            message,
+            data,
+          });
+        });
+      },
       onStreamEvent: (message, data) => {
         updatePanel((state) => {
           return onLog(updatePipeState(state, data), {
@@ -148,7 +158,7 @@ function getDefaultPipeFrame(): Omit<PipeFrame, 'displayName' | 'pipeState'> {
 }
 
 function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
-  console.log(debugEvent.message, debugEvent.data);
+  console.log(debugEvent.message, { ...debugEvent.data, panelState });
 
   const rawTime = Date.now();
   const time = prepareTime(rawTime);
