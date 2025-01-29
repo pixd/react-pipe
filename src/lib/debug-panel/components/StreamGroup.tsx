@@ -32,6 +32,11 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
     streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
   ].filter(Boolean).join(' ');
 
+  const papaClassName = [
+    'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-IconStatus-Success',
+    streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+  ].filter(Boolean).join(' ');
+
   const handleStreamGroupClick = () => {
     onStreamGroupFrameSelection([pipeUniqKey, streamGroupFrame.streamGroup.uniqKey]);
     console.log(streamGroupFrame);
@@ -47,7 +52,7 @@ export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupPro
       <div className="ReactPipeDebugPanel-StreamGroupMembers">
         {isPapa
           ? (
-            <div className="ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-HomeAltSolidIcon ReactPipeDebugPanel-IconStatus-Success">
+            <div className={papaClassName}>
               <HomeAltSolidIcon />
             </div>
           )
