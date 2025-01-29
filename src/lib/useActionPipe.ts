@@ -38,6 +38,7 @@ function createFill(
       const action = actionSelector(store.getState());
 
       if (actionTypes.includes(action.type)) {
+        // TODO Why?
         Promise.resolve().then(() => {
           active && emitStream(action)
         });

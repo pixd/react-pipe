@@ -34,30 +34,34 @@ import { PIPE_ENTITY_TYPE } from './types';
 import { EDataBarrelStatus } from "./types";
 
 export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): PipeKit {
+  // TODO Here we need to add a pipe state status (`active` and `deleted`) and check in `checkPipeState` if it has an stream groups
+
   const pipeState: PipeState = {
     parentPipes: adjuncts.filter(getIsPipe),
     streamGroupRegistry: {},
     dataPipe: {
+      // TODO Should create only in `DEVELOPMENT`
       uniqKey: Symbol(getId('data-pipe')),
       downstreamConnections: [],
     },
     errorPipe: {
+      // TODO Should create only in `DEVELOPMENT`
       uniqKey: Symbol(getId('error-pipe')),
       downstreamConnections: [],
     },
   };
 
-  // TODO We need to create a `checkPipeState` function which will replace `checkStreamGroup`
+  // TODO `UserLogicError` and `LibLogicError` should not just log an error in console, but also throw an error, possibly using an `emitError`
 
   const handleEmitData = (streamGroup: StreamGroup, dataBarrel: DataBarrel): void => {
     if (process.env.NODE_ENV === 'development') {
       if (getIsStreamGroupOpen(streamGroup)) {
         console.error(new LibLogicError('`handleEmitData` should not be called on an open stream group', pipeState));
       }
-      checkStreamGroup(streamGroup, pipeState);
+      checkPipeState(pipeState);
     }
 
-    if (getIsStreamGroupRetired(streamGroup)) {
+    if (getIsStreamGroupRetired(streamGroup) || getIsStreamGroupDeleted(streamGroup)) {
       console.error(new UserLogicError('It looks like you\'re calling `emitData` after the `Final` value has already been emitted'));
     }
 
@@ -81,14 +85,12 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
       }
     }
 
-    const pipe = dataBarrel.dataType === EDataType.error ? pipeState.errorPipe : pipeState.dataPipe;
+    const workingPipe = dataBarrel.dataType === EDataType.error ? pipeState.errorPipe : pipeState.dataPipe;
 
-    if (pipe.downstreamConnections.length) {
-      pipe.downstreamConnections.forEach((downstreamConnection) => {
+    if (workingPipe.downstreamConnections.length) {
+      workingPipe.downstreamConnections.forEach((downstreamConnection) => {
         const stream = createStream(dataBarrel, () => {
-          releaseStream(stream, dataBarrel, streamGroup);
-          tryDeleteDataBarrel(streamGroup, dataBarrel)
-            && tryReleaseStreamGroup(streamGroup);
+          tryReleaseStream(streamGroup, dataBarrel, stream);
         });
 
         streamGroup.dataBarrelRegistry[dataBarrel.papa].emittedStreams.push(stream);
@@ -96,8 +98,7 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
       });
     }
     else {
-      tryDeleteDataBarrel(streamGroup, dataBarrel)
-        && tryReleaseStreamGroup(streamGroup);
+      tryReleaseDataBarrel(streamGroup, dataBarrel);
     }
   };
 
@@ -106,6 +107,7 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
       if (pipeState.streamGroupRegistry[stream.papa]?.members[parentPipeIndex]) {
         console.error(new UserLogicError('Somehow upstream pipe has emitted a stream with previously used papa'));
       }
+      checkPipeState(pipeState);
     }
 
     const streamGroup = pipeState.streamGroupRegistry[stream.papa] ?? createStreamGroup(stream.papa, pipeState.parentPipes.length);
@@ -139,10 +141,13 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
   };
 
   const handleParentPipeStreamTerminate = (parentPipeIndex: number, stream: Stream): void => {
+    if (process.env.NODE_ENV === 'development') {
+      checkPipeState(pipeState);
+    }
+
     const streamGroup = pipeState.streamGroupRegistry[stream.papa];
 
     if (process.env.NODE_ENV === 'development') {
-      checkStreamGroup(streamGroup, pipeState);
       const { deepCopy } = require('./deepCopy');
       debug?.onStreamGroupEvent('Pipe is terminating a stream group as a result of parent pipe stream termination request', deepCopy({ parentPipeIndex, streamGroup, pipeState }));
     }
@@ -159,6 +164,7 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
     if (process.env.NODE_ENV === 'development') {
       const { deepCopy } = require('./deepCopy');
       debug?.onPipeEvent('Pipe is terminating all stream groups', deepCopy({ pipeState }));
+      checkPipeState(pipeState);
     }
 
     Object.getOwnPropertySymbols(pipeState.streamGroupRegistry).forEach((streamGroupRegistryKey) => {
@@ -171,13 +177,23 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
     }
   };
 
-  const tryDeleteDataBarrel = (streamGroup: StreamGroup, dataBarrel: DataBarrel): boolean => {
-    if (getIsStreamGroupClosed(streamGroup) || getIsStreamGroupRetired(streamGroup)) {
-      if (streamGroup.dataBarrelRegistry[dataBarrel.papa].emittedStreams.every((stream) => stream.released)) {
-        deleteDataBarrel(streamGroup, dataBarrel);
-        return true;
+  const tryReleaseStream = (streamGroup: StreamGroup, dataBarrel: DataBarrel, stream: Stream) => {
+    releaseStream(streamGroup, dataBarrel, stream);
+    return tryReleaseDataBarrel(streamGroup, dataBarrel);
+  };
+
+  const tryReleaseDataBarrel = (streamGroup: StreamGroup, dataBarrel: DataBarrel): boolean => {
+    if (dataBarrel.emittedStreams.every((stream) => stream.released)) {
+      releaseDataBarrel(streamGroup, dataBarrel);
+      return tryReleaseStreamGroup(streamGroup);
+    }
+    else {
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onDataBarrelEvent('Data barrel has some unreleased streams and can not be released yet', deepCopy({ dataBarrel, streamGroup, pipeState }));
       }
     }
+
     return false;
   };
 
@@ -187,16 +203,27 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
         releaseStreamGroup(streamGroup);
         return true;
       }
+      else {
+        if (process.env.NODE_ENV === 'development') {
+          const { deepCopy } = require('./deepCopy');
+          debug?.onStreamGroupEvent('Stream group has some unreleased streams and can not be released yet', deepCopy({ streamGroup, pipeState }));
+        }
+      }
+    }
+    else {
       if (process.env.NODE_ENV === 'development') {
         const { deepCopy } = require('./deepCopy');
-        debug?.onStreamGroupEvent('Stream group has some unreleased streams', deepCopy({ streamGroup, pipeState }));
+        debug?.onStreamGroupEvent('Stream group is not retired and can not be released yet', deepCopy({ streamGroup, pipeState }));
       }
     }
     return false;
   };
 
-  const releaseStream = (stream: Stream, dataBarrel: DataBarrel, streamGroup: StreamGroup): void => {
+  const releaseStream = (streamGroup: StreamGroup, dataBarrel: DataBarrel, stream: Stream): void => {
     if (process.env.NODE_ENV === 'development') {
+      if ( ! pipeState.streamGroupRegistry[streamGroup.papa].dataBarrelRegistry[dataBarrel.papa].emittedStreams.includes(stream)) {
+        console.error(new LibLogicError('`releaseDataBarrel` should not be called on a data barrel that is not in the pipe state', pipeState));
+      }
       if (stream.released) {
         console.error(new LibLogicError('`releaseStream` should not be called on a stream that is already released', pipeState));
       }
@@ -210,22 +237,16 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
     }
   };
 
-  const deleteDataBarrel = (streamGroup: StreamGroup, dataBarrel: DataBarrel): void => {
+  const releaseDataBarrel = (streamGroup: StreamGroup, dataBarrel: DataBarrel): void => {
     if (process.env.NODE_ENV === 'development') {
-      if (getIsStreamGroupOpen(streamGroup)) {
-        console.error(new LibLogicError('`deleteDataBarrel` should not be called on an open stream group', pipeState));
-      }
-      if (getIsStreamGroupDeleted(streamGroup)) {
-        console.error(new LibLogicError('`deleteDataBarrel` should not be called on a deleted stream group', pipeState));
-      }
-      if ( ! streamGroup.dataBarrelRegistry[dataBarrel.papa]) {
-        console.error(new LibLogicError('`deleteDataBarrel` should not be called on a data barrel that is not in the data barrel registry', pipeState));
+      if ( ! pipeState.streamGroupRegistry[streamGroup.papa].dataBarrelRegistry[dataBarrel.papa]) {
+        console.error(new LibLogicError('`releaseDataBarrel` should not be called on a data barrel that is not in the pipe state', pipeState));
       }
       if (getIsDataBarrelDeleted(dataBarrel)) {
-        console.error(new LibLogicError('`deleteDataBarrel` should not be called on a deleted data barrel', pipeState));
+        console.error(new LibLogicError('`releaseDataBarrel` should not be called on a deleted data barrel', pipeState));
       }
-      if ( ! (dataBarrel.emittedStreams.every((stream) => stream.released))) {
-        console.error(new LibLogicError('`deleteDataBarrel` should not be called on a data barrel that have unreleased streams', pipeState));
+      if ( ! dataBarrel.emittedStreams.every((stream) => stream.released)) {
+        console.error(new LibLogicError('`releaseDataBarrel` should not be called on a data barrel that have unreleased streams', pipeState));
       }
     }
 
@@ -234,7 +255,44 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
 
     if (process.env.NODE_ENV === 'development') {
       const { deepCopy } = require('./deepCopy');
-      debug?.onDataBarrelEvent('Data barrel has been deleted', deepCopy({ dataBarrel, streamGroup, pipeState }));
+      debug?.onDataBarrelEvent('Data barrel has been released and deleted', deepCopy({ dataBarrel, streamGroup, pipeState }));
+    }
+
+    // TODO Here we need to check `pipeState`
+  };
+
+  const releaseStreamGroup = (streamGroup: StreamGroup): void => {
+    if (process.env.NODE_ENV === 'development') {
+      if ( ! pipeState.streamGroupRegistry[streamGroup.papa]) {
+        console.error(new LibLogicError('`deleteStreamGroup` should not be called on a stream group that is not in the pipe state', pipeState));
+      }
+      if (getIsStreamGroupOpen(streamGroup)) {
+        console.error(new LibLogicError('`deleteStreamGroup` should not be called on an open stream group', pipeState));
+      }
+      if (getIsStreamGroupClosed(streamGroup)) {
+        console.error(new LibLogicError('`deleteStreamGroup` should not be called on a closed stream group', pipeState));
+      }
+      if (getIsStreamGroupDeleted(streamGroup)) {
+        console.error(new LibLogicError('`deleteStreamGroup` should not be called on a deleted stream group', pipeState));
+      }
+      if (Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry).length) {
+        console.error(new LibLogicError('`deleteStreamGroup` should not be called for a stream group that has data barrel registry members', pipeState));
+      }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
+      debug?.onStreamGroupEvent('Stream group is releasing its upstream members', deepCopy({ streamGroup, pipeState }));
+    }
+
+    streamGroup.members.forEach((stream) => stream?.release());
+
+    streamGroup.status = EStreamGroupStatus.deleted;
+    delete pipeState.streamGroupRegistry[streamGroup.papa];
+
+    if (process.env.NODE_ENV === 'development') {
+      const { deepCopy } = require('./deepCopy');
+      debug?.onStreamGroupEvent('Stream group has been released and deleted', deepCopy({ streamGroup, pipeState }));
     }
 
     // TODO Here we need to check `pipeState`
@@ -286,45 +344,6 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
     }
   };
 
-  const releaseStreamGroup = (streamGroup: StreamGroup): void => {
-    if (process.env.NODE_ENV === 'development') {
-      if (getIsStreamGroupOpen(streamGroup)) {
-        console.error(new LibLogicError('`deleteStreamGroup` should not be called on an open stream group', pipeState));
-      }
-      if (getIsStreamGroupClosed(streamGroup)) {
-        console.error(new LibLogicError('`deleteStreamGroup` should not be called on a closed stream group', pipeState));
-      }
-      if (getIsStreamGroupDeleted(streamGroup)) {
-        console.error(new LibLogicError('`deleteStreamGroup` should not be called on a deleted stream group', pipeState));
-      }
-      if (Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry).length) {
-        console.error(new LibLogicError('`deleteStreamGroup` should not be called for a stream group that has data barrel registry members', pipeState));
-      }
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      const { deepCopy } = require('./deepCopy');
-      debug?.onStreamGroupEvent('Stream group releasing', deepCopy({ streamGroup, pipeState }));
-    }
-
-    streamGroup.members.forEach((stream) => stream?.release());
-
-    if (process.env.NODE_ENV === 'development') {
-      const { deepCopy } = require('./deepCopy');
-      debug?.onStreamGroupEvent('Stream group has been released', deepCopy({ streamGroup, pipeState }));
-    }
-
-    streamGroup.status = EStreamGroupStatus.deleted;
-    delete pipeState.streamGroupRegistry[streamGroup.papa];
-
-    if (process.env.NODE_ENV === 'development') {
-      const { deepCopy } = require('./deepCopy');
-      debug?.onStreamGroupEvent('Stream group has been deleted', deepCopy({ streamGroup, pipeState }));
-    }
-
-    // TODO Here we need to check `pipeState`
-  };
-
   const terminateStreamGroup = (streamGroup: StreamGroup) => {
     if (process.env.NODE_ENV === 'development') {
       const { deepCopy } = require('./deepCopy');
@@ -368,20 +387,12 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
 
   let debug: null | Debugger = null;
 
-  let inheritedDisplayName;
   if (pipeState.parentPipes.length) {
     pipeState.parentPipes.forEach((parentPipe, index) => {
-      const connectionIndex = parentPipe.connect(
+      parentPipe.connect(
         (stream) => handleParentPipeStreamEmit(index, stream),
         (stream) => handleParentPipeStreamTerminate(index, stream)
       );
-
-      if (process.env.NODE_ENV === 'development') {
-        // We use first parent pipe `displayName` value
-        if (index === 0) {
-          inheritedDisplayName = `${parentPipe.displayName} => Child #${connectionIndex + 1}`;
-        }
-      }
     });
   }
 
@@ -394,7 +405,7 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
     const debugInstruction = adjuncts.findLast(getIsDebugInstruction);
     const createDebugger = debugInstruction?.createDebugger ?? adjuncts.findLast(getIsPipeWithCreateDebugger)?.createDebugger;
 
-    const displayName = pipeState.displayName = instructionWithDisplayName?.displayName || fill.displayName || inheritedDisplayName || 'unknown';
+    const displayName = pipeState.displayName = instructionWithDisplayName?.displayName || fill.displayName || 'Unknown';
 
     debug = createDebugger?.(displayName) ?? null;
 
@@ -519,6 +530,26 @@ function getId(concat: string = ''): string {
   return concat ? `${concat}-${id}` : id;
 }
 
+function checkDataBarrel(dataBarrel: DataBarrel, pipeState: PipeState) {
+  switch (dataBarrel.status) {
+    case EDataBarrelStatus.active: {
+      if (dataBarrel.emittedStreams.every((stream) => stream.released)) {
+        console.error(new LibLogicError('Active data barrel must have at least one unreleased streams', pipeState));
+      }
+      break;
+    }
+    case EDataBarrelStatus.deleted: {
+      if ( ! dataBarrel.emittedStreams.every((stream) => stream.released)) {
+        console.error(new LibLogicError('Deleted data barrel can not have unreleased streams', pipeState));
+      }
+      break;
+    }
+    default: {
+      console.error(new LibLogicError('Data barrel has unknown status', pipeState));
+    }
+  }
+}
+
 function checkStreamGroup(streamGroup: StreamGroup, pipeState: PipeState): void {
   switch (streamGroup.status) {
     case EStreamGroupStatus.open: {
@@ -555,10 +586,22 @@ function checkStreamGroup(streamGroup: StreamGroup, pipeState: PipeState): void 
       console.error(new LibLogicError('Stream group has unknown status', pipeState));
     }
   }
+
+  Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry).forEach((dataBarrelRegistryKey) => {
+    const dataBarrel = streamGroup.dataBarrelRegistry[dataBarrelRegistryKey];
+    checkDataBarrel(dataBarrel, pipeState);
+    if (getIsDataBarrelDeleted(dataBarrel)) {
+      console.error(new LibLogicError('Deleted data barrel can not be in data barrel registry', pipeState));
+    }
+  });
 }
 
 function checkPipeState(pipeState: PipeState) {
   Object.getOwnPropertySymbols(pipeState.streamGroupRegistry).forEach((streamGroupRegistryKey) => {
-    checkStreamGroup(pipeState.streamGroupRegistry[streamGroupRegistryKey], pipeState);
+    const streamGroup = pipeState.streamGroupRegistry[streamGroupRegistryKey];
+    checkStreamGroup(streamGroup, pipeState);
+    if (getIsStreamGroupDeleted(streamGroup)) {
+      console.error(new LibLogicError('Deleted stream group can not be in stream group registry', pipeState));
+    }
   });
 }
