@@ -9,8 +9,10 @@ import { getIsStreamGroupOpen } from './check';
 import { getIsStreamGroupClosed } from './check';
 import { getIsStreamGroupRetired } from './check';
 import { getIsStreamGroupDeleted } from './check';
+import { getIsStreamInstruction } from './check';
 import { LibLogicError } from './Error';
 import { UserLogicError } from './Error';
+import { createStreamInstruction } from './instruction';
 import type { Adjunct } from './types';
 import type { BasePipe } from './types';
 import type { CommonPipeState } from './types';
@@ -19,6 +21,9 @@ import type { DataPipe } from './types';
 import type { Debugger } from './types';
 import type { DownstreamConnection } from './types';
 import type { DataBarrel } from './types';
+import type { LatestInstruction } from './types';
+import type { LeadingInstruction } from './types';
+import type { OnceInstruction } from './types';
 import type { OnParentPipeStreamEmit } from './types';
 import type { OnParentPipeStreamTerminate } from './types';
 import type { PipeKit } from './types';
@@ -28,10 +33,13 @@ import type { Stream } from './types';
 import type { StreamGroup } from './types';
 import type { StreamGroupMembers } from './types';
 import type { StreamGroupValues } from './types';
+import { EDataBarrelStatus } from "./types";
 import { EDataType } from './types';
 import { EStreamGroupStatus } from "./types";
+import { LATEST_STREAM_INSTRUCTION_TYPE } from './types';
+import { LEADING_STREAM_INSTRUCTION_TYPE } from './types';
+import { ONCE_STREAM_INSTRUCTION_TYPE } from './types';
 import { PIPE_ENTITY_TYPE } from './types';
-import { EDataBarrelStatus } from "./types";
 
 export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): PipeKit {
   // TODO Here we need to add a pipe state status (`active` and `deleted`) and check in `checkPipeState` if it has an stream groups
@@ -50,6 +58,8 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
       downstreamConnections: [],
     },
   };
+
+  const handleStream = adjuncts.findLast(getIsStreamInstruction)?.createStreamHandler();
 
   // TODO `UserLogicError` and `LibLogicError` should not just log an error in console, but also throw an error, possibly using an `emitError`
 
@@ -108,6 +118,10 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
         console.error(new UserLogicError('Somehow upstream pipe has emitted a stream with previously used papa'));
       }
       checkPipeState(pipeState);
+    }
+
+    if (handleStream && ! handleStream(debug, pipeState, stream)) {
+      return;
     }
 
     const streamGroup = pipeState.streamGroupRegistry[stream.papa] ?? createStreamGroup(stream.papa, pipeState.parentPipes.length);
@@ -555,13 +569,78 @@ function retireStreamGroup(debug: null | Debugger, pipeState: PipeState, streamG
   }
 }
 
+export const latest: LatestInstruction = createStreamInstruction(LATEST_STREAM_INSTRUCTION_TYPE, () => {
+  return (debug: null | Debugger, pipeState: PipeState) => {
+    const streamGroupRegistryKeys = Object.getOwnPropertySymbols(pipeState.streamGroupRegistry);
+    if (streamGroupRegistryKeys.length) {
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onPipeEvent('Pipe is terminating all stream groups because it was created using an `latest` instruction', deepCopy({ pipeState }));
+        checkPipeState(pipeState);
+      }
+
+      Object.getOwnPropertySymbols(pipeState.streamGroupRegistry).forEach((streamGroupRegistryKey) => {
+        const streamGroup = pipeState.streamGroupRegistry[streamGroupRegistryKey];
+        tryTerminateStreamGroup(debug, pipeState, streamGroup);
+      });
+
+      return true;
+    }
+    else {
+      return true;
+    }
+  };
+});
+
+export const leading: LeadingInstruction = createStreamInstruction(LEADING_STREAM_INSTRUCTION_TYPE, () => {
+  return (debug: null | Debugger, pipeState: PipeState, stream: Stream) => {
+    if (Object.getOwnPropertySymbols(pipeState.streamGroupRegistry).length) {
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onPipeEvent('Stream is terminating because pipe was created using an `leading` instruction', deepCopy({ pipeState }));
+        checkPipeState(pipeState);
+      }
+
+      stream.release();
+
+      return false;
+    }
+    else {
+      return true;
+    }
+  };
+});
+
+export const once: OnceInstruction = createStreamInstruction(ONCE_STREAM_INSTRUCTION_TYPE, () => {
+  let started = false;
+  return (debug: null | Debugger, pipeState: PipeState, stream: Stream) => {
+    if ( ! started) {
+      started = true;
+      return true;
+    }
+    else {
+      if (process.env.NODE_ENV === 'development') {
+        const { deepCopy } = require('./deepCopy');
+        debug?.onPipeEvent('Stream is terminating because pipe was created using an `once` instruction', deepCopy({ pipeState }));
+        checkPipeState(pipeState);
+      }
+
+      stream.release();
+
+      return false;
+    }
+  };
+});
+
 // We use functions that have `try` at the beginning of their name to try to close (release or
 // terminate) entities such as streams, data barrels or stream groups. These functions may or may
-// not check at the beginning whether the entity is ready to close. If not, the function closes the
-// entity and either passes control to another function, or returns `true` after checking the pipe
-// state. If the function checks the possibility of closing an entity and such a possibility exists,
-// then it closes the entity and also either passes control to another function, or returns `true`
-// after checking the pipe state. Otherwise, it returns `false` after checking the pipe state.
+// not check at the beginning whether the entity is ready to close. If the function does not check
+// this possibility, then it closes the entity and either passes control to another function, or
+// returns `true` after checking the pipe state. When the function checks the possibility of closing
+// an entity there can be two variants. The first one, when a possibility exists, the function
+// closes the entity and also either passes control to another function, or returns `true` after
+// checking the pipe state. And in the second one, the function returns `false` after checking the
+// pipe state.
 
 function tryReleaseStream(debug: null | Debugger, pipeState: PipeState, streamGroup: StreamGroup, dataBarrel: DataBarrel, stream: Stream) {
   releaseStream(debug, pipeState, streamGroup, dataBarrel, stream);

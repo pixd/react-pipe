@@ -1,5 +1,9 @@
+import type { Adjunct } from './Adjunct';
 import type { Connect } from './Connect';
 import type { CreateDebugger } from './Dev';
+import type { DownstreamConnection } from './DownstreamConnection';
+import type { ParentPipes } from './ParentPipe';
+import type { StreamGroupRegistry } from './StreamGroup';
 import { EDataType } from './DataBarrel';
 
 export const PIPE_ENTITY_TYPE = Symbol('PIPE_ENTITY_TYPE');
@@ -62,3 +66,26 @@ export type BasePipeWithDisplayName<
 export type PipeKit<
   TValue extends any = any,
 > = [pipe: DataPipe<TValue>, HZ: undefined | (() => void)];
+
+export type PipeState<
+  TValue extends any = any,
+  TError extends any = any,
+  TAdjuncts extends Adjunct[] = Adjunct[],
+> = {
+  /**
+   * Available if process.env.NODE_ENV === 'development'
+   */
+  displayName?: string;
+
+  parentPipes: ParentPipes<TAdjuncts>;
+  streamGroupRegistry: StreamGroupRegistry<TAdjuncts>;
+  dataPipe: CommonPipeState<TValue>;
+  errorPipe: CommonPipeState<TError>;
+};
+
+export type CommonPipeState<
+  TValue extends any = any,
+> = {
+  uniqKey: symbol;
+  downstreamConnections: DownstreamConnection<TValue>[];
+};

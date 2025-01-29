@@ -7,6 +7,5 @@ export * from './DataBarrel';
 export * from './Fill';
 export * from './ParentPipe';
 export * from './Pipe';
-export * from './PipeState';
 export * from './Stream';
 export * from './StreamGroup';

@@ -1,12 +1,25 @@
 import React, { useCallback, useEffect } from 'react';
 
-import { getFriends, getUser } from '../../api';
-import channel, { useActionPipe, useMountPipe, usePipe } from '../../lib';
+import { getFriends } from '../../api';
+import { getUser } from '../../api';
+import channel from '../../lib';
+import { useActionPipe } from '../../lib';
+import { useMountPipe } from '../../lib';
+import { usePipe } from '../../lib';
 import { initDebugPanel } from '../../lib/debug-panel';
-import { useDispatch, useSelector } from '../../store';
-import { ABORT_REQUEST, FRIENDS_REQUEST, FRIENDS_REQUEST_REJECT, FRIENDS_REQUEST_RESOLVE, PAGE_INIT,
-  PAGE_REFRESH, PAGE_RESET, PAGE_DATA_REQUEST, PAGE_DATA_REQUEST_REJECT, PAGE_DATA_REQUEST_RESOLVE,
-  pageInitializationSelectors } from './store';
+import { useDispatch } from '../../store';
+import { useSelector } from '../../store';
+import { ABORT_REQUEST } from './store';
+import { FRIENDS_REQUEST } from './store';
+import { FRIENDS_REQUEST_REJECT } from './store';
+import { FRIENDS_REQUEST_RESOLVE } from './store';
+import { PAGE_INIT } from './store';
+import { PAGE_REFRESH } from './store';
+import { PAGE_RESET } from './store';
+import { PAGE_DATA_REQUEST } from './store';
+import { PAGE_DATA_REQUEST_REJECT } from './store';
+import { PAGE_DATA_REQUEST_RESOLVE } from './store';
+import { pageInitializationSelectors } from './store';
 
 const { debugPanel } = initDebugPanel();
 
@@ -90,14 +103,14 @@ function usePageDataRequest() {
   const pageInitPipe = useActionPipe([
     PAGE_INIT,
     PAGE_REFRESH,
-  ], [mountPipe, channel.latest]);
+  ], [mountPipe]);
 
   // const abortRequestPipe = useActionPipe(ABORT_REQUEST, [pageInitPipe]);
 
   const pageDataRequestPipe = usePipe(function pageDataRequestPipe() {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
-  }, [pageInitPipe]);
+  }, [pageInitPipe, channel.latest]);
 
   usePipe(function pageDataRequestRejectPipe(error) {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});

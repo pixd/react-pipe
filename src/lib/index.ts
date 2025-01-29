@@ -1,6 +1,8 @@
 import { debug } from './debug';
 import { displayName } from './debug';
-import { latest } from './instruction';
+import { latest } from './createPipeKit';
+import { leading } from './createPipeKit';
+import { once } from './createPipeKit';
 
 export { PIPE_STORE_KEY } from './store';
 export { pipesReducer } from './store';
@@ -18,4 +20,6 @@ export default {
   debug,
   dn: displayName,
   latest,
+  leading,
+  once,
 };

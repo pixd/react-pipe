@@ -1,6 +1,6 @@
 import type { DataBarrel } from './DataBarrel';
 import type { Instruction } from './Instruction';
-import type { PipeState } from './PipeState';
+import type { PipeState } from './Pipe';
 import type { Stream } from './Stream';
 import type { StreamGroup } from './StreamGroup';
 

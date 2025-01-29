@@ -7,6 +7,7 @@ import type { DebugInstruction } from './types';
 import type { Final } from './types';
 import type { Instruction } from './types';
 import type { StreamGroup } from './types';
+import type { StreamInstruction } from './types';
 import { EDataBarrelStatus } from './types';
 import { EStreamGroupStatus } from './types';
 import { DEBUG_INSTRUCTION_TYPE } from './types';
@@ -14,6 +15,7 @@ import { DISPLAY_NAME_INSTRUCTION_TYPE } from './types';
 import { FINAL_TYPE } from './types';
 import { INSTRUCTION_ENTITY_TYPE } from './types';
 import { PIPE_ENTITY_TYPE } from './types';
+import { STREAM_INSTRUCTION_TYPE } from './types';
 
 export function getIsPipe(adjunct: Adjunct): adjunct is BasePipe {
   return !! adjunct && adjunct.entityType === PIPE_ENTITY_TYPE;
@@ -40,11 +42,11 @@ export function getIsPipeWithCreateDebugger(adjunct: Adjunct): adjunct is BasePi
 }
 
 export function getIsPipeWithDisplayName(adjunct: Adjunct): adjunct is BasePipeWithDisplayName {
-  return getIsPipe(adjunct) && adjunct.displayName != null;
+  return getIsPipe(adjunct) && !! adjunct.displayName;
 }
 
-export function getIsPipeWithNonEmptyDisplayName(adjunct: Adjunct): adjunct is BasePipeWithDisplayName {
-  return getIsPipe(adjunct) && !! adjunct.displayName;
+export function getIsStreamInstruction(adjunct: Adjunct): adjunct is StreamInstruction {
+  return getIsInstruction(adjunct) && adjunct.instructionType === STREAM_INSTRUCTION_TYPE;
 }
 
 export function getIsStreamGroupFulfilled(streamGroup: StreamGroup): boolean {
