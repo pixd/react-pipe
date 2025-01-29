@@ -161,9 +161,9 @@ export function updateStreamGroupFrames(streamGroupFrames: StreamGroupFrame[], p
   let changed = false;
 
   const nextStreamGroupFrames: StreamGroupFrame[] = streamGroupFrames.map((streamGroupFrame) => {
-    const streamGroup = Object.getOwnPropertySymbols(pipeState.streamGroups)
-      .map((papa) => {
-        return pipeState.streamGroups[papa];
+    const streamGroup = Object.getOwnPropertySymbols(pipeState.streamGroupRegistry)
+      .map((streamGroupRegistryKey) => {
+        return pipeState.streamGroupRegistry[streamGroupRegistryKey];
       })
       .find((streamGroup) => {
         return streamGroup.uniqKey === streamGroupFrame.streamGroup.uniqKey;
@@ -218,13 +218,14 @@ export function updateDataBarrelFrames(dataBarrelFrames: DataBarrelFrame[], pipe
   let changed = false;
 
   const nextDataBarrelFrames: DataBarrelFrame[] = dataBarrelFrames.map((dataBarrelFrame) => {
-    const dataBarrel = Object.getOwnPropertySymbols(pipeState.streamGroups)
-      .reduce((dataBarrels, papa) => {
+    const dataBarrel = Object.getOwnPropertySymbols(pipeState.streamGroupRegistry)
+      .reduce((dataBarrels, streamGroupRegistryKey) => {
+        const streamGroup = pipeState.streamGroupRegistry[streamGroupRegistryKey];
         return [
           ...dataBarrels,
-          ...Object.getOwnPropertySymbols(pipeState.streamGroups[papa].dataBarrelRegistry)
+          ...Object.getOwnPropertySymbols(streamGroup.dataBarrelRegistry)
             .map((dataBarrelRegistryKey) => {
-              return pipeState.streamGroups[papa].dataBarrelRegistry[dataBarrelRegistryKey].dataBarrel;
+              return streamGroup.dataBarrelRegistry[dataBarrelRegistryKey];
             }),
         ];
       }, [] as DataBarrel[])

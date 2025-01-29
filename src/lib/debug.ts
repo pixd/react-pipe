@@ -63,7 +63,6 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
       displayName,
       message,
       data.pipeState,
-      ['%c papa', neutralColor, data.papa],
       ['%c data barrel', neutralColor, data.dataBarrel],
       ['%c stream group', neutralColor, data.streamGroup],
     ),
@@ -71,7 +70,6 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
       displayName,
       message,
       data.pipeState,
-      ['%c papa', neutralColor, data.papa],
       ['%c data barrel', neutralColor, data.dataBarrel],
       ['%c stream group', neutralColor, data.streamGroup],
     ),
@@ -80,6 +78,7 @@ function createDebugger(displayName: string = 'unknown'): Debugger {
       message,
       data.pipeState,
       ['%c stream', neutralColor, data.stream],
+      ['%c data barrel', neutralColor, data.dataBarrel],
       ['%c stream group', neutralColor, data.streamGroup],
     ),
   }

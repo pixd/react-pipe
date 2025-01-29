@@ -59,7 +59,7 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
         </span>
         {errorDataBarrelFrames.length
           ? errorDataBarrelFrames.map((dataBarrelFrame, index) => {
-            const selected = dataBarrelFrame.papa === selectedDataBarrelFrame;
+            const selected = dataBarrelFrame.dataBarrel.papa === selectedDataBarrelFrame;
 
             return (
               <DataBarrel key={index}

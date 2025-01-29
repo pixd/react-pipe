@@ -2,10 +2,12 @@ import type { Adjunct } from './types';
 import type { BasePipe } from './types';
 import type { BasePipeWithCreateDebugger } from './types';
 import type { BasePipeWithDisplayName } from './types';
+import type { DataBarrel } from './types';
 import type { DebugInstruction } from './types';
 import type { Final } from './types';
 import type { Instruction } from './types';
 import type { StreamGroup } from './types';
+import { EDataBarrelStatus } from './types';
 import { EStreamGroupStatus } from './types';
 import { DEBUG_INSTRUCTION_TYPE } from './types';
 import { DISPLAY_NAME_INSTRUCTION_TYPE } from './types';
@@ -63,6 +65,14 @@ export function getIsStreamGroupRetired(streamGroup: StreamGroup): boolean {
 
 export function getIsStreamGroupDeleted(streamGroup: StreamGroup): boolean {
   return streamGroup.status === EStreamGroupStatus.deleted;
+}
+
+export function getIsDataBarrelActive(dataBarrel: DataBarrel): boolean {
+  return dataBarrel.status === EDataBarrelStatus.active;
+}
+
+export function getIsDataBarrelDeleted(dataBarrel: DataBarrel): boolean {
+  return dataBarrel.status === EDataBarrelStatus.deleted;
 }
 
 export function getIsFinal(value: any): value is Final {

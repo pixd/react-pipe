@@ -1,5 +1,3 @@
-import { DataBarrel } from './DataBarrel';
-
 export type Stream<
   TValue extends any = any,
 > = {
@@ -9,7 +7,7 @@ export type Stream<
   uniqKey: symbol;
 
   papa: symbol;
-  dataBarrel: DataBarrel<TValue>;
+  data: TValue;
   release: ReleaseStream;
   released: boolean;
 };

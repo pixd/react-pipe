@@ -123,7 +123,7 @@ export function initDebugPanel() {
         updatePanel((state) => {
           return onLog(updatePipeState(state, data), {
             eventTargetType: 'dataBarrel',
-            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.stream.dataBarrel.uniqKey],
+            eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.dataBarrel.uniqKey],
             message,
             data,
           });
@@ -289,7 +289,7 @@ function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup
   };
 }
 
-function onEmit(state: PanelState, data: { papa: symbol, dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
+function onEmit(state: PanelState, data: { dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
   });
@@ -297,7 +297,6 @@ function onEmit(state: PanelState, data: { papa: symbol, dataBarrel: DataBarrel,
   const pipeFrame = state.pipeFrames[pipeFrameIndex];
 
   const dataBarrelFrame: DataBarrelFrame = {
-    papa: data.papa,
     dataBarrel: data.dataBarrel,
     deleted: false,
   };

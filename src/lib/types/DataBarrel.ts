@@ -1,17 +1,11 @@
 import { Stream } from './Stream';
 
-export type DataBarrelRegistry = Record<symbol, DataBarrelRegistryMember>;
-
-export type DataBarrelRegistryMember = {
-  /**
-   * Available if process.env.NODE_ENV === 'development'
-   */
-  uniqKey: symbol;
-
-  papa: symbol;
-  dataBarrel: DataBarrel;
-  emittedStreams: Stream[];
+export enum EDataBarrelStatus {
+  active = 'active',
+  deleted = 'deleted',
 }
+
+export type DataBarrelRegistry = Record<symbol, DataBarrel>;
 
 export type DataBarrel<
   TData extends any = any,
@@ -21,9 +15,12 @@ export type DataBarrel<
    */
   uniqKey: symbol;
 
+  papa: symbol;
   data: TData;
   dataType: EDataType;
   final: boolean;
+  status: EDataBarrelStatus;
+  emittedStreams: Stream[];
 };
 
 export enum EDataType {

@@ -40,7 +40,9 @@ function createFill(
           active = false;
         });
 
-      return () => (active = false);
+      return () => {
+        active = false;
+      };
     }
     else {
       emitStream(FINAL(result));

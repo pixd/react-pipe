@@ -26,7 +26,7 @@ export type Debugger = {
   onPipeEvent: (message: string, data: { pipeState: PipeState }) => void;
   onStreamGroupCreate: (message: string, data: { parentPipeIndex?: number, streamGroup: StreamGroup, pipeState: PipeState }) => void;
   onStreamGroupEvent: (message: string, data: { parentPipeIndex?: number, streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onEmit: (message: string, data: { papa: symbol, dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onDataBarrelEvent: (message: string, data: { papa: symbol, dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }) => void;
-  onStreamEvent: (message: string, data: { stream: Stream, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onEmit: (message: string, data: { dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onDataBarrelEvent: (message: string, data: { dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }) => void;
+  onStreamEvent: (message: string, data: { stream: Stream, dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }) => void;
 };

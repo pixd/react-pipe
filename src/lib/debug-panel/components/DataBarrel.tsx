@@ -47,7 +47,7 @@ export const DataBarrel = React.memo(function DataBarrel(props: DataBarrelProps)
         </div>
       </div>
       <div className="ReactPipeDebugPanel-StreamGroupName">
-        {dataBarrelFrame.papa.toString().replace(/Symbol\(papa-([a-z0-9]+)\)/, (...args) => args[1])}
+        {dataBarrelFrame.dataBarrel.papa.toString().replace(/Symbol\(papa-([a-z0-9]+)\)/, (...args) => args[1])}
       </div>
     </div>
   );

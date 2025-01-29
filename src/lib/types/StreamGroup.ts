@@ -49,6 +49,6 @@ export type StreamGroupValues<
       : []
     : [];
 
-export type StreamGroups<
+export type StreamGroupRegistry<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = Record<symbol, StreamGroup<TAdjuncts>>;

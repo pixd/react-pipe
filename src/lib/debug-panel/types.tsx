@@ -61,7 +61,6 @@ export type StreamEntry = {
 export type StreamConnectionDirectionType = 'pass-through' | 'connection';
 
 export type DataBarrelFrame = {
-  papa: symbol;
   dataBarrel: DataBarrel;
   deleted: boolean;
 };
