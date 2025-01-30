@@ -1,7 +1,7 @@
-import { Adjunct } from './Adjunct';
-import { DataBarrelRegistry } from './DataBarrel';
-import { BasePipe } from './Pipe';
-import { Stream } from './Stream';
+import type { Adjunct } from './Adjunct';
+import type { DataBarrelRegistry } from './DataBarrel';
+import type { BasePipe } from './Pipe';
+import type { Stream } from './Stream';
 
 export enum EStreamGroupStatus {
   open = 'open',
@@ -14,7 +14,7 @@ export type StreamGroup<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   uniqKey: symbol;
 

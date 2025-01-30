@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { EDataType } from '../../types';
 import { BugSolidIcon } from '../icons/BugSolidIcon';
@@ -12,7 +12,7 @@ export type DataBarrelProps = {
   onDataBarrelFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const DataBarrel = React.memo(function DataBarrel(props: DataBarrelProps) {
+export const DataBarrel = memo(function DataBarrel(props: DataBarrelProps) {
   const { pipeUniqKey, dataBarrelFrame, selected, onDataBarrelFrameSelection } = props;
 
   const className = [

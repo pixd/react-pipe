@@ -1,5 +1,7 @@
-import { MAIM_CLASS_NAME, SCROLL_WIDTH } from '../styles-constants';
-import { css, round } from '../styles-tools';
+import { MAIM_CLASS_NAME } from '../styles-constants';
+import { SCROLL_WIDTH } from '../styles-constants';
+import { css } from '../styles-tools';
+import { round } from '../styles-tools';
 
 export const styles = css`
   .${MAIM_CLASS_NAME} {

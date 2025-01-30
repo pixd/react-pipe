@@ -4,6 +4,7 @@ import { latest } from './createPipeKit';
 import { leading } from './createPipeKit';
 import { once } from './createPipeKit';
 
+export { initDebugPanel } from './debug-panel';
 export { PIPE_STORE_KEY } from './store';
 export { pipesReducer } from './store';
 export { useActionPipe } from './useActionPipe';
@@ -15,7 +16,6 @@ export type { DataPipe } from './types';
 export type { ActionPipe } from './useActionPipe';
 export type { MountPipe } from './useMountPipe';
 
-// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   debug,
   dn: displayName,

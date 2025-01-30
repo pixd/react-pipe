@@ -1,4 +1,5 @@
-import { ALT_BACKGROUND_COLOR, MAIM_CLASS_NAME } from '../styles-constants';
+import { ALT_BACKGROUND_COLOR } from '../styles-constants';
+import { MAIM_CLASS_NAME } from '../styles-constants';
 import { css } from '../styles-tools';
 
 export const styles = css`

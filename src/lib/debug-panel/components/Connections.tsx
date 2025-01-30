@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { EDataType } from '../../types';
 import { IN_END_GAP } from '../styles-constants';
@@ -25,7 +25,7 @@ export type ConnectionsProps = {
   streamEntries: StreamEntry[];
 };
 
-export const Connections = React.memo(function Connections(props: ConnectionsProps) {
+export const Connections = memo(function Connections(props: ConnectionsProps) {
   const { maxDataEntryLevel, maxErrorEntryLevel, maxDataConnectionLevel, maxErrorConnectionLevel,
     streamConnections, streamEntries } = props;
 

@@ -1,4 +1,4 @@
-import { Stream } from './Stream';
+import type { Stream } from './Stream';
 
 export enum EDataBarrelStatus {
   active = 'active',
@@ -11,7 +11,7 @@ export type DataBarrel<
   TData extends any = any,
 > = {
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   uniqKey: symbol;
 

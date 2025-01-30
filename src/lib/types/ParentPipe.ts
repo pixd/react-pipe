@@ -1,5 +1,5 @@
-import { BasePipe } from './Pipe';
-import { Stream } from './Stream';
+import type { BasePipe } from './Pipe';
+import type { Stream } from './Stream';
 
 export type ParentPipes<
   TAdjuncts extends any = any,

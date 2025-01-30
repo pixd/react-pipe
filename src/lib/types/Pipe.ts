@@ -15,19 +15,19 @@ export type BasePipe<
   type: EDataType;
 
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   uniqKey: symbol;
 
   connect: Connect<TValue>;
 
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   displayName?: null | string;
 
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   createDebugger?: null | CreateDebugger;
 };
@@ -48,7 +48,7 @@ export type BasePipeWithCreateDebugger<
   TValue extends any = any,
 > = BasePipe<TValue> & {
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   createDebugger: CreateDebugger;
 };
@@ -57,7 +57,7 @@ export type BasePipeWithDisplayName<
   TValue extends any = any,
 > = BasePipe<TValue> & {
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   displayName: string;
 };
@@ -73,7 +73,7 @@ export type PipeState<
   TAdjuncts extends Adjunct[] = Adjunct[],
 > = {
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   displayName?: string;
 

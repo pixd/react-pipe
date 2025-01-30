@@ -1,9 +1,11 @@
-// noinspection TypeScriptValidateTypes
+import { memo } from 'react';
+import { useEffect } from 'react';
+import { useRef } from 'react';
+import { useState } from 'react';
 
-import React, { useEffect, useRef, useState } from 'react';
-
-import { LINE_SPACE, OUT_GAP } from '../styles-constants';
-import { PipeFrame } from '../types';
+import { LINE_SPACE } from '../styles-constants';
+import { OUT_GAP } from '../styles-constants';
+import type { PipeFrame } from '../types';
 import { Pipe } from './Pipe';
 
 type ScrollMarker = {
@@ -23,7 +25,7 @@ export type SchemaProps = {
   onDataBarrelSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const Schema = React.memo(function Schema(props: SchemaProps) {
+export const Schema = memo(function Schema(props: SchemaProps) {
   const { pipeFrames, maxDataLevel, maxErrorLevel, selectedPipe, selectedStreamGroup, selectedDataBarrel, onPipeSelection, onStreamGroupSelection, onDataBarrelSelection } = props;
 
   const rootRef = useRef<HTMLDivElement>(null);

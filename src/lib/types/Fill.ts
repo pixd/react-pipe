@@ -16,7 +16,7 @@ export type Fill<
   ): void | undefined | null | Retire;
 
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   displayName?: string;
 };

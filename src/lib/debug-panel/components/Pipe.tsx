@@ -1,8 +1,10 @@
-import React from 'react';
+import { memo } from 'react';
 
-import { IN_END_GAP, IN_GAP, LINE_SPACE } from '../styles-constants';
+import { IN_END_GAP } from '../styles-constants';
+import { IN_GAP } from '../styles-constants';
+import { LINE_SPACE } from '../styles-constants';
 import { round } from '../styles-tools';
-import { PipeFrame } from '../types';
+import type { PipeFrame } from '../types';
 import { Connections } from './Connections';
 import { PipeIn } from './PipeIn';
 import { PipeOut } from './PipeOut';
@@ -17,7 +19,7 @@ export type PipeProps = {
   onDataBarrelFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const Pipe = React.memo(function Pipe(props: PipeProps) {
+export const Pipe = memo(function Pipe(props: PipeProps) {
   const { pipeFrame, selected, selectedStreamGroupFrame, selectedDataBarrelFrame, onPipeSelection,
     onStreamGroupFrameSelection, onDataBarrelFrameSelection } = props;
 

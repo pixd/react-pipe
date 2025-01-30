@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function FakeStreamGroup() {
   return (
     <div className="ReactPipeDebugPanel-StreamGroup" style={{ visibility: 'hidden' }}>

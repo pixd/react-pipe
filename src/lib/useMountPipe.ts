@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { useRef } from 'react';
 
 import type { Adjunct } from './types';
 import type { BasePipe } from './types';

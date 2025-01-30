@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { EStreamGroupStatus } from '../../types';
 import { GhostSolidIcon } from '../icons/GhostSolidIcon';
@@ -14,7 +14,7 @@ export type StreamGroupProps = {
   onStreamGroupFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const StreamGroup = React.memo(function StreamGroup(props: StreamGroupProps) {
+export const StreamGroup = memo(function StreamGroup(props: StreamGroupProps) {
   const { pipeUniqKey, streamGroupFrame, selected, onStreamGroupFrameSelection } = props;
 
   const className = [

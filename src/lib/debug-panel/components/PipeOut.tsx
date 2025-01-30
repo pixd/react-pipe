@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { EDataType } from '../../types';
 import { ArrowAltLeftSolidIcon } from '../icons/ArrowAltLeftSolidIcon';
@@ -14,7 +14,7 @@ export type PipeOutProps = {
   onDataBarrelFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
+export const PipeOut = memo(function PipeOut(props: PipeOutProps) {
   const { pipeUniqKey, dataBarrelFrames, selectedDataBarrelFrame, onDataBarrelFrameSelection }
     = props;
 
@@ -59,7 +59,7 @@ export const PipeOut = React.memo(function PipeOut(props: PipeOutProps) {
         </span>
         {errorDataBarrelFrames.length
           ? errorDataBarrelFrames.map((dataBarrelFrame, index) => {
-            const selected = dataBarrelFrame.dataBarrel.papa === selectedDataBarrelFrame;
+            const selected = dataBarrelFrame.dataBarrel.uniqKey === selectedDataBarrelFrame;
 
             return (
               <DataBarrel key={index}

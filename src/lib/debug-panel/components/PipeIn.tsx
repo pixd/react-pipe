@@ -1,7 +1,7 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { ArrowAltDownSolidIcon } from '../icons/ArrowAltDownSolidIcon';
-import { StreamGroupFrame } from '../types';
+import type { StreamGroupFrame } from '../types';
 import { FakeStreamGroup } from './FakeStreamGroup';
 import { StreamGroup } from './StreamGroup';
 
@@ -12,7 +12,7 @@ export type PipeInProps = {
   onStreamGroupFrameSelection: (uniqKey: [symbol, symbol]) => void;
 };
 
-export const PipeIn = React.memo(function PipeIn(props: PipeInProps) {
+export const PipeIn = memo(function PipeIn(props: PipeInProps) {
   const { pipeUniqKey, streamGroupFrames, selectedStreamGroupFrame, onStreamGroupFrameSelection } = props;
 
   return (

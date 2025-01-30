@@ -2,7 +2,7 @@ export type Stream<
   TValue extends any = any,
 > = {
   /**
-   * Available if process.env.NODE_ENV === 'development'
+   * Available if import.meta.env.DEV
    */
   uniqKey: symbol;
 

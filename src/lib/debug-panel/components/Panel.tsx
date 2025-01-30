@@ -1,7 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { memo } from 'react';
+import { useCallback } from 'react';
+import { useEffect } from 'react';
+import { useState } from 'react';
 
-import { selectDataBarrel, selectEvent, selectPipe, selectStreamGroup } from '../tools';
-import { EventTargetType, PanelState } from '../types';
+import { selectDataBarrel } from '../tools';
+import { selectEvent } from '../tools';
+import { selectPipe } from '../tools';
+import { selectStreamGroup } from '../tools';
+import type { EventTargetType } from '../types';
+import type { PanelState } from '../types';
 import { Console } from './Console';
 import { Schema } from './Schema';
 
@@ -17,12 +24,12 @@ const initialState: PanelState = {
   selectedTimeTravelPointIndex: null,
 };
 
-export type AppProps = {
+export type PanelProps = {
   classNamePrefix: string;
   subscribe: (updatePanelInner: (cb: (state: PanelState) => PanelState) => void) => void;
 };
 
-export function Panel(props: AppProps) {
+export const Panel = memo(function Panel(props: PanelProps) {
   const { subscribe } = props;
 
   const [panelState, _setPanelState] = useState<PanelState>(initialState);
@@ -114,4 +121,4 @@ export function Panel(props: AppProps) {
       <div className="ReactPipeDebugPanel-FakeSpace" />
     </div>
   );
-}
+});

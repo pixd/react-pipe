@@ -1,6 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { memo } from 'react';
+import { useEffect } from 'react';
+import { useRef } from 'react';
+import { useState } from 'react';
 
-import { DebugRecord, EventTargetType } from '../types';
+import type { DebugRecord } from '../types';
+import type { EventTargetType } from '../types';
 import { ConsoleRecord } from './ConsoleRecord';
 
 type ScrollMarker = {
@@ -15,7 +19,7 @@ export type ConsoleProps = {
   onDebugRecordSelect: (index: number) => void;
 };
 
-export const Console = React.memo(function Console(props: ConsoleProps) {
+export const Console = memo(function Console(props: ConsoleProps) {
   const { records, selectedRecord, onEventSelect, onDebugRecordSelect } = props;
 
   const rootRef = useRef<HTMLDivElement>(null);

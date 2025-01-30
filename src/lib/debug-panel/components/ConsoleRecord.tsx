@@ -1,7 +1,8 @@
-import React from 'react';
+import { memo } from 'react';
 import { useState } from 'react';
 
-import { DebugRecord, EventTargetType } from '../types';
+import type { DebugRecord } from '../types';
+import type { EventTargetType } from '../types';
 
 export enum ComplexData {
   FUNCTION = '[[FUNCTION]]',
@@ -19,7 +20,7 @@ export type ConsoleRecordProps = {
   onDebugRecordSelect: (index: number) => void;
 };
 
-export const ConsoleRecord = React.memo(function ConsoleRecord(props: ConsoleRecordProps) {
+export const ConsoleRecord = memo(function ConsoleRecord(props: ConsoleRecordProps) {
   const { record, recordIndex, active, selected, onEventSelect, onDebugRecordSelect } = props;
 
   const [open, setOpen] = useState<boolean>(false);

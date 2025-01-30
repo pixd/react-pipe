@@ -1,7 +1,18 @@
-import { BACKGROUND_COLOR, HEEL_LENGTH, HEEL_RADIUS, HEEL_SHIFT, HEEL_WIDTH, HOLE_LENGTH,
-  HOLE_WIDTH, LINE_WIDTH, MAIM_CLASS_NAME, OUT_SHIFT, LINE_SHADOW_SHIFT, LINE_SHADOW_WIDTH,
-  PIPE_WIDTH } from '../styles-constants';
-import { css, round } from '../styles-tools';
+import { BACKGROUND_COLOR } from '../styles-constants';
+import { HEEL_LENGTH } from '../styles-constants';
+import { HEEL_RADIUS } from '../styles-constants';
+import { HEEL_SHIFT } from '../styles-constants';
+import { HEEL_WIDTH } from '../styles-constants';
+import { HOLE_LENGTH } from '../styles-constants';
+import { HOLE_WIDTH } from '../styles-constants';
+import { LINE_WIDTH } from '../styles-constants';
+import { MAIM_CLASS_NAME } from '../styles-constants';
+import { OUT_SHIFT } from '../styles-constants';
+import { LINE_SHADOW_SHIFT } from '../styles-constants';
+import { LINE_SHADOW_WIDTH } from '../styles-constants';
+import { PIPE_WIDTH } from '../styles-constants';
+import { css } from '../styles-tools';
+import { round } from '../styles-tools';
 
 const LINE_COLOR = '#5d6e7e';
 const HEEL_COLOR = '#758596';

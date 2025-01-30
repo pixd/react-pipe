@@ -1,5 +1,5 @@
-import { OnParentPipeStreamEmit } from './ParentPipe';
-import { OnParentPipeStreamTerminate } from './ParentPipe';
+import type { OnParentPipeStreamEmit } from './ParentPipe';
+import type { OnParentPipeStreamTerminate } from './ParentPipe';
 
 export type DownstreamConnection<
   TValue extends any = any,
