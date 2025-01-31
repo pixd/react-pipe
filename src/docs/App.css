@@ -1,0 +1,66 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  monospace;
+}
+
+body {
+  background-color: #282c34;
+}
+
+.App {
+  color: #cbced2;
+  font-size: calc(10px + 2vmin);
+  line-height: 1.6em;
+  min-height: 100vh;
+  padding: 4em;
+}
+
+.Menu {
+  margin-bottom: 0.4em;
+}
+.Menu > button {
+  display: block;
+}
+
+.button {
+  padding: 0;
+  line-height: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: none;
+}
+
+.button,
+.button:hover,
+.button:focus,
+.button:active,
+.button:disabled {
+  color: inherit;
+  background-color: transparent;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.button:disabled {
+  cursor: default;
+  pointer-events: none;
+}
