@@ -11,27 +11,36 @@ export type Instruction<
   instructionType: TInstructionType;
 };
 
-export const STREAM_INSTRUCTION_TYPE = Symbol('STREAM_INSTRUCTION_TYPE');
+export const CONTROL_INSTRUCTION_TYPE = Symbol('CONTROL_INSTRUCTION_TYPE');
 
-export type StreamInstruction<
-  TStreamInstructionType extends symbol = symbol,
-> = Instruction<typeof STREAM_INSTRUCTION_TYPE> & {
-  streamInstructionType: TStreamInstructionType;
-  createStreamHandler: () => HandleStream;
+export type ControlInstruction<
+  TControlInstructionType extends symbol = symbol,
+> = Instruction<typeof CONTROL_INSTRUCTION_TYPE> & {
+  controlInstructionType: TControlInstructionType;
+  createStreamEmitHandler?: () => HandleEmitStream;
+  createStreamTerminateHandler?: () => HandleTerminateStream;
 };
 
-export type HandleStream = {
+export type HandleEmitStream = {
   (debug: null | Debugger, pipeState: PipeState, stream: Stream): boolean;
 };
 
-export const LATEST_STREAM_INSTRUCTION_TYPE = Symbol('LATEST_STREAM_INSTRUCTION_TYPE');
+export type HandleTerminateStream = {
+  (debug: null | Debugger, pipeState: PipeState, stream: Stream): boolean;
+};
 
-export type LatestInstruction = StreamInstruction<typeof LATEST_STREAM_INSTRUCTION_TYPE>;
+export const LATEST_INSTRUCTION_TYPE = Symbol('LATEST_INSTRUCTION_TYPE');
 
-export const LEADING_STREAM_INSTRUCTION_TYPE = Symbol('LEADING_STREAM_INSTRUCTION_TYPE');
+export type LatestInstruction = ControlInstruction<typeof LATEST_INSTRUCTION_TYPE>;
 
-export type LeadingInstruction = StreamInstruction<typeof LEADING_STREAM_INSTRUCTION_TYPE>;
+export const LEADING_INSTRUCTION_TYPE = Symbol('LEADING_INSTRUCTION_TYPE');
 
-export const ONCE_STREAM_INSTRUCTION_TYPE = Symbol('ONCE_STREAM_INSTRUCTION_TYPE');
+export type LeadingInstruction = ControlInstruction<typeof LEADING_INSTRUCTION_TYPE>;
 
-export type OnceInstruction = StreamInstruction<typeof ONCE_STREAM_INSTRUCTION_TYPE>;
+export const ONCE_INSTRUCTION_TYPE = Symbol('ONCE_INSTRUCTION_TYPE');
+
+export type OnceInstruction = ControlInstruction<typeof ONCE_INSTRUCTION_TYPE>;
+
+export const FORK_INSTRUCTION_TYPE = Symbol('FORK_INSTRUCTION_TYPE');
+
+export type ForkInstruction = ControlInstruction<typeof FORK_INSTRUCTION_TYPE>;

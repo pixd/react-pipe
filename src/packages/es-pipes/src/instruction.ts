@@ -1,8 +1,8 @@
 import type { Instruction } from './entities';
-import type { HandleStream } from './entities';
-import type { StreamInstruction } from './entities';
+import type { HandleEmitStream } from './entities';
+import type { ControlInstruction } from './entities';
 import { INSTRUCTION_ENTITY_TYPE } from './entities';
-import { STREAM_INSTRUCTION_TYPE } from './entities';
+import { CONTROL_INSTRUCTION_TYPE } from './entities';
 
 export function createInstruction<
   TInstructionType extends symbol = symbol,
@@ -13,12 +13,12 @@ export function createInstruction<
   };
 }
 
-export function createStreamInstruction<
-  TStreamInstructionType extends symbol = symbol,
->(streamInstructionType: TStreamInstructionType, createStreamHandler: () => HandleStream): StreamInstruction<TStreamInstructionType> {
+export function createControlInstruction<
+  TControlInstructionType extends symbol = symbol,
+>(controlInstructionType: TControlInstructionType, props: Pick<ControlInstruction, 'createStreamEmitHandler' | 'createStreamTerminateHandler'>): ControlInstruction<TControlInstructionType> {
   return {
-    ...createInstruction(STREAM_INSTRUCTION_TYPE),
-    streamInstructionType,
-    createStreamHandler,
+    ...createInstruction(CONTROL_INSTRUCTION_TYPE),
+    controlInstructionType,
+    ...props,
   };
 }

@@ -126,7 +126,7 @@ function usePageDataRequest() {
   const friends = usePipe(function friendsPipe(data) {
     dispatch({ type: FRIENDS_REQUEST });
     return getFriends({ userId: data.user.id });
-  }, [pageDataResolved]);
+  }, [pageDataResolved, channel.fork]);
 
   usePipe(function friendsRejectedPipe(error) {
     dispatch({ type: FRIENDS_REQUEST_REJECT, payload: { error }});
@@ -138,7 +138,7 @@ function usePageDataRequest() {
     return data;
   }, [friends]);
 
-  usePipe(function completedPipe() {
-    return 'Done!';
-  }, [pageDataResolved, friendsResolved]);
+  // usePipe(function completedPipe() {
+  //   return 'Done!';
+  // }, [pageDataResolved, friendsResolved]);
 }

@@ -7,13 +7,13 @@ import type { DebugInstruction } from './entities';
 import type { Final } from './entities';
 import type { Instruction } from './entities';
 import type { StreamGroup } from './entities';
-import type { StreamInstruction } from './entities';
+import type { ControlInstruction } from './entities';
 import { DEBUG_INSTRUCTION_TYPE } from './entities';
 import { DISPLAY_NAME_INSTRUCTION_TYPE } from './entities';
 import { FINAL_TYPE } from './entities';
 import { INSTRUCTION_ENTITY_TYPE } from './entities';
 import { PIPE_ENTITY_TYPE } from './entities';
-import { STREAM_INSTRUCTION_TYPE } from './entities';
+import { CONTROL_INSTRUCTION_TYPE } from './entities';
 import { dataBarrelStatus } from './entities';
 import { streamGroupStatus } from './entities';
 
@@ -45,8 +45,16 @@ export function getIsPipeWithDisplayName(adjunct: Adjunct): adjunct is BasePipeW
   return getIsPipe(adjunct) && !! adjunct.displayName;
 }
 
-export function getIsStreamInstruction(adjunct: Adjunct): adjunct is StreamInstruction {
-  return getIsInstruction(adjunct) && adjunct.instructionType === STREAM_INSTRUCTION_TYPE;
+export function getIsControlInstruction(adjunct: Adjunct): adjunct is ControlInstruction {
+  return getIsInstruction(adjunct) && adjunct.instructionType === CONTROL_INSTRUCTION_TYPE;
+}
+
+export function getIsStreamEmitInstruction(adjunct: Adjunct): adjunct is Omit<ControlInstruction, 'createStreamEmitHandler'> & { createStreamEmitHandler: NonNullable<ControlInstruction['createStreamEmitHandler']> } {
+  return getIsControlInstruction(adjunct) && !! adjunct.createStreamEmitHandler;
+}
+
+export function getIsStreamTerminateInstruction(adjunct: Adjunct): adjunct is Omit<ControlInstruction, 'createStreamTerminateHandler'> & { createStreamTerminateHandler: NonNullable<ControlInstruction['createStreamTerminateHandler']> } {
+  return getIsControlInstruction(adjunct) && !! adjunct.createStreamTerminateHandler;
 }
 
 export function getIsStreamGroupFulfilled(streamGroup: StreamGroup): boolean {
