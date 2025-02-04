@@ -92,4 +92,8 @@ export const styles = css`
   .${MAIM_CLASS_NAME}-ScrollMarker--Log {
     box-shadow: 0 0 0 1px #cfe142;
   }
+
+  .${MAIM_CLASS_NAME}-ScrollMarker--Error {
+    box-shadow: 0 0 0 1px #ff4e4e;
+  }
 `;

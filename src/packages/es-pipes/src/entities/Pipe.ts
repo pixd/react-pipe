@@ -2,7 +2,7 @@ import type { Adjunct } from './Adjunct';
 import type { Connect } from './Connect';
 import type { DataType } from './DataBarrel';
 import type { DownstreamConnection } from './Connect';
-import type { CreateDebugger } from './Dev';
+import type { CreateDebugger } from './Instruction';
 import type { ParentPipes } from './ParentPipe';
 import type { StreamGroupRegistry } from './StreamGroup';
 

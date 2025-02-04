@@ -3,9 +3,8 @@ import { useState } from 'react';
 
 import type { DebugRecord } from '../types';
 import type { EventTargetType } from '../types';
-import { EComplexData } from '../types';
 
-const complexDataValues = Object.values(EComplexData);
+const complexDataValues = ['[[FUNCTION]]', '[[HTMLElement]]'];
 
 export type ConsoleRecordProps = {
   record: DebugRecord;
@@ -43,6 +42,7 @@ export const ConsoleRecord = memo(function ConsoleRecord(props: ConsoleRecordPro
     'ReactPipeDebugPanel-ConsoleRecord',
     active ? null : 'ReactPipeDebugPanel-ConsoleRecord-Inactive',
     selected ? 'ReactPipeDebugPanel-ConsoleRecord-Selected': null,
+    record.debugEvent.error ? 'ReactPipeDebugPanel-ConsoleRecord-Error' : null,
   ].filter(Boolean).join(' ');
 
   const eventMarkerClassName = [

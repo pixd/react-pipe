@@ -69,10 +69,6 @@ export const styles = css`
     min-height: 100%;
   }
 
-  .${MAIM_CLASS_NAME}-ConsoleRecord-Inactive * {
-    color: #464d5c !important;
-  }
-
   .${MAIM_CLASS_NAME}-Time > span {
     color: #537f7e;
     display: block;
@@ -92,6 +88,14 @@ export const styles = css`
 
   .${MAIM_CLASS_NAME}-ConsoleRecord-Selected .${MAIM_CLASS_NAME}-Time > i {
     color: #464d5c !important;
+  }
+
+  .${MAIM_CLASS_NAME}-ConsoleRecord-Inactive * {
+    color: #464d5c !important;
+  }
+
+  .${MAIM_CLASS_NAME}-ConsoleRecord-Error .${MAIM_CLASS_NAME}-LogName {
+    color: #ff4e4e !important;
   }
 
   .${MAIM_CLASS_NAME}-Message {

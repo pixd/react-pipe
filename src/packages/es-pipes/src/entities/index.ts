@@ -1,6 +1,5 @@
 export * from './Adjunct';
 export * from './Connect';
-export * from './Dev';
 export * from './Instruction';
 export * from './DataBarrel';
 export * from './Fill';

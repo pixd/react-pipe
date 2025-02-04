@@ -3,7 +3,8 @@ import { useEffect } from 'react';
 
 import { getFriends } from '../../api';
 import { getUser } from '../../api';
-import channel from '../../../packages/es-pipes/src';
+import { fork } from '../../../packages/es-pipes/src';
+import { latest } from '../../../packages/es-pipes/src';
 import { useMountPipe } from '../../../packages/react-pipes/src';
 import { usePipe } from '../../../packages/react-pipes/src';
 import { initDebugPanel } from '../../../packages/react-pipes/src/debug-panel';
@@ -104,6 +105,7 @@ function usePageDataRequest() {
   const initAction = useActionPipe([
     PAGE_INIT,
     PAGE_REFRESH,
+    PAGE_REFRESH,
   ], [mount]);
 
   // const abortRequestPipe = useActionPipe(ABORT_REQUEST, [initAction]);
@@ -111,7 +113,7 @@ function usePageDataRequest() {
   const pageData = usePipe(function pageDataPipe() {
     dispatch({ type: PAGE_DATA_REQUEST });
     return getUser();
-  }, [initAction, channel.latest]);
+  }, [initAction, latest]);
 
   usePipe(function pageRejectedPipe(error) {
     dispatch({ type: PAGE_DATA_REQUEST_REJECT, payload: { error }});
@@ -126,7 +128,7 @@ function usePageDataRequest() {
   const friends = usePipe(function friendsPipe(data) {
     dispatch({ type: FRIENDS_REQUEST });
     return getFriends({ userId: data.user.id });
-  }, [pageDataResolved, channel.fork]);
+  }, [pageDataResolved, fork]);
 
   usePipe(function friendsRejectedPipe(error) {
     dispatch({ type: FRIENDS_REQUEST_REJECT, payload: { error }});
@@ -138,7 +140,7 @@ function usePageDataRequest() {
     return data;
   }, [friends]);
 
-  // usePipe(function completedPipe() {
-  //   return 'Done!';
-  // }, [pageDataResolved, friendsResolved]);
+  usePipe(function completedPipe() {
+    return 'Done!';
+  }, [pageDataResolved, friendsResolved, fork]);
 }

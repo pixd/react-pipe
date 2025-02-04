@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { dataType } from '../../../../es-pipes/src';
+import { dataType } from '../../../../es-pipes/src/index.core';
 import { BugSolidIcon } from '../icons/BugSolidIcon';
 import { DatabaseSolidIcon } from '../icons/DatabaseSolidIcon';
 import type { DataBarrelFrame } from '../types';

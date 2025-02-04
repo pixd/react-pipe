@@ -2,9 +2,9 @@ import { useStore } from 'react-redux';
 import type { Store } from 'redux';
 import type { UnknownAction } from 'redux';
 
-import type { Adjunct } from '../../../../es-pipes/src';
-import type { BasePipe } from '../../../../es-pipes/src';
-import type { Emit } from '../../../../es-pipes/src';
+import type { Adjunct } from '../../../../es-pipes/src/index.core';
+import type { BasePipe } from '../../../../es-pipes/src/index.core';
+import type { Emit } from '../../../../es-pipes/src/index.core';
 import { useCommonPipe } from '../../useCommonPipe';
 
 type ActionPipe<
@@ -88,7 +88,7 @@ function createFill(
     };
   };
 
-  fill.displayName = 'Action listener (' + (actionTypes.length > 1 ? `${actionTypes[0]} + ${actionTypes.length - 1}` : actionTypes[0]) + ')';
+  fill.displayName = 'Action channel (' + (actionTypes.length > 1 ? `${actionTypes[0]} + ${actionTypes.length - 1} ${actionTypes.length - 1 === 1 ? 'other' : 'others'}` : actionTypes[0]) + ')';
 
   return fill;
 }

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { streamGroupStatus } from '../../../../es-pipes/src';
+import { streamGroupStatus } from '../../../../es-pipes/src/index.core';
 import { GhostSolidIcon } from '../icons/GhostSolidIcon';
 import { HeartSolidIcon } from '../icons/HeartSolidIcon';
 import { HomeAltSolidIcon } from '../icons/HomeAltSolidIcon';

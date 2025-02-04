@@ -1,11 +1,11 @@
 import ReactDOM from 'react-dom/client';
 
-import { createInstruction } from '../../../es-pipes/src';
-import type { DataBarrel } from '../../../es-pipes/src';
-import type { Debugger } from '../../../es-pipes/src';
-import type { PipeState } from '../../../es-pipes/src';
-import type { StreamGroup } from '../../../es-pipes/src';
-import { DEBUG_INSTRUCTION_TYPE } from '../../../es-pipes/src';
+import type { DataBarrel } from '../../../es-pipes/src/index.core';
+import type { PipeState } from '../../../es-pipes/src/index.core';
+import type { StreamGroup } from '../../../es-pipes/src/index.core';
+import type { Debugger } from '../../../es-pipes/src/index.debug';
+import { createDebugInstruction } from '../../../es-pipes/src/index.debug';
+import { createDebugger } from '../../../es-pipes/src/index.debug';
 import { Panel } from './components/Panel';
 import { styles as animationStyle } from './styles/animation';
 import { styles as connectionsStyle } from './styles/connections';
@@ -57,85 +57,94 @@ export function initDebugPanel() {
     </>
   );
 
-  const createDebugger = (): Debugger => {
+  const debugPanel = createDebugInstruction((displayName: string): Debugger => {
+    const logger = createDebugger(displayName);
     return {
-      onPipeCreate: (message, data) => {
+      onPipeCreate: withNativeLog(logger.onPipeCreate, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(onPipeCreate(state, data), {
+          return onLog(time, onPipeCreate(state, data), {
             eventTargetType: 'pipe',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
             message,
             data,
           });
         });
-      },
-      onPipeEvent: (message, data) => {
+      }),
+      onPipeEvent: withNativeLog(logger.onPipeEvent, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
+          return onLog(time, updatePipeState(state, data), {
             eventTargetType: 'pipe',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.pipeState.dataPipe.uniqKey],
             message,
             data,
           });
         });
-      },
-      onStreamGroupCreate: (message, data) => {
+      }),
+      onStreamGroupCreate: withNativeLog(logger.onStreamGroupCreate, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(onStreamGroupCreate(state, data), {
+          return onLog(time, onStreamGroupCreate(state, data), {
             eventTargetType: 'streamGroup',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
             message,
             data,
           });
         });
-      },
-      onStreamGroupEvent: (message, data) => {
+      }),
+      onStreamGroupEvent: withNativeLog(logger.onStreamGroupEvent, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
+          return onLog(time, updatePipeState(state, data), {
             eventTargetType: 'streamGroup',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.streamGroup.uniqKey],
             message,
             data,
           });
         });
-      },
-      onEmit: (message, data) => {
+      }),
+      onEmit: withNativeLog(logger.onEmit, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(onEmit(state, data), {
+          return onLog(time, onEmit(state, data), {
             eventTargetType: 'dataBarrel',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.dataBarrel.uniqKey],
             message,
             data,
           });
         });
-      },
-      onDataBarrelEvent: (message, data) => {
+      }),
+      onDataBarrelEvent: withNativeLog(logger.onDataBarrelEvent, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
+          return onLog(time, updatePipeState(state, data), {
             eventTargetType: 'dataBarrel',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.dataBarrel.uniqKey],
             message,
             data,
           });
         });
-      },
-      onStreamEvent: (message, data) => {
+      }),
+      onStreamEvent: withNativeLog(logger.onStreamEvent, (time, message, data) => {
         updatePanel((state) => {
-          return onLog(updatePipeState(state, data), {
+          return onLog(time, updatePipeState(state, data), {
             eventTargetType: 'dataBarrel',
             eventTargetKey: [data.pipeState.dataPipe.uniqKey, data.dataBarrel.uniqKey],
             message,
             data,
+          });
+        });
+      }),
+      onError: (error, pipeState) => {
+        const time = Date.now();
+        logger.onError(error, pipeState);
+        updatePanel((state) => {
+          return onLog(time, state, {
+            eventTargetType: 'pipe',
+            eventTargetKey: [pipeState.dataPipe.uniqKey, pipeState.dataPipe.uniqKey],
+            message: error.message,
+            data: { error, pipeState },
+            error: true,
           });
         });
       },
     }
-  };
-
-  const debugPanel = {
-    ...createInstruction(DEBUG_INSTRUCTION_TYPE),
-    createDebugger,
-  };
+  });
 
   init = true;
 
@@ -157,12 +166,17 @@ function getDefaultPipeFrame(): Omit<PipeFrame, 'displayName' | 'pipeState'> {
   };
 }
 
-function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
-  console.log(debugEvent.message, { ...debugEvent.data, panelState });
+function withNativeLog<
+  TData extends any = any,
+>(nativeLog: (message: string, data: TData) => void, next: (time: number, message: string, data: TData) => void): ((message: string, data: TData) => void) {
+  return (message, data) => {
+    nativeLog(message, data);
+    const time = Date.now();
+    return next(time, message, data);
+  };
+}
 
-  const rawTime = Date.now();
-  const time = prepareTime(rawTime);
-
+function onLog(rawTime: number, panelState: PanelState, debugEvent: DebugEvent): PanelState {
   let lastDebugRecord = panelState.debugRecords[panelState.debugRecords.length - 1];
 
   if (lastDebugRecord) {
@@ -189,7 +203,7 @@ function onLog(panelState: PanelState, debugEvent: DebugEvent): PanelState {
   const pilotSelected = !! selectedObjectKey && debugEvent.data.pipeState.dataPipe.uniqKey === selectedObjectKey[1];
 
   const record: DebugRecord = {
-    time,
+    time: prepareTime(rawTime),
     rawTime,
     selected,
     pilot,
@@ -289,7 +303,7 @@ function onStreamGroupCreate(state: PanelState, data: { streamGroup: StreamGroup
   };
 }
 
-function onEmit(state: PanelState, data: { dataBarrel: DataBarrel, streamGroup: StreamGroup, pipeState: PipeState }): PanelState {
+function onEmit(state: PanelState, data: { dataBarrel: DataBarrel, pipeState: PipeState }): PanelState {
   const pipeFrameIndex = state.pipeFrames.findIndex((pipeFrame) => {
     return pipeFrame.pipeState.dataPipe.uniqKey === data.pipeState.dataPipe.uniqKey;
   });

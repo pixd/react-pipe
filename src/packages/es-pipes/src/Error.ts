@@ -1,10 +1,13 @@
-import type { PipeState } from './entities';
-
 export class LibLogicError extends Error {
-  constructor(message: string, pipeState: PipeState) {
-    super(message + '. See pipe state above.');
-    console.error(pipeState);
+  constructor(message: string) {
+    super(message);
+    console.error(message);
   }
 }
 
-export class UserLogicError extends Error {}
+export class UserLogicError extends Error {
+  constructor(message: string) {
+    super(message);
+    console.error(message);
+  }
+}

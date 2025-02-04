@@ -3,13 +3,14 @@ import { useEffect } from 'react';
 import { useRef } from 'react';
 import { useState } from 'react';
 
+import { MAIM_CLASS_NAME } from '../styles-constants';
 import type { DebugRecord } from '../types';
 import type { EventTargetType } from '../types';
 import { ConsoleRecord } from './ConsoleRecord';
 
 type ScrollMarker = {
   top: number;
-  type: 'log' | 'time';
+  type: 'error' | 'log' | 'time';
 };
 
 export type ConsoleProps = {
@@ -55,7 +56,9 @@ export const Console = memo(function Console(props: ConsoleProps) {
           const style = { top: marker.top + '%' };
           const className = [
             'ReactPipeDebugPanel-ScrollMarker',
-            marker.type === 'time' ? 'ReactPipeDebugPanel-ScrollMarker--Time' : 'ReactPipeDebugPanel-ScrollMarker--Log',
+            marker.type === 'time' ? 'ReactPipeDebugPanel-ScrollMarker--Time' : null,
+            marker.type === 'log' ? 'ReactPipeDebugPanel-ScrollMarker--Log' : null,
+            marker.type === 'error' ? 'ReactPipeDebugPanel-ScrollMarker--Error' : null,
           ].filter(Boolean).join(' ');
 
           return (
@@ -97,21 +100,20 @@ function getScrollMarkers(rootElement: HTMLElement, listElement: HTMLElement) {
 
   const realThumbHeight = Math.round((consoleHeight * consoleHeight / listHeight)) + 'px';
 
-  const scrollMarkers: ScrollMarker[] = [];
+  const findScrollMarker = (type: ScrollMarker['type'], selector: string): ScrollMarker[] => {
+    return Array.from(rootElement.querySelectorAll(selector))
+      .map((element) => {
+        const elementTop = element.getBoundingClientRect().top;
+        const top = Math.round((elementTop - listTop) / listHeight * 100);
+        return { top, type };
+      });
+  }
 
-  rootElement.querySelectorAll('.ReactPipeDebugPanel-LogMarker-Selected')
-    .forEach((element) => {
-      const elementTop = element.getBoundingClientRect().top;
-      const top = Math.round((elementTop - listTop) / listHeight * 100);
-      scrollMarkers.push({ top, type: 'log' });
-    });
-
-  rootElement.querySelectorAll('.ReactPipeDebugPanel-ConsoleRecord-Selected .ReactPipeDebugPanel-Time')
-    .forEach((element) => {
-      const elementTop = element.getBoundingClientRect().top;
-      const top = Math.round((elementTop - listTop) / listHeight * 100);
-      scrollMarkers.push({ top, type: 'time' });
-    });
+  const scrollMarkers: ScrollMarker[] = [
+    ...findScrollMarker('error', `.${MAIM_CLASS_NAME}-ConsoleRecord-Error`),
+    ...findScrollMarker('log', `.${MAIM_CLASS_NAME}-LogMarker-Selected`),
+    ...findScrollMarker('time', `.${MAIM_CLASS_NAME}-ConsoleRecord-Selected .${MAIM_CLASS_NAME}-Time`),
+  ];
 
   return { realThumbHeight, scrollMarkers };
 }

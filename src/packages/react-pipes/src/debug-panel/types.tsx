@@ -1,8 +1,8 @@
-import type { DataBarrel } from '../../../es-pipes/src';
-import type { DataType } from '../../../es-pipes/src';
-import type { Debugger } from '../../../es-pipes/src';
-import type { PipeState } from '../../../es-pipes/src';
-import type { StreamGroup } from '../../../es-pipes/src';
+import type { DataBarrel } from '../../../es-pipes/src/index.core';
+import type { DataType } from '../../../es-pipes/src/index.core';
+import type { PipeState } from '../../../es-pipes/src/index.core';
+import type { StreamGroup } from '../../../es-pipes/src/index.core';
+import type { Debugger } from '../../../es-pipes/src/index.debug';
 
 export type PanelState = {
   debugRecords: DebugRecord[];
@@ -81,13 +81,9 @@ export type DebugEvent = {
     eventTargetType: EventTargetType;
     eventTargetKey: [symbol, symbol];
     message: string;
-    data: Parameters<Debugger[TKey]>[1];
+    data: Parameters<Debugger[TKey]>[0] extends string ? Parameters<Debugger[TKey]>[1] : { error: Error, pipeState: PipeState };
+    error?: boolean;
   };
 }[keyof Debugger];
 
 export type EventTargetType = 'pipe' | 'streamGroup' | 'dataBarrel';
-
-export enum EComplexData {
-  FUNCTION = '[[FUNCTION]]',
-  HTML_ELEMENT = '[[HTMLElement]]'
-}
