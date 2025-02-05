@@ -1,7 +1,7 @@
-import type { BasePipe } from 'es-pipes/core';
-import type { DataBarrel } from 'es-pipes/core';
-import type { PipeState } from 'es-pipes/core';
-import { dataType } from 'es-pipes/core';
+import type { BasePipe } from '@@es-pipes/core';
+import type { DataBarrel } from '@@es-pipes/core';
+import type { PipeState } from '@@es-pipes/core';
+import { dataType } from '@@es-pipes/core';
 
 import type { DataBarrelFrame } from './types';
 import type { EventTargetType } from './types';

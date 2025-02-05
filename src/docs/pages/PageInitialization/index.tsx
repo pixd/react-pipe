@@ -1,10 +1,10 @@
+import { fork } from '@@react-pipes';
+import { latest } from '@@react-pipes';
+import { useMountPipe } from '@@react-pipes';
+import { usePipe } from '@@react-pipes';
+import { initDebugPanel } from '@@react-pipes/debug';
 import { useCallback } from 'react';
 import { useEffect } from 'react';
-import { fork } from 'react-pipes';
-import { latest } from 'react-pipes';
-import { useMountPipe } from 'react-pipes';
-import { usePipe } from 'react-pipes';
-import { initDebugPanel } from 'react-pipes/debug';
 
 import { getFriends } from '../../api';
 import { getUser } from '../../api';

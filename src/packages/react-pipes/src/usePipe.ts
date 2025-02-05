@@ -1,8 +1,8 @@
-import type { Adjunct } from 'es-pipes/core';
-import type { Emit } from 'es-pipes/core';
-import type { StreamGroupValues } from 'es-pipes/core';
-import type { UniversalDataPipe } from 'es-pipes/core';
-import { FINAL } from 'es-pipes/core';
+import type { Adjunct } from '@@es-pipes/core';
+import type { Emit } from '@@es-pipes/core';
+import type { StreamGroupValues } from '@@es-pipes/core';
+import type { UniversalDataPipe } from '@@es-pipes/core';
+import { FINAL } from '@@es-pipes/core';
 
 import { useCommonPipe } from './useCommonPipe';
 

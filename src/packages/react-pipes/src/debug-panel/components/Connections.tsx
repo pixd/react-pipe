@@ -1,5 +1,6 @@
-import { dataType } from 'es-pipes/core';
 import { memo } from 'react';
+
+import { dataType } from '@@es-pipes/core';
 
 import { IN_END_GAP } from '../styles-constants';
 import { HEEL_LENGTH } from '../styles-constants';

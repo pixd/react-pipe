@@ -1,5 +1,6 @@
-import { streamGroupStatus } from 'es-pipes/core';
 import { memo } from 'react';
+
+import { streamGroupStatus } from '@@es-pipes/core';
 
 import { GhostSolidIcon } from '../icons/GhostSolidIcon';
 import { HeartSolidIcon } from '../icons/HeartSolidIcon';
@@ -59,7 +60,7 @@ export const StreamGroup = memo(function StreamGroup(props: StreamGroupProps) {
           : streamGroupFrame.streamGroup.members.map((member, index) => {
             const className = [
               'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-TintSolidIcon',
-              streamGroupFrame.streamGroup.status === streamGroupStatus.retired && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+              streamGroupFrame.streamGroup.status === streamGroupStatus.deleted && streamGroupFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
               member ? 'ReactPipeDebugPanel-IconStatus-Success' : 'ReactPipeDebugPanel-IconStatus-Muted',
             ].filter(Boolean).join(' ');
 

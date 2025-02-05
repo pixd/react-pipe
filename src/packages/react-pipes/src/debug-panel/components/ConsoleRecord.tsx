@@ -124,7 +124,7 @@ export const ConsoleRecord = memo(function ConsoleRecord(props: ConsoleRecordPro
               <>
                 <div className="ReactPipeDebugPanel-LogDataLine">
                   <ObjectData
-                    data={record.debugEvent.data} />
+                    data={{...record.debugEvent.data, timeTravelPanelState: record.timeTravelPanelState }} />
                 </div>
                 <div>
                   <span className="ReactPipeDebugPanel-Brackets"

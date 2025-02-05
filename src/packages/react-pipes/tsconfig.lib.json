@@ -16,6 +16,17 @@
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "outDir": "./main",
+    "paths": {
+      "@@es-pipes/debug": [
+        "es-pipes/debug",
+      ],
+      "@@es-pipes/core": [
+        "es-pipes/core",
+      ],
+      "@@es-pipes": [
+        "es-pipes",
+      ],
+    },
 
     /* Linting */
     "noFallthroughCasesInSwitch": true,
@@ -23,9 +34,9 @@
     "strict": true
   },
   "exclude": [
-    "node_modules",
+    "node_modules"
   ],
   "include": [
-    "./src",
-  ],
+    "./src"
+  ]
 }

@@ -27,6 +27,16 @@ module.exports = [
         {
           exclude: 'node_modules/**',
           values: {
+            '@@es-pipes/debug': 'es-pipes/debug',
+            '@@es-pipes/core': 'es-pipes/core',
+            '@@es-pipes': 'es-pipes',
+          },
+        },
+      ),
+      replace(
+        {
+          exclude: 'node_modules/**',
+          values: {
             'import.meta.env.DEV': 'true',
           },
         },

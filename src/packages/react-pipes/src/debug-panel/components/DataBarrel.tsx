@@ -1,5 +1,7 @@
-import { dataType } from 'es-pipes/core';
 import { memo } from 'react';
+
+import { dataType } from '@@es-pipes/core';
+import { dataBarrelStatus } from '@@es-pipes/core';
 
 import { BugSolidIcon } from '../icons/BugSolidIcon';
 import { DatabaseSolidIcon } from '../icons/DatabaseSolidIcon';
@@ -23,7 +25,7 @@ export const DataBarrel = memo(function DataBarrel(props: DataBarrelProps) {
   const iconClassName = [
     'ReactPipeDebugPanel-StreamGroupMember ReactPipeDebugPanel-IconStatus-Success',
     dataBarrelFrame.dataBarrel.dataType === dataType.error ? 'ReactPipeDebugPanel-BugSolidIcon' : 'ReactPipeDebugPanel-DatabaseSolidIcon',
-    dataBarrelFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
+    dataBarrelFrame.dataBarrel.status === dataBarrelStatus.deleted && dataBarrelFrame.deleted ? 'ReactPipeDebugPanel-InactiveIcon' : null,
   ].filter(Boolean).join(' ');
 
   const handleDataBarrelClick = () => {

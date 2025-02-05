@@ -1,10 +1,11 @@
-import type { Adjunct } from 'es-pipes/core';
-import type { BasePipe } from 'es-pipes/core';
-import type { Emit } from 'es-pipes/core';
-import type { TerminateAll } from 'es-pipes/core';
-import { FINAL } from 'es-pipes/core';
 import { useEffect } from 'react';
 import { useRef } from 'react';
+
+import type { Adjunct } from '@@es-pipes/core';
+import type { BasePipe } from '@@es-pipes/core';
+import type { Emit } from '@@es-pipes/core';
+import type { TerminateAll } from '@@es-pipes/core';
+import { FINAL } from '@@es-pipes/core';
 
 import { useCommonPipe } from './useCommonPipe';
 

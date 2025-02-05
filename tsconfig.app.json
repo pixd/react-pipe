@@ -18,6 +18,26 @@
     "moduleDetection": "force",
     "moduleResolution": "bundler",
     "noEmit": true,
+    "paths": {
+      "@@es-pipes/debug": [
+        "./src/packages/es-pipes/src/index.debug.ts",
+      ],
+      "@@es-pipes/core": [
+        "./src/packages/es-pipes/src/index.core.ts",
+      ],
+      "@@es-pipes": [
+        "./src/packages/es-pipes/src/index.ts",
+      ],
+      "@@react-pipes/debug": [
+        "./src/packages/react-pipes/src/index.debug.ts",
+      ],
+      "@@react-pipes/connectors/redux": [
+        "./src/packages/react-pipes/src/index.connectors.redux.ts",
+      ],
+      "@@react-pipes": [
+        "./src/packages/react-pipes/src/index.ts",
+      ],
+    },
 
     /* Linting */
     "noFallthroughCasesInSwitch": true,

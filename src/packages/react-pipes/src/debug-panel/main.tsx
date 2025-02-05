@@ -1,10 +1,11 @@
-import type { DataBarrel } from 'es-pipes/core';
-import type { PipeState } from 'es-pipes/core';
-import type { StreamGroup } from 'es-pipes/core';
-import type { Debugger } from 'es-pipes/debug';
-import { createDebugger } from 'es-pipes/debug';
-import { createDebugInstruction } from 'es-pipes/debug';
 import ReactDOM from 'react-dom/client';
+
+import type { DataBarrel } from '@@es-pipes/core';
+import type { PipeState } from '@@es-pipes/core';
+import type { StreamGroup } from '@@es-pipes/core';
+import type { Debugger } from '@@es-pipes/debug';
+import { createDebugger } from '@@es-pipes/debug';
+import { createDebugInstruction } from '@@es-pipes/debug';
 
 import { Panel } from './components/Panel';
 import { styles as animationStyle } from './styles/animation';

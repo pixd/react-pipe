@@ -1,11 +1,14 @@
-import type { Adjunct } from 'es-pipes/core';
-import type { BasePipe } from 'es-pipes/core';
-import type { Emit } from 'es-pipes/core';
 import { useStore } from 'react-redux';
 import type { Store } from 'redux';
 import type { UnknownAction } from 'redux';
 
+import type { Adjunct } from '@@es-pipes/core';
+import type { BasePipe } from '@@es-pipes/core';
+import type { Emit } from '@@es-pipes/core';
+
 import { useCommonPipe } from '../../useCommonPipe';
+
+const DEFAULT_STORE_KEY = '@@redux-pipes';
 
 type ActionPipe<
   TAction extends UnknownAction = UnknownAction,
@@ -40,9 +43,13 @@ type ReduxPipeKit<
   };
 };
 
+export function createReduxPipeKit(): ReduxPipeKit<typeof DEFAULT_STORE_KEY>
+
 export function createReduxPipeKit<
   TStoreKey extends string = string,
->(storeKey: TStoreKey): ReduxPipeKit<TStoreKey> {
+>(storeKey: TStoreKey): ReduxPipeKit<TStoreKey>
+
+export function createReduxPipeKit(storeKey: string = DEFAULT_STORE_KEY): ReduxPipeKit {
   const reducer = (state: PipeKitState = { action: null }, action: UnknownAction) => {
     return { ...state, action };
   };
