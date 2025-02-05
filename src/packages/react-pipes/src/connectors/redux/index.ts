@@ -1,10 +1,10 @@
+import type { Adjunct } from 'es-pipes/core';
+import type { BasePipe } from 'es-pipes/core';
+import type { Emit } from 'es-pipes/core';
 import { useStore } from 'react-redux';
 import type { Store } from 'redux';
 import type { UnknownAction } from 'redux';
 
-import type { Adjunct } from '../../../../es-pipes/src/index.core';
-import type { BasePipe } from '../../../../es-pipes/src/index.core';
-import type { Emit } from '../../../../es-pipes/src/index.core';
 import { useCommonPipe } from '../../useCommonPipe';
 
 type ActionPipe<
@@ -49,7 +49,7 @@ export function createReduxPipeKit<
 
   const useActionPipe = (actionType: string | string[], adjuncts?: Adjunct[]): ActionPipe => {
     // TODO `store` can change
-    //  But is this change normal? Probably not. For now, let's leave it as it is.
+    //   But is this change normal? Probably not. For now, let's leave it as it is.
     const store = useStore();
     return useCommonPipe(() => createFill(storeKey, actionType, store), adjuncts ?? []);
   };

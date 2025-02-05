@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import { useEffect } from 'react';
+import { fork } from 'react-pipes';
+import { latest } from 'react-pipes';
+import { useMountPipe } from 'react-pipes';
+import { usePipe } from 'react-pipes';
+import { initDebugPanel } from 'react-pipes/debug';
 
 import { getFriends } from '../../api';
 import { getUser } from '../../api';
-import { fork } from '../../../packages/es-pipes/src';
-import { latest } from '../../../packages/es-pipes/src';
-import { useMountPipe } from '../../../packages/react-pipes/src';
-import { usePipe } from '../../../packages/react-pipes/src';
-import { initDebugPanel } from '../../../packages/react-pipes/src/debug-panel';
 import { useActionPipe } from '../../store';
 import { useDispatch } from '../../store';
 import { useSelector } from '../../store';

@@ -1,3 +1,3 @@
-import { createReduxPipeKit } from '../../packages/react-pipes/src/connectors/redux';
+import { createReduxPipeKit } from 'react-pipes/connectors/redux';
 
 export const reduxPipeKit = createReduxPipeKit('@@redux-pipe');

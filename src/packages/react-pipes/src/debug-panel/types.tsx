@@ -1,8 +1,8 @@
-import type { DataBarrel } from '../../../es-pipes/src/index.core';
-import type { DataType } from '../../../es-pipes/src/index.core';
-import type { PipeState } from '../../../es-pipes/src/index.core';
-import type { StreamGroup } from '../../../es-pipes/src/index.core';
-import type { Debugger } from '../../../es-pipes/src/index.debug';
+import type { DataBarrel } from 'es-pipes/core';
+import type { DataType } from 'es-pipes/core';
+import type { PipeState } from 'es-pipes/core';
+import type { StreamGroup } from 'es-pipes/core';
+import type { Debugger } from 'es-pipes/debug';
 
 export type PanelState = {
   debugRecords: DebugRecord[];

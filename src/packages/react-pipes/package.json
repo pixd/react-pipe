@@ -1,0 +1,38 @@
+{
+  "name": "react-pipes",
+  "version": "0.0.0-rc.0",
+  "description": "",
+  "homepage": "https://github.com/pixd/react-pipe#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pixd/react-pipe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pixd/react-pipe/issues"
+  },
+  "author": "James Dibel <pixd.dev@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "main",
+    "connectors",
+    "debug"
+  ],
+  "main": "main/cjs/index.cjs.js",
+  "module": "main/esm/index.esm.js",
+  "types": "main/@types",
+  "scripts": {
+    "build": "npm run clear && rollup --config ./rollup.config.js",
+    "clear": "rm -rf main",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "es-pipes": "0.0.0-rc.7"
+  },
+  "devDependencies": {
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "rollup": "^4.34.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.3"
+  }
+}

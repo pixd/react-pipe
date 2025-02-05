@@ -1,10 +1,10 @@
-export type DeepCopy = {
-  <
-    TData extends any,
-  >(data: TData, circleHack?: any[][]): TData;
-};
-
 export function deepCopy<
+  TData extends any,
+>(data: TData): TData {
+  return deepCopyInner(data);
+}
+
+function deepCopyInner<
   TData extends any,
 >(data: TData, circleHack: any[][] = []): TData {
   const circleHackDataIndex = circleHack.findIndex((circleHackData) => circleHackData[0] === data);

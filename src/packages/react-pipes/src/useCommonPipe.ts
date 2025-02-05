@@ -1,11 +1,10 @@
+import type { Adjunct } from 'es-pipes/core';
+import type { CreateFill } from 'es-pipes/core';
+import type { DataPipe } from 'es-pipes/core';
+import type { StreamGroupValues } from 'es-pipes/core';
+import { createPipeKit } from 'es-pipes/core';
 import { useEffect } from 'react';
 import { useMemo } from 'react';
-
-import type { Adjunct } from '../../es-pipes/src/index.core';
-import type { CreateFill } from '../../es-pipes/src/index.core';
-import type { DataPipe } from '../../es-pipes/src/index.core';
-import type { StreamGroupValues } from '../../es-pipes/src/index.core';
-import { createPipeKit } from '../../es-pipes/src/index.core';
 
 export function useCommonPipe<
   TValue extends any = any,

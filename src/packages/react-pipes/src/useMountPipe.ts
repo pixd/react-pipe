@@ -1,11 +1,11 @@
+import type { Adjunct } from 'es-pipes/core';
+import type { BasePipe } from 'es-pipes/core';
+import type { Emit } from 'es-pipes/core';
+import type { TerminateAll } from 'es-pipes/core';
+import { FINAL } from 'es-pipes/core';
 import { useEffect } from 'react';
 import { useRef } from 'react';
 
-import type { Adjunct } from '../../es-pipes/src/index.core';
-import type { BasePipe } from '../../es-pipes/src/index.core';
-import type { Emit } from '../../es-pipes/src/index.core';
-import type { TerminateAll } from '../../es-pipes/src/index.core';
-import { FINAL } from '../../es-pipes/src/index.core';
 import { useCommonPipe } from './useCommonPipe';
 
 export type MountPipe = BasePipe<null>;

@@ -11,7 +11,7 @@ import { getIsStreamGroupRetired } from './check';
 import { getIsStreamGroupDeleted } from './check';
 import { getIsStreamEmitInstruction } from './check';
 import { getIsStreamTerminateInstruction } from './check';
-import type { DeepCopy } from './deepCopy';
+import { deepCopy } from './deepCopy.env-detect.main';
 import type { Adjunct } from './entities';
 import type { BasePipe } from './entities';
 import type { CommonPipeState } from './entities';
@@ -46,11 +46,6 @@ import { LibLogicError } from './Error';
 import { UserLogicError } from './Error';
 import { createControlInstruction } from './instruction';
 
-let deepCopy: DeepCopy;
-if (import.meta.env.DEV) {
-  deepCopy = (await import('./deepCopy')).deepCopy;
-}
-
 export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): PipeKit {
   // TODO We need to add a pipe state status (`active` and `deleted`) and check in `checkPipeState` if it has an stream groups
 
@@ -58,12 +53,12 @@ export function createPipeKit(createFill: CreateFill, adjuncts: Adjunct[]): Pipe
     parentPipes: adjuncts.filter(getIsPipe),
     streamGroupRegistry: {},
     dataPipe: {
-      // TODO Should create only in `DEVELOPMENT`
+      // TODO Should create only in `import.meta.env.DEV`
       uniqKey: Symbol(getId('data-pipe')),
       downstreamConnections: [],
     },
     errorPipe: {
-      // TODO Should create only in `DEVELOPMENT`
+      // TODO Should create only in `import.meta.env.DEV`
       uniqKey: Symbol(getId('error-pipe')),
       downstreamConnections: [],
     },
